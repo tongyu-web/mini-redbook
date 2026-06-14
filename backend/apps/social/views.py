@@ -1,0 +1,77 @@
+from rest_framework.views import APIView
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.parsers import JSONParser
+from django.shortcuts import get_object_or_404
+from .models import Like, Favorite, FavoriteFolder, Follow
+from .serializers import FavoriteFolderSerializer
+from .tasks import SocialTask
+from common.response import ApiResponse
+from common.pagination import StandardPagination
+
+class FollowView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, user_id):
+        result = SocialTask.follow_user(request.user, user_id)
+        if result is None:
+            return ApiResponse.error(code=4001, message="不能关注自己", status=400)
+        return ApiResponse.success(data=result, message="操作成功")
+
+class LikeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, note_id):
+        result = SocialTask.toggle_like(request.user, note_id)
+        return ApiResponse.success(data=result)
+
+class FavoriteFolderViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = FavoriteFolderSerializer
+
+    def get_queryset(self):
+        return FavoriteFolder.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def perform_destroy(self, instance):
+        from apps.notes.models import Note
+        from django.db.models import F
+        favs = instance.favorites.all()
+        for fav in favs:
+            Note.objects.filter(pk=fav.note_id).update(fav_count=F("fav_count") - 1)
+        instance.delete()
+
+class FavoriteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        note_id = request.data.get("note_id")
+        folder_id = request.data.get("folder_id", "")
+        if not note_id:
+            return ApiResponse.error(code=4001, message="缺少 note_id", status=400)
+        if not folder_id:
+            folder, _ = FavoriteFolder.objects.get_or_create(user=request.user, name="默认收藏夹")
+            folder_id = folder.id
+        result = SocialTask.add_to_favorite(request.user, note_id, folder_id)
+        return ApiResponse.success(data=result)
+
+    def delete(self, request):
+        note_id = request.data.get("note_id")
+        folder_id = request.data.get("folder_id")
+        if not note_id or not folder_id:
+            return ApiResponse.error(code=4001, message="缺少参数", status=400)
+        result = SocialTask.remove_from_favorite(request.user, note_id, folder_id)
+        return ApiResponse.success(data=result)
+
+    def get(self, request, folder_id):
+        folder = get_object_or_404(FavoriteFolder, pk=folder_id, user=request.user)
+        from apps.notes.models import Note
+        note_ids = Favorite.objects.filter(folder=folder).values_list("note_id", flat=True)
+        qs = Note.objects.filter(id__in=note_ids)
+        paginator = StandardPagination()
+        page = paginator.paginate_queryset(qs, request)
+        from apps.notes.serializers import NoteListSerializer
+        ser = NoteListSerializer(page, many=True, context={"request": request})
+        return ApiResponse.success(data=paginator.get_paginated_response(ser.data).data)

@@ -1,22 +1,34 @@
 import { defineStore } from "pinia"
 import { ref } from "vue"
+import { messageApi } from "../api/messaging"
 
 export const useNotificationStore = defineStore("notification", () => {
-  const count = ref(0)
-  const list = ref([])
+  const unreadCount = ref(0)
+  const byType = ref({})
+  let pollTimer = null
 
-  function increment() {
-    count.value++
+  async function fetchUnreadCount() {
+    try {
+      const data = await messageApi.getUnreadCount()
+      unreadCount.value = data.unread_count || 0
+      byType.value = data.by_type || {}
+    } catch (e) {}
+  }
+
+  function startPolling() {
+    fetchUnreadCount()
+    pollTimer = setInterval(fetchUnreadCount, 30000)
+  }
+
+  function stopPolling() {
+    if (pollTimer) clearInterval(pollTimer)
+    pollTimer = null
   }
 
   function reset() {
-    count.value = 0
+    unreadCount.value = 0
+    byType.value = {}
   }
 
-  function setNotifications(notifications) {
-    list.value = notifications
-    count.value = notifications.length
-  }
-
-  return { count, list, increment, reset, setNotifications }
+  return { unreadCount, byType, fetchUnreadCount, startPolling, stopPolling, reset }
 })

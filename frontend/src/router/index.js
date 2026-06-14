@@ -1,6 +1,16 @@
 import { createRouter, createWebHistory } from "vue-router"
 
-const routes = []
+const routes = [
+  { path: "/", name: "Home", component: () => import("../views/Home.vue") },
+  { path: "/login", name: "Login", component: () => import("../views/Login.vue") },
+  { path: "/register", name: "Register", component: () => import("../views/Register.vue") },
+  { path: "/user/:id", name: "UserProfile", component: () => import("../views/UserProfile.vue") },
+  { path: "/note/:id", name: "NoteDetail", component: () => import("../views/NoteDetail.vue") },
+  { path: "/create", name: "CreateNote", component: () => import("../views/CreateNote.vue") },
+  { path: "/search", name: "Search", component: () => import("../views/Search.vue") },
+  { path: "/message", name: "Message", component: () => import("../views/Message.vue") },
+  { path: "/chat/:userId", name: "Chat", component: () => import("../views/Chat.vue") },
+]
 
 const router = createRouter({
   history: createWebHistory(),

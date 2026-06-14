@@ -1,5 +1,4 @@
 import axios from "axios"
-import { ElMessage } from "element-plus"
 import router from "../router"
 
 const request = axios.create({
@@ -18,7 +17,6 @@ function processQueue(error, token = null) {
   failedQueue = []
 }
 
-// Request interceptor: attach JWT token
 request.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("access_token")
@@ -30,56 +28,34 @@ request.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// Response interceptor: unwrap + error handling + token refresh
 request.interceptors.response.use(
   (response) => {
     const { code, data, message } = response.data
     if (code === 0) {
       return data
     }
-    ElMessage.error(message || "请求失败")
-    return Promise.reject(new Error(message))
+    return Promise.reject(new Error(message || "请求失败"))
   },
   async (error) => {
-    const originalRequest = error.config
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject })
-        }).then(token => {
-          originalRequest.headers.Authorization = "Bearer " + token
-          return request(originalRequest)
-        })
+    if (error.response?.status === 401) {
+      const originalRequest = error.config
+      if (!originalRequest?._retry) {
+        originalRequest._retry = true
+        const refreshToken = localStorage.getItem("refresh_token")
+        if (refreshToken) {
+          try {
+            const resp = await axios.post("/api/accounts/token/refresh/", { refresh: refreshToken })
+            const newToken = resp.data.access || resp.data.access_token
+            localStorage.setItem("access_token", newToken)
+            originalRequest.headers.Authorization = "Bearer " + newToken
+            return request(originalRequest)
+          } catch (e) {}
+        }
       }
-      originalRequest._retry = true
-      isRefreshing = true
-      const refreshToken = localStorage.getItem("refresh_token")
-      if (!refreshToken) {
-        localStorage.removeItem("access_token")
-        localStorage.removeItem("refresh_token")
-        router.push("/login")
-        return Promise.reject({ ...error, _handled: true })
-      }
-      try {
-        const resp = await axios.post("/api/accounts/token/refresh/", { refresh: refreshToken }, { headers: { "Content-Type": "application/json" } })
-        const newToken = resp.data.access || resp.data.access_token
-        localStorage.setItem("access_token", newToken)
-        processQueue(null, newToken)
-        originalRequest.headers.Authorization = "Bearer " + newToken
-        return request(originalRequest)
-      } catch (refreshError) {
-        processQueue(refreshError, null)
-        localStorage.removeItem("access_token")
-        localStorage.removeItem("refresh_token")
-        router.push("/login")
-        return Promise.reject(refreshError)
-      } finally {
-        isRefreshing = false
-      }
-    }
-    // Don't show error toast for 401 (handled by redirect)
-    if (error.response?.status !== 401) {
-      ElMessage.error(error.response?.data?.message || "网络错误")
+      localStorage.removeItem("access_token")
+      localStorage.removeItem("refresh_token")
+      router.push("/login")
+      return Promise.reject(error)
     }
     return Promise.reject(error)
   }

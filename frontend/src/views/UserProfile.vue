@@ -113,9 +113,7 @@ watch(() => route.params.id, async () => {
 async function loadProfile() {
   try {
     profile.value = await accountsApi.getProfile(route.params.id)
-  } catch (e) {
-    if (e.message === "未登录") router.push("/login")
-  }
+  } catch (e) {}
 }
 
 async function loadTab() {
@@ -134,6 +132,11 @@ async function loadTab() {
     } else if (activeTab.value === "likes") {
       if (isOwn.value) {
         const res = await notesApi.getLikedNotes()
+        items.value = res.results || res || []
+      }
+    } else if (activeTab.value === "favorites") {
+      if (isOwn.value) {
+        const res = await socialApi.getAllFavorites()
         items.value = res.results || res || []
       }
     }

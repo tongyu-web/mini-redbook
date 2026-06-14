@@ -1,29 +1,20 @@
-# mini-redbook
+﻿# mini-redbook
 
-\u5c0f\u7ea2\u4e66\u98ce\u683c\u793e\u4ea4\u5e73\u53f0 Mini \u7248 - \u5206\u4eab\u751f\u6d3b\uff0c\u53d1\u73b0\u7f8e\u597d\u3002
+A social lifestyle platform - Share life, discover beauty.
 
-## \u529f\u80fd\u7279\u6027
+## Quick Start
 
-- \ud83d\udcdd \u53d1\u5e03\u56fe\u6587\u7b14\u8bb0
-- \ud83c\udfe0 \u9996\u9875\u4fe1\u606f\u6d41
-- \u2764\ufe0f \u70b9\u8d5e\u4e92\u52a8
-- \ud83d\udc64 \u7528\u6237\u6ce8\u518c/\u767b\u5f55
-- \ud83c\udff7\ufe0f \u5206\u7c7b\u6d4f\u89c8
+```bash
+# Clone the repo
+git clone https://github.com/tongyu-web/mini-redbook.git
 
-## \u6280\u672f\u6808
+# Get started
+cd mini-redbook
+```
 
-- **\u540e\u7aef\uff1a** Python Flask + SQLAlchemy + SQLite
-- **\u524d\u7aef\uff1a** HTML5 + CSS3 + Vanilla JS
-- **\u6837\u5f0f\uff1a** \u5c0f\u7ea2\u4e66\u98ce\u683c UI
+## Features (Coming Soon)
 
-## \u5feb\u901f\u542f\u52a8
-
-\u0024\u0024\u0020bash
-pip install -r requirements.txt
-python backend/app.py
-\u0024\u0024\u0020
-
-\u8bbf\u95ee http://localhost:5000
-
-## \u9879\u76ee\u7ed3\u6784
-
+- 📝 Publish posts with images
+- 🏠 Feed timeline
+- ❤️ Like & interact
+- 👤 User profiles

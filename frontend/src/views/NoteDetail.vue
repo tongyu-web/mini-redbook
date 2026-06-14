@@ -1,7 +1,6 @@
 <template>
   <div class="detail">
-    <NavBar />
-    <div class="content" v-if="note">
+<div class="content" v-if="note">
       <div class="user-header">
         <div class="user" @click="$router.push('/user/' + note.user_id)">
           <el-avatar :size="40" :src="note.user_avatar" />
@@ -125,7 +124,7 @@ import { useRoute, useRouter } from "vue-router"
 import { useUserStore } from "../stores/user"
 import { notesApi } from "../api/notes"
 import { socialApi } from "../api/social"
-import NavBar from "../components/NavBar.vue"
+
 
 const route = useRoute()
 const router = useRouter()

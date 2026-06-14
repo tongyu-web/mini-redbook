@@ -1,7 +1,6 @@
 ﻿<template>
   <div class="settings">
-    <NavBar />
-    <div class="content">
+<div class="content">
       <div class="header">
         <el-button text @click="$router.back()">← 返回</el-button>
         <h2>编辑个人资料</h2>
@@ -55,7 +54,6 @@ import { ref, reactive, onMounted } from "vue"
 import { useRouter } from "vue-router"
 import { useUserStore } from "../stores/user"
 import { accountsApi } from "../api/accounts"
-import NavBar from "../components/NavBar.vue"
 
 const router = useRouter()
 const userStore = useUserStore()

@@ -1,7 +1,6 @@
 <template>
   <div class="message-page">
-    <NavBar />
-    <div class="content">
+<div class="content">
       <el-tabs v-model="activeTab">
         <el-tab-pane label="通知" name="notification">
           <div class="filter-btns">
@@ -37,7 +36,7 @@
 import { ref, onMounted } from "vue"
 import { messageApi } from "../api/messaging"
 import { useNotificationStore } from "../stores/notification"
-import NavBar from "../components/NavBar.vue"
+
 
 const notificationStore = useNotificationStore()
 const activeTab = ref("notification")

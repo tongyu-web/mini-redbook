@@ -1,7 +1,6 @@
 ﻿<template>
   <div class="profile">
-    <NavBar />
-    <div class="content" v-if="profile">
+<div class="content" v-if="profile">
       <!-- 未完善资料引导 -->
       <el-alert v-if="!profile.is_profile_complete && isOwn" title="完善个人资料" type="warning" show-icon closable class="mb-3">
         <template #default>
@@ -82,7 +81,6 @@ import { useUserStore } from "../stores/user"
 import { accountsApi } from "../api/accounts"
 import { notesApi } from "../api/notes"
 import { socialApi } from "../api/social"
-import NavBar from "../components/NavBar.vue"
 
 const route = useRoute()
 const router = useRouter()

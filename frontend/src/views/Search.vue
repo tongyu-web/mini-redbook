@@ -1,7 +1,6 @@
 <template>
   <div class="search-page">
-    <NavBar />
-    <div class="content">
+<div class="content">
       <el-input v-model="keyword" placeholder="搜索笔记、用户、标签..." @input="onInput" clearable class="search-input" />
       <div v-if="suggestions.length && keyword" class="suggestions">
         <div v-for="s in suggestions" :key="s.name" @click="doSearch(s.name)" class="suggest-item">{{ s.name }}</div>
@@ -28,7 +27,7 @@
 <script setup>
 import { ref, onMounted } from "vue"
 import { searchApi } from "../api/search"
-import NavBar from "../components/NavBar.vue"
+
 
 const keyword = ref("")
 const suggestions = ref([])

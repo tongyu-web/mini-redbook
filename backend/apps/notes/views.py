@@ -78,6 +78,28 @@ class NoteViewSet(viewsets.ModelViewSet):
         ser = NoteListSerializer(page, many=True)
         return ApiResponse.success(data=self.get_paginated_response(ser.data).data)
 
+class UserNoteListView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get(self, request, user_id):
+        qs = Note.objects.filter(user_id=user_id, status=NOTE_STATUS_PUBLISHED).order_by("-created_at").select_related("user").prefetch_related("media_list", "tags")
+        paginator = StandardPagination()
+        page = paginator.paginate_queryset(qs, request)
+        ser = NoteListSerializer(page, many=True, context={"request": request})
+        return ApiResponse.success(data=paginator.get_paginated_response(ser.data).data)
+
+class LikedNoteListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from apps.social.models import Like
+        note_ids = Like.objects.filter(user=request.user).values_list("note_id", flat=True)
+        qs = Note.objects.filter(id__in=list(note_ids), status=NOTE_STATUS_PUBLISHED).order_by("-created_at").select_related("user")
+        paginator = StandardPagination()
+        page = paginator.paginate_queryset(qs, request)
+        ser = NoteListSerializer(page, many=True, context={"request": request})
+        return ApiResponse.success(data=paginator.get_paginated_response(ser.data).data)
+
 class CommentView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 

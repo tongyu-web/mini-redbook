@@ -1,4 +1,4 @@
-import request from "./request"
+﻿import request from "./request"
 
 export const notesApi = {
   getNotes(page = 1) { return request.get(`/notes/?page=${page}`) },
@@ -6,6 +6,8 @@ export const notesApi = {
   createNote(formData) { return request.post("/notes/", formData) },
   updateNote(id, data) { return request.patch(`/notes/${id}/`, data) },
   deleteNote(id) { return request.delete(`/notes/${id}/`) },
+  getUserNotes(userId) { return request.get(`/notes/user/${userId}/`) },
+  getLikedNotes() { return request.get("/notes/liked/") },
   getDrafts() { return request.get("/notes/drafts/") },
   getRecycle() { return request.get("/notes/recycle/") },
   getTags() { return request.get("/notes/tags/") },

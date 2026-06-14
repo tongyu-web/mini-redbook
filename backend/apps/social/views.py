@@ -3,6 +3,7 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.parsers import JSONParser
 from django.shortcuts import get_object_or_404
+from django.db.models import F
 from .models import Like, Favorite, FavoriteFolder, Follow
 from .serializers import FavoriteFolderSerializer
 from .tasks import SocialTask
@@ -37,7 +38,6 @@ class FavoriteFolderViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         from apps.notes.models import Note
-        from django.db.models import F
         favs = instance.favorites.all()
         for fav in favs:
             Note.objects.filter(pk=fav.note_id).update(fav_count=F("fav_count") - 1)
@@ -69,7 +69,20 @@ class FavoriteView(APIView):
         folder = get_object_or_404(FavoriteFolder, pk=folder_id, user=request.user)
         from apps.notes.models import Note
         note_ids = Favorite.objects.filter(folder=folder).values_list("note_id", flat=True)
-        qs = Note.objects.filter(id__in=note_ids)
+        qs = Note.objects.filter(id__in=list(note_ids))
+        paginator = StandardPagination()
+        page = paginator.paginate_queryset(qs, request)
+        from apps.notes.serializers import NoteListSerializer
+        ser = NoteListSerializer(page, many=True, context={"request": request})
+        return ApiResponse.success(data=paginator.get_paginated_response(ser.data).data)
+
+class FavoriteAllView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        note_ids = Favorite.objects.filter(user=request.user).values_list("note_id", flat=True).distinct()
+        from apps.notes.models import Note
+        qs = Note.objects.filter(id__in=list(note_ids))
         paginator = StandardPagination()
         page = paginator.paginate_queryset(qs, request)
         from apps.notes.serializers import NoteListSerializer

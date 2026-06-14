@@ -58,7 +58,7 @@ request.interceptors.response.use(
         localStorage.removeItem("access_token")
         localStorage.removeItem("refresh_token")
         router.push("/login")
-        return Promise.reject(error)
+        return Promise.reject({ ...error, _handled: true })
       }
       try {
         const resp = await axios.post("/api/accounts/token/refresh/", { refresh: refreshToken }, { headers: { "Content-Type": "application/json" } })
@@ -77,7 +77,10 @@ request.interceptors.response.use(
         isRefreshing = false
       }
     }
-    ElMessage.error(error.response?.data?.message || "网络错误")
+    // Don't show error toast for 401 (handled by redirect)
+    if (error.response?.status !== 401) {
+      ElMessage.error(error.response?.data?.message || "网络错误")
+    }
     return Promise.reject(error)
   }
 )

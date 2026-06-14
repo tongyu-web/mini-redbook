@@ -88,3 +88,16 @@ class FavoriteAllView(APIView):
         from apps.notes.serializers import NoteListSerializer
         ser = NoteListSerializer(page, many=True, context={"request": request})
         return ApiResponse.success(data=paginator.get_paginated_response(ser.data).data)
+
+
+class RemoveFollowerView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, user_id):
+        from .models import Follow
+        Follow.objects.filter(follower_id=user_id, following=request.user).delete()
+        # Update counts
+        from apps.accounts.models import User
+        User.objects.filter(id=user_id).update(following_count=F("following_count") - 1)
+        User.objects.filter(id=request.user.id).update(follower_count=F("follower_count") - 1)
+        return ApiResponse.success(message="已移除粉丝")

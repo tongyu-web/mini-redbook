@@ -52,7 +52,9 @@
             <el-avatar :size="28" :src="c.user_avatar" />
             <div class="comment-body">
               <span class="c-nickname">{{ c.user_nickname }}</span>
+              <el-button v-if="userStore.isLoggedIn" text size="small" @click="replyToComment(c)" class="reply-btn">回复</el-button>
               <p>{{ c.content }}</p>
+              <img v-if="c.image" :src="c.image" class="comment-img" @click="openUrlViewer(c.image)" />
             </div>
           </div>
           <div v-if="c.replies?.length" class="replies">
@@ -61,6 +63,39 @@
         </div>
       </div>
     </div>
+      <!-- Comment input -->
+      <div class="comment-input-area" v-if="userStore.isLoggedIn">
+        <div class="reply-hint" v-if="replyTo">
+          <span>回复 @{{ replyTo.nickname }}</span>
+          <el-button text size="small" @click="cancelReply">取消</el-button>
+        </div>
+        <div class="comment-form">
+          <el-avatar :size="32" :src="userStore.user?.avatar_url" />
+          <div class="comment-input-wrap">
+            <el-input
+              v-model="commentContent"
+              type="textarea"
+              :rows="2"
+              :maxlength="300"
+              placeholder="写下你的评论..."
+              show-word-limit
+              resize="none"
+            />
+            <div class="comment-actions">
+              <label class="upload-label" for="comment-image">
+                <span class="img-btn">图片</span>
+              </label>
+              <input id="comment-image" ref="commentInput" type="file" accept="image/jpeg,image/png,image/webp" hidden @change="handleCommentImage" />
+              <span class="img-name" v-if="commentFile">{{ commentFile.name }}</span>
+              <el-button size="small" type="primary" :loading="commenting" @click="submitComment" :disabled="!commentContent.trim()">发送</el-button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-else class="login-hint">
+        <el-button text @click="$router.push('/login')">登录后发表评论</el-button>
+      </div>
+
     <el-dialog v-model="deleteDialog" title="删除笔记" width="90%" max-width="400px">
       <p>确定要删除这篇笔记吗？删除后将移入回收站，30天内可恢复。</p>
       <template #footer>
@@ -168,6 +203,42 @@ async function toggleLike() {
   note.value.is_liked = res.is_liked
   note.value.like_count = res.like_count
 }
+
+// Comment state
+const commentContent = ref("")
+const commentFile = ref(null)
+const commenting = ref(false)
+const replyTo = ref(null)
+
+function handleCommentImage(e) {
+  const f = e.target.files?.[0]
+  if (!f) return
+  commentFile.value = f
+  e.target.value = ""
+}
+
+function cancelReply() { replyTo.value = null }
+
+function replyToComment(c) { replyTo.value = { id: c.id, nickname: c.user_nickname } }
+
+async function submitComment() {
+  if (!commentContent.value.trim()) return
+  commenting.value = true
+  try {
+    const fd = new FormData()
+    fd.append("content", commentContent.value.trim())
+    if (replyTo.value) fd.append("parent_id", replyTo.value.id)
+    if (commentFile.value) fd.append("image", commentFile.value)
+    await notesApi.postComment(route.params.id, fd)
+    commentContent.value = ""
+    commentFile.value = null
+    replyTo.value = null
+    const res = await notesApi.getComments(route.params.id)
+    comments.value = res.results || res || []
+    if (note.value) note.value.comment_count = (note.value.comment_count || 0) + 1
+  } catch (e) { console.error(e) }
+  finally { commenting.value = false }
+}
 </script>
 
 <style scoped>
@@ -218,4 +289,19 @@ async function toggleLike() {
 :global(.nav-btn) { font-size: 32px; cursor: pointer; padding: 8px 16px; user-select: none; }
 :global(.nav-btn:hover) { background: rgba(255,255,255,0.1); border-radius: 8px; }
 :global(.nav-count) { font-size: 14px; }
+
+.comment-input-area { margin-top: 16px; border-top: 1px solid #f0f0f0; padding-top: 12px; }
+.reply-hint { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #666; margin-bottom: 8px; }
+.comment-form { display: flex; gap: 10px; align-items: flex-start; }
+.comment-input-wrap { flex: 1; }
+.comment-input-wrap :deep(.el-textarea__inner) { font-size: 14px; border-radius: 8px; }
+.comment-actions { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.upload-label { cursor: pointer; display: flex; align-items: center; }
+.img-btn { font-size: 12px; color: #666; cursor: pointer; padding: 2px 8px; border: 1px solid #ddd; border-radius: 4px; }
+.img-btn:hover { color: #ff2442; border-color: #ff2442; }
+.img-name { font-size: 11px; color: #999; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.login-hint { text-align: center; padding: 16px; border-top: 1px solid #f0f0f0; margin-top: 16px; }
+.comment-img { max-width: 180px; max-height: 180px; border-radius: 8px; margin-top: 6px; cursor: pointer; }
+.reply-btn { font-size: 12px; color: #999; margin-left: 4px; }
+.reply-btn:hover { color: #ff2442; }
 </style>

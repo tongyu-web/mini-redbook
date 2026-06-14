@@ -41,7 +41,7 @@ class NoteViewSet(viewsets.ModelViewSet):
         note = NoteTask.publish_note(request.user, data, images=images, video=video)
         return ApiResponse.success(
             data=NoteDetailSerializer(note, context={"request": request}).data,
-            message="发布成功", status=201
+            message="鍙戝竷鎴愬姛", status=201
         )
 
     def retrieve(self, request, pk=None):
@@ -59,12 +59,12 @@ class NoteViewSet(viewsets.ModelViewSet):
         images = request.FILES.getlist("images") if request.FILES.getlist("images") else None
         NoteTask.edit_note(note, data, images=images)
         ser2 = NoteDetailSerializer(note, context={"request": request})
-        return ApiResponse.success(data=ser2.data, message="更新成功")
+        return ApiResponse.success(data=ser2.data, message="鏇存柊鎴愬姛")
 
     def destroy(self, request, pk=None):
         note = self.get_object()
         NoteTask.soft_delete(note)
-        return ApiResponse.success(message="已移入回收站")
+        return ApiResponse.success(message="宸茬Щ鍏ュ洖鏀剁珯")
 
     @action(detail=False, methods=["get"], url_path="drafts")
     def drafts(self, request):
@@ -86,7 +86,7 @@ class NoteRestoreView(APIView):
     def post(self, request, pk):
         note = get_object_or_404(Note, pk=pk, user=request.user, status=2)
         NoteTask.restore_note(note)
-        return ApiResponse.success(message="笔记已恢复")
+        return ApiResponse.success(message="绗旇宸叉仮澶?)
 
 class NoteHardDeleteView(APIView):
     permission_classes = [IsAuthenticated]
@@ -94,13 +94,13 @@ class NoteHardDeleteView(APIView):
     def delete(self, request, pk):
         note = get_object_or_404(Note, pk=pk, user=request.user)
         if note.status == 2:
-            # 从回收站彻底删除
+            # 浠庡洖鏀剁珯褰诲簳鍒犻櫎
             note.media_list.all().delete()
             note.delete()
-            return ApiResponse.success(message="笔记已永久删除")
-        # 直接删除已发布笔记
+            return ApiResponse.success(message="绗旇宸叉案涔呭垹闄?)
+        # 鐩存帴鍒犻櫎宸插彂甯冪瑪璁?
         NoteTask.soft_delete(note)
-        return ApiResponse.success(message="已移入回收站")
+        return ApiResponse.success(message="宸茬Щ鍏ュ洖鏀剁珯")
 
 class RecycleBinCleanupView(APIView):
     permission_classes = [IsAuthenticated]
@@ -112,7 +112,7 @@ class RecycleBinCleanupView(APIView):
         for note in expired:
             note.media_list.all().delete()
         expired.delete()
-        return ApiResponse.success(data={"cleaned_count": count}, message=f"已清理{count}条过期笔记")
+        return ApiResponse.success(data={"cleaned_count": count}, message=f"宸叉竻鐞唟count}鏉¤繃鏈熺瑪璁?)
 
 class UserNoteListView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -139,7 +139,7 @@ class DraftListView(APIView):
         ser = NoteListSerializer(qs, many=True); return ApiResponse.success(data=ser.data)
     def delete(self, request, pk):
         note = get_object_or_404(Note, pk=pk, user=request.user, status=NOTE_STATUS_DRAFT)
-        note.delete(); return ApiResponse.success(message="草稿已删除")
+        note.delete(); return ApiResponse.success(message="鑽夌宸插垹闄?)
 
 class CommentView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -151,12 +151,12 @@ class CommentView(APIView):
     def post(self, request, note_id):
         note = get_object_or_404(Note, pk=note_id, status=NOTE_STATUS_PUBLISHED)
         content = request.data.get("content", "").strip()
-        if not content: return ApiResponse.error(code=4001, message="评论内容不能为空", status=400)
+        if not content: return ApiResponse.error(code=4001, message="璇勮鍐呭涓嶈兘涓虹┖", status=400)
         comment = Comment.objects.create(note=note, user=request.user, content=content,
             parent_id=request.data.get("parent_id") or None)
         Note.objects.filter(pk=note_id).update(comment_count=F("comment_count") + 1)
         ser = CommentSerializer(comment, context={"request": request})
-        return ApiResponse.success(data=ser.data, message="评论成功", status=201)
+        return ApiResponse.success(data=ser.data, message="璇勮鎴愬姛", status=201)
 
 class TagListView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -165,6 +165,6 @@ class TagListView(APIView):
         return ApiResponse.success(data=ser.data)
     def post(self, request):
         name = request.data.get("name", "").strip()
-        if not name: return ApiResponse.error(code=4001, message="标签名不能为空", status=400)
+        if not name: return ApiResponse.error(code=4001, message="鏍囩鍚嶄笉鑳戒负绌?, status=400)
         tag, _ = Tag.objects.get_or_create(name=name)
         return ApiResponse.success(data=TagSerializer(tag).data, status=201)

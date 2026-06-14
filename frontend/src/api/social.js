@@ -1,8 +1,9 @@
-﻿import request from "./request"
+import request from "./request"
 
 export const socialApi = {
   toggleFollow(userId) { return request.post(`/social/follow/${userId}/`) },
   toggleLike(noteId) { return request.post(`/social/notes/${noteId}/like/`) },
+  removeFollower(userId) { return request.delete(`/social/follower/${userId}/`) },
   getFolders() { return request.get("/social/favorite-folders/") },
   createFolder(data) { return request.post("/social/favorite-folders/", data) },
   deleteFolder(id) { return request.delete(`/social/favorite-folders/${id}/`) },

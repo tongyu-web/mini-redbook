@@ -9,4 +9,6 @@ urlpatterns = [
     path("favorites/all/", views.FavoriteAllView.as_view(), name="favorites-all"),
     path("favorites/<str:folder_id>/", views.FavoriteView.as_view(), name="favorite-list"),
     path("favorites/", views.FavoriteView.as_view(), name="favorite-add"),
+
+    path("follower/<str:user_id>/", views.RemoveFollowerView.as_view(), name="remove-follower"),
 ]

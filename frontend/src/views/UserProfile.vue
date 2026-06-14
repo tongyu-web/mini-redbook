@@ -151,11 +151,11 @@ async function toggleFollow() {
 }
 
 function showFollowers() {
-  router.push({ query: { tab: "followers" } })
+  router.push({ path: "/follow-list", query: { tab: "followers", user_id: route.params.id } })
 }
 
 function showFollowing() {
-  router.push({ query: { tab: "following" } })
+  router.push({ path: "/follow-list", query: { tab: "following", user_id: route.params.id } })
 }
 </script>
 

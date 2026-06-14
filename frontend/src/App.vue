@@ -5,10 +5,13 @@
 <script setup>
 import { onMounted, onUnmounted } from "vue"
 import { useNotificationStore } from "./stores/notification"
+import { useUserStore } from "./stores/user"
 
 const notificationStore = useNotificationStore()
+const userStore = useUserStore()
 
 onMounted(() => {
+  userStore.init()
   notificationStore.startPolling()
 })
 

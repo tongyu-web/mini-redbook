@@ -6,6 +6,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/accounts/", include("apps.accounts.urls")),
+    path("api/accounts/token/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
     path("api/notes/", include("apps.notes.urls")),
     path("api/social/", include("apps.social.urls")),
     path("api/search/", include("apps.search.urls")),

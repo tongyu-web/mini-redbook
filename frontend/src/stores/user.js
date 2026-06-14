@@ -17,5 +17,17 @@ export const useUserStore = defineStore("user", () => {
     localStorage.removeItem("refresh_token")
   }
 
-  return { user, isLoggedIn, setUser, clearUser }
+  async function init() {
+    const token = localStorage.getItem("access_token")
+    if (!token) return
+    try {
+      const { accountsApi } = await import("../api/accounts")
+      const userData = await accountsApi.getProfile()
+      setUser(userData)
+    } catch (e) {
+      clearUser()
+    }
+  }
+
+  return { user, isLoggedIn, setUser, clearUser, init }
 })

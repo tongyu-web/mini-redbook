@@ -1,21 +1,24 @@
 <template>
   <div class="navbar">
     <div class="tab" :class="{ active: $route.path === '/' }" @click="$router.push('/')">
-      <span>🏠</span><span class="label">首页</span>
+      <span class="tab-icon">🏠</span>
+      <span class="label">首页</span>
     </div>
     <div class="tab" :class="{ active: $route.path === '/search' }" @click="$router.push('/search')">
-      <span>🔍</span><span class="label">发现</span>
+      <span class="tab-icon">🔍</span>
+      <span class="label">发现</span>
     </div>
     <div class="tab" @click="goCreate">
-      <span class="create-btn">＋</span>
+      <span class="create-btn">+</span>
     </div>
     <div class="tab" :class="{ active: $route.path.startsWith('/message') }" @click="$router.push('/message')">
-      <span>💬</span>
+      <span class="tab-icon">💬</span>
       <span v-if="notificationStore.unreadCount > 0" class="badge">{{ notificationStore.unreadCount > 99 ? "99+" : notificationStore.unreadCount }}</span>
       <span class="label">消息</span>
     </div>
     <div class="tab" :class="{ active: $route.path.startsWith('/user') }" @click="goProfile">
-      <span>👤</span><span class="label">我的</span>
+      <span class="tab-icon">👤</span>
+      <span class="label">我的</span>
     </div>
   </div>
 </template>

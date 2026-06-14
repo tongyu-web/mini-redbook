@@ -1,9 +1,9 @@
-﻿<template>
+<template>
   <div class="create-page">
     <div class="header">
       <el-button text @click="handleBack">← 返回</el-button>
       <h2>{{ isEdit ? "编辑笔记" : "发布笔记" }}</h2>
-      <el-button text type="primary" @click="saveDraft" :disabled="!form.title && !form.content">存草稿</el-button>
+      <el-button v-if="!isEdit" text type="primary" @click="saveDraft" :disabled="!form.title && !form.content">存草稿</el-button>
     </div>
 
     <div class="content">
@@ -12,7 +12,7 @@
 
       <!-- 类型选择 -->
       <div class="type-selector">
-        <el-radio-group v-model="form.type">
+        <el-radio-group v-model="form.type" :disabled="isEdit">
           <el-radio-button :value="0">📷 图文</el-radio-button>
           <el-radio-button :value="1">🎬 视频</el-radio-button>
         </el-radio-group>
@@ -83,11 +83,9 @@
 
       <!-- 操作按钮 -->
       <div class="actions">
-        <el-button type="primary" size="large" class="action-btn" :loading="publishing" @click="handlePublish">发布</el-button>
-        <el-button size="large" class="action-btn" @click="saveDraft" :disabled="!hasContent">存草稿</el-button>
+        <el-button type="primary" size="large" class="action-btn" :loading="publishing" @click="handlePublish">{{ isEdit ? "保存修改" : "发布" }}</el-button>
+        <el-button size="large" class="action-btn" @click="handleBack">取消</el-button>
       </div>
-
-      <p class="draft-hint" v-if="draftSaved">草稿已自动保存</p>
     </div>
   </div>
 </template>
@@ -102,11 +100,15 @@ const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 
+const isEdit = computed(() => !!route.params.id)
+const editId = computed(() => route.params.id)
+
 const form = reactive({
   title: "", content: "", type: 0, tag_names: [],
 })
 const imageFiles = ref([])
 const imagePreviews = ref([])
+const existingMediaIds = ref([])
 const videoFile = ref(null)
 const videoPreviewUrl = ref("")
 const coverFile = ref(null)
@@ -115,37 +117,50 @@ const fileInput = ref(null)
 const videoInput = ref(null)
 const coverInput = ref(null)
 const tagInputRef = ref(null)
-const publishing = ref(false)
+const tagInput = ref("")
+const showTagInput = ref(false)
+const tagSuggestions = ref([])
 const errorMsg = ref("")
 const successMsg = ref("")
-const draftSaved = ref(false)
-const showTagInput = ref(false)
-const tagInput = ref("")
-const tagSuggestions = ref([])
-const isEdit = ref(false)
-const editId = ref(null)
+const publishing = ref(false)
 const hasContent = computed(() => form.title || form.content || imageFiles.value.length || videoFile.value)
+const draftSaved = ref(false)
 
-// 草稿自动保存
-let draftTimer = null
-onMounted(() => {
-  loadDraft()
-  loadHotTags()
-  draftTimer = setInterval(autoSaveDraft, 30000)
+onMounted(async () => {
+  if (isEdit.value) {
+    await loadEditData()
+  } else {
+    loadDraft()
+    loadHotTags()
+  }
 })
-onUnmounted(() => { clearInterval(draftTimer) })
+
+async function loadEditData() {
+  try {
+    const note = await notesApi.getNote(editId.value)
+    form.title = note.title || ""
+    form.content = note.content || ""
+    form.type = note.type || 0
+    form.tag_names = (note.tags || []).map(t => t.name)
+
+    // 加载已有的图片预览
+    if (note.media_list) {
+      note.media_list.forEach((m, i) => {
+        imagePreviews.value.push(m.file)
+        existingMediaIds.value.push(m.id)
+      })
+    }
+    if (note.cover_img) {
+      coverPreview.value = note.cover_img
+    }
+  } catch (e) {
+    errorMsg.value = "加载笔记失败"
+    router.back()
+  }
+}
 
 function loadHotTags() {
   notesApi.getTags().then(data => { tagSuggestions.value = data || [] }).catch(() => {})
-}
-
-function autoSaveDraft() {
-  if (hasContent.value) {
-    const draft = { title: form.title, content: form.content, type: form.type }
-    localStorage.setItem("create_draft", JSON.stringify(draft))
-    draftSaved.value = true
-    setTimeout(() => { draftSaved.value = false }, 2000)
-  }
 }
 
 function loadDraft() {
@@ -179,6 +194,7 @@ function handleImages(e) {
     imageFiles.value.push(f)
     imagePreviews.value.push(URL.createObjectURL(f))
   }
+  e.target.value = ""
 }
 
 function removeImage(i) {
@@ -192,12 +208,10 @@ function triggerVideoUpload() { videoInput.value?.click() }
 function handleVideo(e) {
   const f = e.target.files?.[0]
   if (!f) return
-  if (f.size > 500 * 1024 * 1024) {
-    errorMsg.value = "视频不能超过500MB"
-    return
-  }
+  if (f.size > 500 * 1024 * 1024) { errorMsg.value = "视频最大500MB"; return }
   videoFile.value = f
   videoPreviewUrl.value = URL.createObjectURL(f)
+  e.target.value = ""
 }
 
 function removeVideo() {
@@ -214,6 +228,7 @@ function handleCover(e) {
   if (!f) return
   coverFile.value = f
   coverPreview.value = URL.createObjectURL(f)
+  e.target.value = ""
 }
 
 // 标签
@@ -239,7 +254,9 @@ function selectTag(tag) {
 
 // 保存/发布
 async function saveDraft() {
-  autoSaveDraft()
+  if (!hasContent.value) return
+  const draft = { title: form.title, content: form.content, type: form.type }
+  localStorage.setItem("create_draft", JSON.stringify(draft))
   errorMsg.value = "草稿已保存在本地"
 }
 
@@ -268,23 +285,23 @@ async function handlePublish() {
 
     if (isEdit.value) {
       await notesApi.updateNote(editId.value, fd)
+      successMsg.value = "修改已保存！"
     } else {
       await notesApi.createNote(fd)
+      clearDraft()
+      successMsg.value = "发布成功！"
     }
-
-    clearDraft()
-    successMsg.value = "发布成功！"
-    setTimeout(() => router.push("/"), 1000)
+    setTimeout(() => router.push("/user/" + userStore.user.id), 1000)
   } catch (e) {
-    errorMsg.value = e.message || "发布失败"
+    errorMsg.value = e.message || (isEdit.value ? "修改失败" : "发布失败")
   } finally {
     publishing.value = false
   }
 }
 
 function handleBack() {
-  if (hasContent.value) {
-    autoSaveDraft()
+  if (hasContent.value && !isEdit.value) {
+    saveDraft()
   }
   router.back()
 }

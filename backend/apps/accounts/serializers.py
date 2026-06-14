@@ -13,12 +13,14 @@ class LoginSerializer(serializers.Serializer):
 
 class UserProfileSerializer(serializers.ModelSerializer):
     avatar_url = serializers.SerializerMethodField()
+    is_profile_complete = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = User
         fields = ["id", "username", "nickname", "avatar_url", "bio", "gender",
                    "birthday", "note_count", "like_received_count", "fav_received_count",
-                   "follower_count", "following_count", "privacy", "created_at"]
+                   "follower_count", "following_count", "privacy", "created_at",
+                   "is_profile_complete"]
 
     def get_avatar_url(self, obj):
         if obj.avatar and hasattr(obj.avatar, "url"):
@@ -32,14 +34,24 @@ class UserUpdateSerializer(serializers.Serializer):
     birthday = serializers.DateField(required=False)
     privacy = serializers.IntegerField(required=False)
 
+    def validate_nickname(self, value):
+        qs = User.objects.filter(nickname=value)
+        if self.context.get("request") and hasattr(self.context["request"], "user"):
+            qs = qs.exclude(id=self.context["request"].user.id)
+        if qs.exists():
+            raise serializers.ValidationError("该昵称已被使用")
+        return value
+
 class UserSimpleSerializer(serializers.ModelSerializer):
     avatar_url = serializers.SerializerMethodField()
     is_following = serializers.SerializerMethodField()
+    is_profile_complete = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = User
         fields = ["id", "nickname", "avatar_url", "bio", "note_count",
-                   "follower_count", "following_count", "is_following"]
+                   "follower_count", "following_count", "is_following",
+                   "is_profile_complete"]
 
     def get_avatar_url(self, obj):
         if obj.avatar and hasattr(obj.avatar, "url"):

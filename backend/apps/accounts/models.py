@@ -11,7 +11,7 @@ def uuid4_hex():
 
 class User(AbstractUser):
     id = models.CharField(max_length=32, primary_key=True, default=uuid4_hex, editable=False)
-    nickname = models.CharField(max_length=MAX_NICKNAME_LENGTH, default="")
+    nickname = models.CharField(max_length=MAX_NICKNAME_LENGTH, unique=True, default="")
     avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
     bio = models.TextField(max_length=MAX_BIO_LENGTH, blank=True, default="")
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default=GENDER_UNKNOWN)
@@ -33,6 +33,10 @@ class User(AbstractUser):
 
     class Meta:
         db_table = "users"
+
+    @property
+    def is_profile_complete(self):
+        return bool(self.nickname and self.nickname != self.username and self.avatar)
 
     def __str__(self):
         return self.username

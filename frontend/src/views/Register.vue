@@ -1,11 +1,12 @@
-<template>
+﻿<template>
   <div class="page-center">
     <div class="auth-card">
       <h2>注册</h2>
+      <el-alert v-if="errorMsg" :title="errorMsg" type="error" show-icon closable @close="errorMsg=''" class="mb-3" />
       <el-form @submit.prevent="handleRegister">
-        <el-input v-model="form.username" placeholder="用户名" class="mb-3" />
-        <el-input v-model="form.nickname" placeholder="昵称" class="mb-3" />
-        <el-input v-model="form.password" type="password" placeholder="密码" class="mb-3" show-password />
+        <el-input v-model="form.username" placeholder="手机号/用户名" class="mb-3" />
+        <el-input v-model="form.nickname" placeholder="昵称（选填）" class="mb-3" />
+        <el-input v-model="form.password" type="password" placeholder="密码（至少6位）" class="mb-3" show-password />
         <el-button type="primary" native-type="submit" class="w-full" :loading="loading">注册</el-button>
       </el-form>
       <p class="mt-3 text-center">已有账号？<router-link to="/login">去登录</router-link></p>
@@ -22,9 +23,19 @@ import { accountsApi } from "../api/accounts"
 const router = useRouter()
 const userStore = useUserStore()
 const loading = ref(false)
+const errorMsg = ref("")
 const form = reactive({ username: "", nickname: "", password: "" })
 
 async function handleRegister() {
+  errorMsg.value = ""
+  if (!form.username || !form.password) {
+    errorMsg.value = "请填写手机号和密码"
+    return
+  }
+  if (form.password.length < 6) {
+    errorMsg.value = "密码至少6位"
+    return
+  }
   loading.value = true
   try {
     const res = await accountsApi.register(form)
@@ -32,7 +43,9 @@ async function handleRegister() {
     localStorage.setItem("refresh_token", res.refresh_token)
     userStore.setUser(res.user)
     router.push("/")
-  } catch (e) {} finally {
+  } catch (e) {
+    errorMsg.value = e.message || "注册失败，请重试"
+  } finally {
     loading.value = false
   }
 }

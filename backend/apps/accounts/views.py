@@ -10,6 +10,9 @@ from .serializers import (
 from .tasks import AccountTask
 from common.response import ApiResponse
 from common.pagination import StandardPagination
+from config.constants import MAX_AVATAR_SIZE_MB
+
+ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/jpg"]
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
@@ -20,10 +23,11 @@ class RegisterView(APIView):
         data = ser.validated_data
         if User.objects.filter(username=data["username"]).exists():
             return ApiResponse.error(code=4001, message="用户名已存在", status=409)
+        nickname = data.get("nickname", "").strip() or data["username"]
         user = User.objects.create_user(
             username=data["username"],
             password=data["password"],
-            nickname=data.get("nickname", data["username"]),
+            nickname=nickname,
             gender=data.get("gender", "UNKNOWN")
         )
         refresh = RefreshToken.for_user(user)
@@ -70,7 +74,7 @@ class ProfileView(APIView):
         return ApiResponse.success(data=ser.data)
 
     def put(self, request):
-        ser = UserUpdateSerializer(data=request.data, partial=True)
+        ser = UserUpdateSerializer(data=request.data, partial=True, context={"request": request})
         ser.is_valid(raise_exception=True)
         for key, value in ser.validated_data.items():
             setattr(request.user, key, value)
@@ -82,10 +86,34 @@ class AvatarUploadView(APIView):
 
     def post(self, request):
         if "avatar" not in request.FILES:
-            return ApiResponse.error(code=4001, message="请上传图片", status=400)
-        request.user.avatar = request.FILES["avatar"]
+            return ApiResponse.error(code=4001, message="请选择头像图片", status=400)
+        avatar = request.FILES["avatar"]
+        if avatar.content_type not in ALLOWED_AVATAR_TYPES:
+            return ApiResponse.error(code=4001, message="仅支持 JPG/PNG 格式", status=400)
+        if avatar.size > MAX_AVATAR_SIZE_MB * 1024 * 1024:
+            return ApiResponse.error(code=4001, message=f"头像大小不能超过{MAX_AVATAR_SIZE_MB}MB", status=400)
+        request.user.avatar = avatar
         request.user.save()
-        return ApiResponse.success(data={"avatar_url": request.user.avatar.url if request.user.avatar else ""}, message="上传成功")
+        return ApiResponse.success(data={"avatar_url": request.user.avatar.url if request.user.avatar else ""}, message="头像上传成功")
+
+class ProfileStatusView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        missing = []
+        if not request.user.nickname or request.user.nickname == request.user.username:
+            missing.append("nickname")
+        if not request.user.avatar:
+            missing.append("avatar")
+        if not request.user.bio:
+            missing.append("bio")
+        if request.user.gender == "UNKNOWN":
+            missing.append("gender")
+        return ApiResponse.success(data={
+            "is_complete": len(missing) == 0,
+            "missing_fields": missing,
+            "completion_percent": max(0, 100 - len(missing) * 25)
+        })
 
 class FollowPagination(StandardPagination):
     page_size = 20

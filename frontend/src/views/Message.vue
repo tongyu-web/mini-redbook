@@ -1,31 +1,57 @@
 <template>
   <div class="message-page">
-<div class="content">
-      <el-tabs v-model="activeTab">
-        <el-tab-pane label="通知" name="notification">
-          <div class="filter-btns">
-            <el-button v-for="t in types" :key="t.key" :type="filterType === t.key ? 'primary' : 'default'" size="small" @click="filterType = t.key; loadNotifications()">{{ t.label }}</el-button>
-          </div>
-          <el-button size="small" @click="markAllRead" class="read-all">全部已读</el-button>
-          <div v-for="n in notifications" :key="n.id" class="notif-item" @click="handleClick(n)">
-            <el-avatar :size="36" :src="n.from_user_avatar" />
-            <div class="notif-body">
-              <p><strong>{{ n.from_user_nickname }}</strong> {{ typeText(n.type) }}了你的笔记</p>
-              <span class="time">{{ n.created_at }}</span>
-            </div>
-          </div>
-        </el-tab-pane>
-        <el-tab-pane label="私信" name="chat">
-          <div v-for="c in conversations" :key="c.user_id" class="conv-item" @click="$router.push('/chat/' + c.user_id)">
-            <el-avatar :size="40" :src="c.avatar_url" />
-            <div class="conv-body">
-              <div class="conv-header">
-                <strong>{{ c.nickname }}</strong>
-                <span v-if="c.unread_count > 0" class="unread-badge">{{ c.unread_count }}</span>
+    <div class="content">
+      <!-- Search bar -->
+      <div class="msg-search-box">
+        <div class="msg-search-wrapper">
+          <svg class="msg-search-icon" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" width="18" height="18">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            v-model="searchText"
+            class="msg-search-input"
+            placeholder="搜索消息..."
+            @keyup.enter="doSearch"
+          />
+        </div>
+      </div>
+      <el-tabs v-model="activeTab" @tab-change="loadTab">
+        <el-tab-pane label="评论和@" name="comment">
+          <div v-if="commentItems.length" class="notif-list">
+            <div v-for="n in commentItems" :key="n.id" class="notif-item" @click="handleClick(n)">
+              <el-avatar :size="40" :src="n.from_user_avatar" />
+              <div class="notif-body">
+                <p><strong>{{ n.from_user_nickname }}</strong> 评论了你的笔记</p>
+                <p class="notif-preview">{{ n.comment_preview || n.content }}</p>
+                <span class="time">{{ n.created_at }}</span>
               </div>
-              <p class="last-msg">{{ c.last_message }}</p>
             </div>
           </div>
+          <div v-else class="empty-state">暂无评论</div>
+        </el-tab-pane>
+        <el-tab-pane label="赞和收藏" name="like">
+          <div v-if="likeItems.length" class="notif-list">
+            <div v-for="n in likeItems" :key="n.id" class="notif-item" @click="handleClick(n)">
+              <el-avatar :size="40" :src="n.from_user_avatar" />
+              <div class="notif-body">
+                <p><strong>{{ n.from_user_nickname }}</strong> {{ n.type === "favorite" ? "收藏" : "赞" }}了你的笔记</p>
+                <span class="time">{{ n.created_at }}</span>
+              </div>
+            </div>
+          </div>
+          <div v-else class="empty-state">暂无赞和收藏</div>
+        </el-tab-pane>
+        <el-tab-pane label="新增关注" name="follow">
+          <div v-if="followItems.length" class="notif-list">
+            <div v-for="n in followItems" :key="n.id" class="notif-item" @click="handleClick(n)">
+              <el-avatar :size="40" :src="n.from_user_avatar" />
+              <div class="notif-body">
+                <p><strong>{{ n.from_user_nickname }}</strong> 关注了你</p>
+                <span class="time">{{ n.created_at }}</span>
+              </div>
+            </div>
+          </div>
+          <div v-else class="empty-state">暂无新增关注</div>
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -34,40 +60,49 @@
 
 <script setup>
 import { ref, onMounted } from "vue"
+import { useRouter } from "vue-router"
 import { messageApi } from "../api/messaging"
 import { useNotificationStore } from "../stores/notification"
 
-
+const router = useRouter()
 const notificationStore = useNotificationStore()
-const activeTab = ref("notification")
-const filterType = ref("")
+const activeTab = ref("comment")
+const searchText = ref("")
+
 const notifications = ref([])
-const conversations = ref([])
-const types = ref([{key:"",label:"全部"}, {key:"like",label:"点赞"}, {key:"comment",label:"评论"}, {key:"follow",label:"关注"}, {key:"favorite",label:"收藏"}])
+const commentItems = ref([])
+const likeItems = ref([])
+const followItems = ref([])
 
 onMounted(() => {
   loadNotifications()
-  loadConversations()
 })
 
 async function loadNotifications() {
-  const params = filterType.value ? { type: filterType.value } : {}
-  const res = await messageApi.getNotifications(params)
+  const res = await messageApi.getNotifications({})
   notifications.value = res.results || res || []
+  filterItems()
 }
 
-async function loadConversations() {
-  conversations.value = await messageApi.getConversations()
+function filterItems() {
+  commentItems.value = notifications.value.filter(n => n.type === "comment")
+  likeItems.value = notifications.value.filter(n => n.type === "like" || n.type === "favorite")
+  followItems.value = notifications.value.filter(n => n.type === "follow")
 }
 
-async function markAllRead() {
-  await messageApi.markAllRead()
-  notificationStore.reset()
+function loadTab() {
+  // already filtered
 }
 
 function typeText(t) {
   const map = { like: "点赞", comment: "评论", follow: "关注", favorite: "收藏" }
   return map[t] || t
+}
+
+function doSearch() {
+  if (searchText.value.trim()) {
+    router.push("/search?q=" + encodeURIComponent(searchText.value.trim()))
+  }
 }
 
 async function handleClick(n) {
@@ -79,15 +114,37 @@ async function handleClick(n) {
 </script>
 
 <style scoped>
-.message-page { padding-bottom: 60px; }
+.message-page { }
+.msg-search-box { margin-bottom: 16px; }
+.msg-search-wrapper {
+  display: flex;
+  align-items: center;
+  background: #f5f5f5;
+  border-radius: 24px;
+  padding: 0 16px;
+  height: 42px;
+  gap: 8px;
+  border: 1px solid transparent;
+  transition: border-color 0.2s;
+}
+.msg-search-wrapper:focus-within { border-color: #ff2442; }
+.msg-search-icon { flex-shrink: 0; }
+.msg-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  outline: none;
+  color: #333;
+}
+.msg-search-input::placeholder { color: #bbb; }
 .content { max-width: 700px; margin: 0 auto; padding: 16px; }
-.filter-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
-.read-all { margin-bottom: 12px; }
-.notif-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f5f5f5; cursor: pointer; }
-.notif-body p { margin: 0; font-size: 14px; }
-.time { font-size: 12px; color: #999; }
-.conv-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f5f5f5; cursor: pointer; }
-.conv-header { display: flex; align-items: center; gap: 6px; }
-.last-msg { font-size: 13px; color: #999; margin: 2px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.unread-badge { background: #ff2442; color: white; font-size: 11px; border-radius: 10px; padding: 1px 6px; }
+.empty-state { text-align: center; padding: 60px 0; color: #bbb; font-size: 14px; }
+.notif-list { display: flex; flex-direction: column; }
+.notif-item { display: flex; gap: 12px; padding: 14px 0; border-bottom: 1px solid #f5f5f5; cursor: pointer; }
+.notif-item:hover { background: #fafafa; }
+.notif-body { flex: 1; min-width: 0; }
+.notif-body p { margin: 0 0 2px; font-size: 14px; }
+.notif-preview { font-size: 13px; color: #999; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.time { font-size: 12px; color: #bbb; }
 </style>

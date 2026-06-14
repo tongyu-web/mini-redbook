@@ -1,26 +1,39 @@
 <template>
   <div class="app-layout">
-    <Sidebar />
-    <div class="main-area">
-      <TopBar @categoryChange="onCategoryChange" />
-      <div class="content-area">
-        <router-view :category="currentCategory" />
+    <template v-if="!isAuthPage">
+      <Sidebar />
+      <div class="main-area">
+        <TopBar v-if="showTopBar" @categoryChange="onCategoryChange" />
+        <div class="content-area" :class="{ 'with-topbar': showTopBar }">
+          <router-view :category="currentCategory" />
+        </div>
       </div>
-    </div>
+    </template>
+    <template v-else>
+      <router-view />
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue"
+import { ref, computed } from "vue"
 import { onMounted, onUnmounted } from "vue"
+import { useRoute } from "vue-router"
 import { useNotificationStore } from "./stores/notification"
 import { useUserStore } from "./stores/user"
 import Sidebar from "./components/Sidebar.vue"
 import TopBar from "./components/TopBar.vue"
 
+const route = useRoute()
 const notificationStore = useNotificationStore()
 const userStore = useUserStore()
 const currentCategory = ref("recommend")
+
+const authRoutes = ["Login", "Register"]
+const isAuthPage = computed(() => authRoutes.includes(route.name))
+
+const topbarRoutes = ["Home", "NoteDetail", "Search"]
+const showTopBar = computed(() => topbarRoutes.includes(route.name))
 
 onMounted(() => {
   userStore.init()
@@ -69,8 +82,10 @@ a { color: var(--primary); text-decoration: none; }
   flex-direction: column;
 }
 .content-area {
-  margin-top: var(--topbar-height);
   flex: 1;
   background: var(--bg);
+}
+.content-area.with-topbar {
+  margin-top: var(--topbar-height);
 }
 </style>

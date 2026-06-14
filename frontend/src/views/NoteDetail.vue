@@ -241,7 +241,7 @@ async function submitComment() {
 </script>
 
 <style scoped>
-.detail { padding-bottom: 60px; background: #fff; min-height: 100vh; }
+.detail {  background: #fff; min-height: 100vh; }
 .content { max-width: 700px; margin: 0 auto; padding: 0 16px 16px; }
 .user-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid #f5f5f5; margin-bottom: 12px; }
 .user { display: flex; align-items: center; gap: 10px; cursor: pointer; }

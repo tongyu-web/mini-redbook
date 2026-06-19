@@ -198,7 +198,7 @@ if (typeof document !== "undefined") {
   color: #555;
   position: relative;
 }
-.nav-item:hover { background: #f5f5f5; color: #222; }
+.nav-item:hover { background: #e8e8e8; color: #222; }
 .nav-item.active { background: #fff0f0; color: #ff2442; font-weight: 600; }
 .nav-icon { width: 22px; height: 22px; flex-shrink: 0; }
 .nav-label { font-size: 14px; }
@@ -232,7 +232,7 @@ if (typeof document !== "undefined") {
   cursor: pointer;
   transition: background 0.15s;
 }
-.account-trigger:hover { background: #f5f5f5; }
+.account-trigger:hover { background: #e8e8e8; }
 .account-avatar, .account-avatar-placeholder {
   width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
 }

@@ -237,7 +237,7 @@ function switchCategory(key) {
   height: 120px;
   background: #fff;
   z-index: 100;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #eee;
 }
 .topbar-inner {
   max-width: 1000px;

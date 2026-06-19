@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="app-layout">
     <template v-if="!isAuthPage">
       <Sidebar />

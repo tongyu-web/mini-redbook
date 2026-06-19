@@ -12,7 +12,7 @@
         </svg>
         <span class="nav-label">首页</span>
       </div>
-      <div class="nav-item create-btn" @click="goCreate">
+      <div class="nav-item" :class="{ active: $route.path.startsWith('/create') || $route.path.startsWith('/edit') }" @click="goCreate">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
         </svg>
@@ -143,8 +143,7 @@ function goRecycle() {
 .nav-item.active { background: #fff0f0; color: #ff2442; font-weight: 600; }
 .nav-icon { width: 22px; height: 22px; flex-shrink: 0; }
 .nav-label { font-size: 14px; }
-.create-btn { margin-top: 4px; background: #ff2442; color: white; border-radius: 10px; }
-.create-btn:hover { background: #e01e38; color: white; }
+
 .nav-badge {
   position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
   background: #ff2442; color: white; font-size: 10px; border-radius: 10px;

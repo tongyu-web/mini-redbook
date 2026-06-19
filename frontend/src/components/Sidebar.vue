@@ -33,7 +33,7 @@
         <span class="nav-label">我的</span>
       </div>
     </div>
-        <div class="nav-bottom">
+    <div class="nav-bottom">
       <div class="nav-item" @click="$router.push('/search')">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -79,7 +79,9 @@
           </div>
         </Transition>
       </div>
-    </div></template>
+    </div>
+  </div>
+</template>
 
 <script setup>
 import { ref } from "vue"
@@ -213,8 +215,6 @@ if (typeof document !== "undefined") {
   flex-direction: column;
   gap: 2px;
 }
-.about-item { color: #bbb; font-size: 12px; }
-.about-item:hover { color: #999; }
 
 /* Account switcher */
 .account-section {

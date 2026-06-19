@@ -210,6 +210,7 @@
 
 <script setup>
 import { ref, computed, watch, onUnmounted } from "vue"
+import { ElMessage } from "element-plus"
 import { useRouter } from "vue-router"
 import { useUserStore } from "../stores/user"
 import { useNoteDetailStore } from "../stores/noteDetail"
@@ -299,23 +300,30 @@ async function toggleFollow() {
 
 async function toggleLike() {
   if (!userStore.isLoggedIn) {
+    ElMessage.warning("请先登录")
     router.push("/login")
     store.close()
     return
   }
   if (!note.value) return
   try {
+    console.log("toggleLike: calling API for note", store.currentNoteId.value)
     const res = await socialApi.toggleLike(store.currentNoteId.value)
+    console.log("toggleLike: API response", res)
     if (note.value) {
       note.value.is_liked = res.is_liked
       note.value.like_count = res.like_count
     }
-  } catch (e) { console.error(e) }
+  } catch (e) {
+    console.error("toggleLike error:", e)
+    ElMessage.error("点赞失败: " + (e.message || e))
+  }
 }
 
 // Favorite
 async function showFolderDialog() {
   if (!userStore.isLoggedIn) {
+    ElMessage.warning("请先登录")
     router.push("/login")
     store.close()
     return
@@ -332,19 +340,31 @@ async function showFolderDialog() {
     return
   }
   try {
+    console.log("showFolderDialog: fetching folders")
     const res = await socialApi.getFolders()
+    console.log("showFolderDialog: folders", res)
     folders.value = res || []
     favDialogVisible.value = true
-  } catch (e) { console.error(e) }
+  } catch (e) {
+    console.error("showFolderDialog error:", e)
+    ElMessage.error("获取收藏夹失败: " + (e.message || e))
+  }
 }
 
 async function selectFolder(folder) {
   try {
-    await socialApi.addFavorite({ note_id: store.currentNoteId.value, folder_id: folder.id })
-    note.value.is_favorited = true
-    note.value.fav_count = (note.value.fav_count || 0) + 1
+    console.log("selectFolder: adding favorite", { note_id: store.currentNoteId.value, folder_id: folder.id })
+    const res = await socialApi.addFavorite({ note_id: store.currentNoteId.value, folder_id: folder.id })
+    console.log("selectFolder: API response", res)
+    if (note.value) {
+      note.value.is_favorited = true
+      note.value.fav_count = (note.value.fav_count || 0) + 1
+    }
     favDialogVisible.value = false
-  } catch (e) { console.error(e) }
+  } catch (e) {
+    console.error("selectFolder error:", e)
+    ElMessage.error("收藏失败: " + (e.message || e))
+  }
 }
 
 async function createAndSelect() {

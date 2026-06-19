@@ -193,6 +193,21 @@ class PrivacySettingsView(APIView):
         request.user.save()
         return ApiResponse.success(data={"privacy": privacy}, message="隐私设置已更新")
 
+class LogoutView(APIView):
+    """退出登录（黑名单当前 refresh token）"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from rest_framework_simplejwt.tokens import RefreshToken
+        refresh_token = request.data.get("refresh", "")
+        if refresh_token:
+            try:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            except Exception:
+                pass
+        return ApiResponse.success(message="已退出登录")
+
 class FollowingListView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -266,3 +281,18 @@ class PrivacySettingsView(APIView):
         request.user.privacy = privacy
         request.user.save()
         return ApiResponse.success(data={"privacy": privacy}, message="隐私设置已更新")
+
+class LogoutView(APIView):
+    """退出登录（黑名单当前 refresh token）"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from rest_framework_simplejwt.tokens import RefreshToken
+        refresh_token = request.data.get("refresh", "")
+        if refresh_token:
+            try:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            except Exception:
+                pass
+        return ApiResponse.success(message="已退出登录")

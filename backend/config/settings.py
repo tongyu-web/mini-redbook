@@ -17,6 +17,7 @@ INSTALLED_APPS = [
     # 第三方
     "rest_framework",
     "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     # 项目 App
     "apps.accounts",

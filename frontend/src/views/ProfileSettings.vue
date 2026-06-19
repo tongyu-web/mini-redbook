@@ -76,6 +76,12 @@
       </div>
 
       <div class="section">
+        <div class="section-title">退出登录</div>
+        <p class="hint">退出后需要重新登录</p>
+        <el-button size="small" @click="handleLogout">退出登录</el-button>
+      </div>
+
+      <div class="section">
         <div class="section-title danger-zone">注销账号</div>
         <p class="hint">注销后账号将被永久停用，所有数据不可恢复</p>
         <el-button size="small" type="danger" :loading="cancelSaving" @click="showCancelDialog = true">注销账号</el-button>
@@ -256,6 +262,19 @@ async function bindEmail() {
   } finally {
     emailSaving.value = false
   }
+}
+
+async function handleLogout() {
+  try {
+    const refresh = localStorage.getItem("refresh_token")
+    if (refresh) {
+      await accountsApi.logout({ refresh })
+    }
+  } catch (e) { /* ignore */ }
+  localStorage.removeItem("access_token")
+  localStorage.removeItem("refresh_token")
+  userStore.clearUser()
+  router.push("/login")
 }
 
 async function confirmCancel() {

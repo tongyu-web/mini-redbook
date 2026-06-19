@@ -12,6 +12,7 @@ urlpatterns = [
     path("email/bind/", views.BindEmailView.as_view(), name="bind-email"),
     path("privacy/", views.PrivacySettingsView.as_view(), name="privacy-settings"),
     path("cancel/", views.CancelAccountView.as_view(), name="cancel-account"),
+    path("logout/", views.LogoutView.as_view(), name="logout"),
     path("<str:user_id>/followers/", views.FollowersListView.as_view(), name="followers"),
     path("<str:user_id>/following/", views.FollowingListView.as_view(), name="following"),
 ]

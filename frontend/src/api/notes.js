@@ -15,6 +15,7 @@ export const notesApi = {
   hardDeleteNote(id) { return request.delete(`/notes/recycle/hard-delete/${id}/`) },
   cleanupRecycle() { return request.post("/notes/recycle/cleanup/") },
   getTags() { return request.get("/notes/tags/") },
+  getCategories() { return request.get("/notes/categories/") },
   getComments(noteId, page = 1) { return request.get(`/notes/${noteId}/comments/?page=${page}`) },
   postComment(noteId, data) { return request.post(`/notes/${noteId}/comments/`, data) },
 }

@@ -2,66 +2,34 @@
   <div class="topbar">
     <div class="topbar-inner">
       <!-- Search bar section -->
-      <div class="search-section" ref="searchSection">
-        <div class="search-input-wrapper">
-          <button v-if="$route.path !== `/search`" class="quick-create-btn" @click="goCreate" title="快速发布">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
-              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-          </button>
-          <input
-            v-model="searchText"
-            class="search-input"
-            placeholder="搜索或输入任何问题"
-            @focus="onSearchFocus"
-            @keyup.enter="doSearch"
-            @input="onSearchInput"
-          />
-          <button class="search-submit-btn" @click="doSearch">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-          </button>
+            <div class="search-section" ref="searchSection">
+        <div class="search-card">
+          <div class="search-card-top">
+            <input
+              v-model="searchText"
+              class="search-card-input"
+              placeholder="搜索感兴趣的内容"
+              @focus="onSearchFocus"
+              @keyup.enter="doSearch"
+              @input="onSearchInput"
+            />
+          </div>
+          <div class="search-card-bottom">
+            <button class="sc-create-btn" @click="goCreate" title="快速发布">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2.5" width="20" height="20">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </button>
+            <span class="sc-hint">发现精彩内容</span>
+            <button class="sc-search-btn" @click="doSearch">
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" width="20" height="20">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </button>
+          </div>
         </div>
         <!-- Search Dropdown -->
-        <Transition name="search-drop">
-          <div v-if="showDropdown" class="search-dropdown">
-            <!-- Suggestions (when typing) -->
-            <div v-if="searchText.trim() && suggestions.length" class="sd-section">
-              <div class="sd-title">联想搜索</div>
-              <div v-for="s in suggestions" :key="s.name" class="sd-item" @click="selectSuggestion(s.name)">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#999" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <span>{{ s.name }}</span>
-              </div>
-            </div>
-            <!-- Hot tags (when empty) -->
-            <div v-if="!searchText.trim() && hotTags.length" class="sd-section">
-              <div class="sd-title">热门搜索</div>
-              <div v-for="(tag, i) in hotTags" :key="tag.name" class="sd-item hot-item" @click="selectSuggestion(tag.name)">
-                <span class="hot-rank" :class="'rank-' + (i + 1)">{{ i + 1 }}</span>
-                <span class="hot-name">{{ tag.name }}</span>
-                <span class="hot-count">{{ tag.hot_value || 0 }}</span>
-              </div>
-            </div>
-            <!-- History (when empty, logged in) -->
-            <div v-if="!searchText.trim() && userStore.isLoggedIn && localHistory.length" class="sd-section">
-              <div class="sd-title history-title">
-                <span>搜索历史</span>
-                <button class="clear-history-btn" @click.stop="clearHistory">清空</button>
-              </div>
-              <div v-for="(h, i) in localHistory" :key="i" class="sd-item history-item" @click="selectSuggestion(h)">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#999" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                <span class="history-keyword">{{ h }}</span>
-                <button class="remove-history-btn" @click.stop="removeHistoryItem(i)">&#10005;</button>
-              </div>
-            </div>
-            <div v-if="!searchText.trim() && !hotTags.length && !localHistory.length" class="sd-empty">
-              <span>暂无热门搜索</span>
-            </div>
-          </div>
-        </Transition>
-      </div>
-      <!-- Category tabs section -->
+       <!-- Category tabs section -->
       <div v-if="$route.path !== '/search'" class="tabs-section">
         <div class="category-tabs-wrapper">
           <div class="category-tabs" ref="tabsRef">
@@ -363,36 +331,67 @@ function switchCategory(key) {
   overflow-y: auto;
 }
 .sd-section { padding: 4px 0; }
-.sd-section + .sd-section { border-top: 1px solid #f5f5f5; }
-.sd-title {
-  font-size: 12px; color: #999; font-weight: 600;
-  padding: 6px 16px 4px;
-}
-.sd-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 16px; cursor: pointer; font-size: 14px; color: #333;
-  transition: background 0.12s;
-}
-.sd-item:hover { background: #f8f8f8; }
-.sd-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sd-section + .sd-section { border-top: 1px solid.search-section { position: relative; padding: 0 24px; max-width: 800px; margin: 0 auto; }
 
-.hot-rank {
-  width: 20px; height: 20px; border-radius: 4px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 700; flex-shrink: 0;
-  background: #f0f0f0; color: #999;
+.search-card {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 18px;
+  padding: 12px 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  transition: box-shadow 0.2s;
 }
-.hot-rank.rank-1 { background: #ff2442; color: white; }
-.hot-rank.rank-2 { background: #ff6b81; color: white; }
-.hot-rank.rank-3 { background: #ff9aa2; color: white; }
-.hot-name { flex: 1; }
-.hot-count { font-size: 11px; color: #ccc; }
+.search-card:hover, .search-card:focus-within {
+  box-shadow: 0 6px 20px rgba(0,0,0,0.07);
+}
 
-.history-title { display: flex; justify-content: space-between; align-items: center; }
-.clear-history-btn { background: none; border: none; color: #999; font-size: 12px; cursor: pointer; padding: 0; }
-.clear-history-btn:hover { color: #ff2442; }
-.history-keyword { flex: 1; }
-.remove-history-btn { background: none; border: none; color: #ccc; cursor: pointer; font-size: 12px; padding: 2px; }
+.search-card-top { margin-bottom: 8px; }
+.search-card-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  outline: none;
+  color: #333;
+  line-height: 1.6;
+}
+.search-card-input::placeholder { color: #ccc; }
+
+.search-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sc-create-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px dashed #ddd;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: all 0.15s;
+}
+.sc-create-btn:hover { border-color: #ff2442; }
+.sc-create-btn:hover svg { stroke: #ff2442; }
+
+.sc-hint { font-size: 12px; color: #ccc; }
+
+.sc-search-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: none;
+  background: #222;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.2s, transform 0.15s;
+}
+.sc-search-btn:hover { background: #ff2442; transform: scale(1.05); }ackground: none; border: none; color: #ccc; cursor: pointer; font-size: 12px; padding: 2px; }
 .remove-history-btn:hover { color: #ff2442; }
 
 .sd-empty { text-align: center; padding: 24px 0; color: #ccc; font-size: 13px; }

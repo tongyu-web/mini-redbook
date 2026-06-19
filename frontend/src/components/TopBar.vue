@@ -252,7 +252,7 @@ function switchCategory(key) {
 .search-input-wrapper {
   display: flex;
   align-items: center;
-  background: #f5f5f5;
+  background: #fff;
   border-radius: 24px;
   padding: 0 4px 0 8px;
   height: 44px;

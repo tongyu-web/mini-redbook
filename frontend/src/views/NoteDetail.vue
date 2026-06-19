@@ -70,50 +70,6 @@
                   <div class="comments-header">
                     <span>评论 ({{ note.comment_count }})</span>
                   </div>
-                <!-- Bottom action bar -->
-                <div class="bottom-bar">
-                  <div class="bottom-comment">
-                    <!-- Reply hint -->
-                    <div class="reply-hint" v-if="replyTo">
-                      <span>回复 @{{ replyTo.nickname }}</span>
-                      <el-button text size="small" @click="cancelReply">取消</el-button>
-                    </div>
-                    <div class="comment-input-wrap" v-if="userStore.isLoggedIn">
-                      <el-input v-model="commentContent" type="textarea" :rows="1" :maxlength="300" placeholder="写下你的评论..." show-word-limit resize="none" />
-                      <div class="comment-actions-inline">
-                        <label class="upload-label" for="comment-image-bottom">
-                          <span class="img-btn">&#128247;</span>
-                        </label>
-                        <input id="comment-image-bottom" ref="commentInput" type="file" accept="image/jpeg,image/png,image/webp" hidden @change="handleCommentImage" />
-                        <span class="img-name" v-if="commentFile">{{ commentFile.name }}</span>
-                        <el-button size="small" type="primary" :loading="commenting" @click="submitComment" :disabled="!commentContent.trim()">发送</el-button>
-                      </div>
-                    </div>
-                    <div v-else class="login-hint-inline">
-                      <el-button text size="small" @click="$router.push('/login')">登录后评论</el-button>
-                    </div>
-                  </div>
-                  <div class="bottom-icons">
-                    <div class="bottom-icon-item" @click="toggleLike">
-                      <svg v-if="note.is_liked" viewBox="0 0 24 24" width="20" height="20" fill="#ff2442"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                      <svg v-else viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#666" stroke-width="2"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                      <span class="bottom-icon-count">{{ note.like_count || 0 }}</span>
-                    </div>
-                    <div class="bottom-icon-item" @click="showFolderDialog" v-if="userStore.isLoggedIn">
-                      <svg v-if="note.is_favorited" viewBox="0 0 24 24" width="20" height="20" fill="#ffb800"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                      <svg v-else viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#666" stroke-width="2"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                      <span class="bottom-icon-count">{{ note.fav_count || 0 }}</span>
-                    </div>
-                    <div class="bottom-icon-item" @click="scrollToComments">
-                      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#666" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-                      <span class="bottom-icon-count">{{ note.comment_count || 0 }}</span>
-                    </div>
-                    <div class="bottom-icon-item">
-                      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#666" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-                    </div>
-                  </div>
-                </div>
-
                   <div class="comments-list" ref="commentsRef">
                     <div v-for="c in comments" :key="c.id" class="comment-item">
                       <div class="comment-user">
@@ -133,7 +89,45 @@
                     </div>
                     <div v-if="!comments.length" class="no-comments">暂无评论，来说两句吧~</div>
                   </div>
-
+                </div>
+                <!-- Bottom action bar -->
+                <div class="bottom-bar">
+                  <div class="reply-hint" v-if="replyTo">
+                    <span>回复 @{{ replyTo.nickname }}</span>
+                    <el-button text size="small" @click="cancelReply">取消</el-button>
+                  </div>
+                  <div class="bottom-row">
+                    <div class="bottom-input" v-if="userStore.isLoggedIn">
+                      <el-avatar :size="26" :src="userStore.user?.avatar_url" />
+                      <div class="input-wrap">
+                        <el-input v-model="commentContent" type="textarea" :rows="1" :maxlength="300" placeholder="写下你的评论..." resize="none" @keydown.enter.ctrl="submitComment" />
+                      </div>
+                      <label class="upload-btn" for="comment-image-bottom">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#999" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      </label>
+                      <input id="comment-image-bottom" ref="commentInput" type="file" accept="image/jpeg,image/png,image/webp" hidden @change="handleCommentImage" />
+                    </div>
+                    <div v-else class="bottom-input">
+                      <el-button text size="small" @click="$router.push('/login')">登录后评论</el-button>
+                    </div>
+                    <div class="bottom-icons">
+                      <div class="bottom-icon-item" @click="toggleLike">
+                        <svg :class="note.is_liked ? 'like-active' : ''" viewBox="0 0 24 24" width="20" height="20"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                        <span>{{ note.like_count || 0 }}</span>
+                      </div>
+                      <div class="bottom-icon-item" @click="showFolderDialog" v-if="userStore.isLoggedIn">
+                        <svg :class="note.is_favorited ? 'fav-active' : ''" viewBox="0 0 24 24" width="20" height="20"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                        <span>{{ note.fav_count || 0 }}</span>
+                      </div>
+                      <div class="bottom-icon-item" @click="scrollToComments">
+                        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                        <span>{{ note.comment_count || 0 }}</span>
+                      </div>
+                      <div class="bottom-icon-item">
+                        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -585,49 +579,60 @@ function scrollToComments() {
 }
 /* Bottom action bar */
 .bottom-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 16px;
   border-top: 1px solid #f0f0f0;
   background: #fff;
   flex-shrink: 0;
 }
-.bottom-comment {
-  flex: 1;
-  min-width: 0;
-}
-.bottom-comment .reply-hint {
+.bottom-bar .reply-hint {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 12px;
   color: #666;
-  margin-bottom: 4px;
+  padding: 4px 16px 0;
 }
-.bottom-comment .comment-input-wrap {
-  width: 100%;
-}
-.bottom-comment .comment-input-wrap :deep(.el-textarea__inner) {
-  font-size: 13px;
-  border-radius: 16px;
-  min-height: 30px !important;
-  padding: 5px 12px;
-}
-.comment-actions-inline {
+.bottom-row {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-top: 2px;
+  gap: 6px;
+  padding: 8px 16px;
 }
-.bottom-comment .upload-label { cursor: pointer; }
-.bottom-comment .img-btn { font-size: 14px; cursor: pointer; color: #999; }
-.bottom-comment .img-name { font-size: 10px; color: #999; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.login-hint-inline { display: flex; align-items: center; }
+.bottom-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.input-wrap {
+  flex: 1;
+  min-width: 0;
+}
+.input-wrap :deep(.el-textarea__inner) {
+  font-size: 13px;
+  border-radius: 18px;
+  min-height: 32px !important;
+  padding: 5px 12px;
+  background: #f5f5f5;
+  border-color: transparent;
+}
+.input-wrap :deep(.el-textarea__inner:focus) {
+  background: #fff;
+  border-color: #ff2442;
+}
+.upload-btn {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+.upload-btn:hover svg { stroke: #ff2442; }
 .bottom-icons {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 0;
   flex-shrink: 0;
 }
 .bottom-icon-item {
@@ -636,20 +641,28 @@ function scrollToComments() {
   gap: 3px;
   cursor: pointer;
   padding: 6px 10px;
-  border-radius: 8px;
-  transition: background 0.15s;
+  transition: color 0.15s;
   color: #666;
   font-size: 12px;
   white-space: nowrap;
 }
 .bottom-icon-item:hover {
-  background: #f5f5f5;
   color: #ff2442;
 }
-.bottom-icon-count {
-  font-size: 12px;
-  min-width: 10px;
-  text-align: center;
+.bottom-icon-item svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.bottom-icon-item .like-active {
+  fill: #ff2442;
+  stroke: #ff2442;
+}
+.bottom-icon-item .fav-active {
+  fill: #ffb800;
+  stroke: #ffb800;
 }
 
 /* Comments section */

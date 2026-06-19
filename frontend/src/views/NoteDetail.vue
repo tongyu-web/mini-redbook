@@ -374,42 +374,47 @@ async function submitComment() {
   background: rgba(0, 0, 0, 0.45);
   z-index: 2000;
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
+  align-items: center;
   backdrop-filter: blur(2px);
 }
 
 /* Drawer panel */
 .drawer-panel {
-  width: 92vw;
-  max-width: 960px;
-  height: 100vh;
+  width: 90vw;
+  max-width: 1100px;
+  height: 88vh;
+  max-height: 900px;
   background: #fff;
-  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
   position: relative;
+  overflow: hidden;
 }
 
 .drawer-close {
   position: absolute;
   top: 12px;
-  left: -40px;
+  left: 12px;
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.9);
+  background: rgba(0,0,0,0.45);
   border: none;
   font-size: 22px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #333;
-  z-index: 10;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  color: #fff;
+  z-index: 20;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  transition: background 0.15s;
 }
 .drawer-close:hover {
-  background: #fff;
+  background: rgba(0,0,0,0.7);
 }
 
 .drawer-body {
@@ -493,8 +498,8 @@ async function submitComment() {
 
 /* RIGHT: Content panel */
 .drawer-right {
-  width: 380px;
-  min-width: 380px;
+  width: 44%;
+  min-width: 300px;
   display: flex;
   flex-direction: column;
   border-left: 1px solid #f0f0f0;
@@ -736,10 +741,11 @@ async function submitComment() {
 }
 
 .drawer-slide-enter-active, .drawer-slide-leave-active {
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
 }
 .drawer-slide-enter-from, .drawer-slide-leave-to {
-  transform: translateX(100%);
+  transform: scale(0.92);
+  opacity: 0;
 }
 
 /* Folder dialog */
@@ -767,24 +773,21 @@ async function submitComment() {
   .drawer-panel {
     width: 100vw;
     max-width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
   }
   .drawer-body {
     flex-direction: column;
   }
   .drawer-left {
-    max-height: 45vh;
+    max-height: 40vh;
   }
   .drawer-right {
     width: 100%;
     min-width: 0;
     border-left: none;
     border-top: 1px solid #f0f0f0;
-  }
-  .drawer-close {
-    left: 12px;
-    top: 12px;
-    background: rgba(0,0,0,0.4);
-    color: white;
   }
 }
 </style>

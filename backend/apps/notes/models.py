@@ -76,7 +76,7 @@ class Comment(models.Model):
     note = models.ForeignKey(Note, related_name="comments", on_delete=models.CASCADE)
     user = models.ForeignKey("accounts.User", related_name="comments", on_delete=models.CASCADE)
     parent = models.ForeignKey("self", null=True, blank=True, related_name="replies", on_delete=models.CASCADE)
-    content = models.TextField(max_length=MAX_COMMENT_LENGTH)
+    content = models.TextField(max_length=MAX_COMMENT_LENGTH, blank=True, default="")
     image = models.ImageField(upload_to="comments/", blank=True, null=True)
     like_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)

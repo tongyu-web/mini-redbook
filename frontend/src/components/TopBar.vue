@@ -20,7 +20,6 @@
                 <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
             </button>
-            <span class="sc-hint">发现精彩内容</span>
             <button class="sc-search-btn" @click="doSearch">
               <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" width="20" height="20">
                 <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -303,8 +302,8 @@ function switchCategory(key) {
   padding: 2px 0;
   justify-content: center;
 }
-.cat-tab {
-  padding: 6px 16px;
+.cat-tab { font-size: 15px;
+  padding: 8px 18px;
   font-size: 14px;
   color: #888;
   cursor: pointer;
@@ -338,13 +337,13 @@ function switchCategory(key) {
 .sd-section { padding: 4px 0; }
 .sd-section + .sd-section { border-top: 1px solid #f5f5f5; }
 
-.search-section { position: relative; padding: 0 24px; max-width: 800px; margin: 0 auto; }
+.search-section { position: relative; padding: 24px 24px 0; max-width: 900px; margin: 0 auto; }
 
-.search-card {
+.search-card { margin-bottom: 20px;
   background: #fff;
   border: 1px solid #e8e8e8;
   border-radius: 18px;
-  padding: 12px 20px;
+  padding: 16px 24px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.04);
   transition: box-shadow 0.2s;
 }
@@ -352,15 +351,15 @@ function switchCategory(key) {
   box-shadow: 0 6px 20px rgba(0,0,0,0.07);
 }
 
-.search-card-top { margin-bottom: 8px; }
+.search-card-top { margin-bottom: 10px; }
 .search-card-input {
   width: 100%;
   border: none;
   background: transparent;
-  font-size: 16px;
+  font-size: 17px;
   outline: none;
   color: #333;
-  line-height: 1.6;
+  line-height: 1.8;
 }
 .search-card-input::placeholder { color: #ccc; }
 

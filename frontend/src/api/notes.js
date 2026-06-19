@@ -17,5 +17,6 @@ export const notesApi = {
   getTags() { return request.get("/notes/tags/") },
   getCategories() { return request.get("/notes/categories/") },
   getComments(noteId, page = 1) { return request.get(`/notes/${noteId}/comments/?page=${page}`) },
+  deleteComment(id) { return request.delete(`/notes/comments/${id}/delete/`) },
   postComment(noteId, data) { return request.post(`/notes/${noteId}/comments/`, data) },
 }

@@ -150,7 +150,7 @@ class CommentView(APIView):
     def post(self, request, note_id):
         note = get_object_or_404(Note, pk=note_id, status=NOTE_STATUS_PUBLISHED)
         content = request.data.get("content", "").strip()
-        if not content: return ApiResponse.error(code=4001, message="评论内容不能为空", status=400)
+        # 支持仅图片评论（内容可为空）
         # US-013: 支持图片评论
         image = request.FILES.get("image") if request.FILES else None
         comment = Comment.objects.create(
@@ -177,6 +177,17 @@ class CommentView(APIView):
         ser = CommentSerializer(comment, context={"request": request})
         return ApiResponse.success(data=ser.data, message="评论成功", status=201)
 
+
+class CommentDeleteView(APIView):
+    permission_classes = [IsAuthenticated]
+    def delete(self, request, pk):
+        comment = get_object_or_404(Comment, pk=pk)
+        if str(comment.user_id) != str(request.user.id):
+            return ApiResponse.error(code=403, message="无权删除此评论", status=403)
+        note_id = comment.note_id
+        comment.delete()
+        Note.objects.filter(pk=note_id).update(comment_count=F("comment_count") - 1)
+        return ApiResponse.success(message="评论已删除")
 class TagListView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
     def get(self, request):
@@ -220,3 +231,5 @@ class TagNoteListView(APIView):
             "tag": TagSerializer(tag).data,
             "notes": paginator.get_paginated_response(ser.data).data
         })
+
+

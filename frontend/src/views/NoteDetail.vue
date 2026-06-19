@@ -78,6 +78,7 @@
                           <div class="comment-top">
                             <span class="c-nickname">{{ c.user_nickname }}</span>
                             <el-button v-if="userStore.isLoggedIn" text size="small" @click="replyToComment(c)" class="reply-btn">回复</el-button>
+                              <el-button v-if="userStore.isLoggedIn &amp;&amp; userStore.user?.id === c.user_id" text size="small" type="danger" @click="deleteComment(c.id)" class="reply-btn" style="color:#999">删除</el-button>
                           </div>
                           <p>{{ c.content }}</p>
                           <img v-if="c.image" :src="c.image" class="comment-img" @click="openUrlViewer(c.image)" />
@@ -146,7 +147,7 @@
                         <input id="comment-image-compose" ref="commentInput" type="file" accept="image/jpeg,image/png,image/webp" hidden @change="handleCommentImage" />
                         <div class="compose-actions">
                           <el-button size="small" @click="cancelCompose">取消</el-button>
-                          <el-button size="small" type="primary" :loading="commenting" @click="submitComment" :disabled="!commentContent.trim()">发送</el-button>
+                          <el-button size="small" type="primary" :loading="commenting" @click="submitComment" :disabled="!commentContent.trim() && !commentFile">发送</el-button>
                         </div>
                       </div>
                     </div>
@@ -437,9 +438,17 @@ function cancelCompose() {
   replyTo.value = null
 }
 
+async function deleteComment(id) {
+  try {
+    await notesApi.deleteComment(id)
+    comments.value = comments.value.filter(c => c.id !== id)
+    if (note.value) note.value.comment_count = Math.max(0, (note.value.comment_count || 0) - 1)
+  } catch (e) { console.error("deleteComment error:", e); ElMessage.error("删除失败") }
+}
+
 async function submitComment() {
   if (!userStore.isLoggedIn) return
-  if (!commentContent.value.trim()) return
+  if (!commentContent.value.trim() && !commentFile.value) return
   commenting.value = true
   try {
     const fd = new FormData()
@@ -945,3 +954,4 @@ async function submitComment() {
   }
 }
 </style>
+

@@ -1,100 +1,76 @@
-<template>
+﻿<template>
   <div class="profile-page">
     <div class="profile-content" v-if="profile">
-      <!-- Incomplete profile alert -->
-      <div v-if="!profile.is_profile_complete && isOwn" class="profile-alert" @click="$router.push('/settings')">
-        <span>完善资料，展示更好的个人形象</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-          <polyline points="9 18 15 12 9 6"/>
-        </svg>
-      </div>
-
-      <!-- Profile header -->
+      <!-- Profile Header -->
       <div class="profile-header">
-        <div class="avatar-wrapper">
-          <img v-if="profile.avatar_url" :src="profile.avatar_url" class="avatar" />
-          <div v-else class="avatar avatar-placeholder">{{ (profile.nickname || "?")[0] }}</div>
-        </div>
-        <h1 class="username">{{ profile.nickname || "未设置昵称" }}</h1>
-        <p class="user-id">mini-redbook ID：{{ profile.user_id || route.params.id }}</p>
-        <p class="bio">{{ profile.bio || "这个人很懒，什么都没写" }}</p>
-
-        <!-- Social stats -->
-        <div class="stat-row">
-          <div class="stat-item" @click="showFollowing">
-            <span class="stat-num">{{ profile.following_count }}</span>
-            <span class="stat-label">关注</span>
-          </div>
-          <div class="stat-item" @click="showFollowers">
-            <span class="stat-num">{{ profile.follower_count }}</span>
-            <span class="stat-label">粉丝</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-num">{{ (profile.like_received_count || 0) + (profile.favorite_received_count || 0) }}</span>
-            <span class="stat-label">获赞与收藏</span>
+        <div class="header-avatar">
+          <div class="avatar-ring">
+            <img v-if="profile.avatar_url" :src="profile.avatar_url" class="avatar-img" />
+            <div v-else class="avatar-img avatar-placeholder">😺</div>
           </div>
         </div>
-
-        <!-- Action buttons -->
-        <div class="action-row">
-          <button v-if="isOwn" class="action-btn edit-btn" @click="$router.push('/settings')">编辑资料</button>
-          <button v-else class="action-btn" :class="{ 'following': isFollowing }" @click="toggleFollow">
-            {{ isFollowing ? "已关注" : "关注" }}
-          </button>
+        <div class="header-info">
+          <h1 class="header-name">{{ profile.nickname || "未设置昵称" }}</h1>
+          <p class="header-id">mini-redbook ID：{{ profile.user_id || route.params.id }}</p>
+          <p class="header-bio">{{ profile.bio || "这个人很懒，什么都没写" }}</p>
+          <div class="header-stats">
+            <div class="hs-item" @click="showFollowing">
+              <span class="hs-num">{{ profile.following_count }}</span>
+              <span class="hs-label">关注</span>
+            </div>
+            <div class="hs-item" @click="showFollowers">
+              <span class="hs-num">{{ profile.follower_count }}</span>
+              <span class="hs-label">粉丝</span>
+            </div>
+            <div class="hs-item">
+              <span class="hs-num">{{ (profile.like_received_count || 0) + (profile.fav_received_count || 0) }}</span>
+              <span class="hs-label">获赞收藏</span>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button v-if="isOwn" class="ha-btn edit" @click="$router.push('/settings')">编辑资料</button>
+            <button v-else class="ha-btn" :class="{ following: isFollowing }" @click="toggleFollow">
+              {{ isFollowing ? "已关注" : "关注" }}
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- Content tabs -->
-      <div class="tabs-bar">
-        <div class="tab" :class="{ active: activeTab === 'notes' }" @click="switchTab('notes')">笔记</div>
-        <div class="tab" :class="{ active: activeTab === 'favorites' }" @click="switchTab('favorites')">收藏</div>
-        <div class="tab" :class="{ active: activeTab === 'likes' }" @click="switchTab('likes')">点赞</div>
+      <!-- Tabs: equal 1/3 width, full-width underline -->
+      <div class="profile-tabs">
+        <div class="pt-item" :class="{ active: activeTab === 'notes' }" @click="switchTab('notes')">笔记</div>
+        <div class="pt-item" :class="{ active: activeTab === 'favorites' }" @click="switchTab('favorites')">收藏</div>
+        <div class="pt-item" :class="{ active: activeTab === 'likes' }" @click="switchTab('likes')">点赞</div>
       </div>
 
-      <!-- Content list -->
+      <!-- Waterfall grid -->
       <div v-if="loading" class="center">加载中...</div>
       <div v-else-if="items.length === 0" class="empty-state">
-        <div class="empty-illustration">
-          <svg viewBox="0 0 120 100" fill="none" width="120" height="100">
-            <rect x="25" y="10" width="70" height="50" rx="10" stroke="#ddd" stroke-width="2" fill="#f9f9f9"/>
-            <line x1="45" y1="25" x2="75" y2="25" stroke="#ddd" stroke-width="2" stroke-linecap="round"/>
-            <line x1="45" y1="35" x2="65" y2="35" stroke="#ddd" stroke-width="2" stroke-linecap="round"/>
-            <line x1="45" y1="45" x2="55" y2="45" stroke="#ddd" stroke-width="2" stroke-linecap="round"/>
-            <circle cx="60" cy="80" r="15" stroke="#ddd" stroke-width="2" fill="#f9f9f9"/>
-            <line x1="72" y1="85" x2="85" y2="75" stroke="#ddd" stroke-width="2.5" stroke-linecap="round"/>
-          </svg>
-        </div>
         <p class="empty-text">{{ emptyText }}</p>
       </div>
-      <div v-else class="note-grid">
-        <div v-for="n in items" :key="n.id" class="note-card" @click="noteDetailStore.open(n.id)">
-          <div class="card-cover">
+      <div v-else class="waterfall">
+        <div v-for="n in items" :key="n.id" class="wf-card" @click="noteDetailStore.open(n.id)">
+          <div class="wf-cover">
             <img v-if="n.cover_img" :src="n.cover_img" :alt="n.title" />
-            <div v-else class="card-placeholder">{{ n.title?.[0] || "?" }}</div>
+            <div v-else class="wf-placeholder">{{ n.title?.[0] || "?" }}</div>
           </div>
-          <div class="card-info">
-            <h4 class="card-title">{{ n.title }}</h4>
-            <div class="card-meta">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" width="12" height="12">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-              </svg>
-              <span>{{ n.like_count || 0 }}</span>
-            </div>
+          <div class="wf-bar">
+            <span class="wf-title">{{ n.title }}</span>
+            <span class="wf-like">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#999" stroke-width="2" stroke-linejoin="round"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+              {{ n.like_count || 0 }}
+            </span>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- Not logged in -->
     <div v-else class="center" style="padding: 80px 0;">
       <p style="color: #999; margin-bottom: 16px;">请先登录</p>
       <button class="action-btn" @click="$router.push('/login')">去登录</button>
     </div>
   </div>
-  <!-- Note Detail Drawer -->
   <NoteDetail />
 </template>
-
 <script setup>
 import { ref, computed, onMounted, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
@@ -183,228 +159,155 @@ function showFollowing() {
   router.push({ path: "/follow-list", query: { tab: "following", user_id: route.params.id } })
 }
 </script>
-
 <style scoped>
 .profile-page {
-  padding: 24px;
   display: flex;
   justify-content: center;
+  background: #fff;
+  padding: 0 24px;
 }
 .profile-content {
   width: 100%;
-  max-width: 700px;
+  max-width: 820px;
 }
 
-/* Alert */
-.profile-alert {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #fff8e6;
-  border-radius: 12px;
-  padding: 12px 16px;
-  font-size: 13px;
-  color: #b87a00;
-  margin-bottom: 20px;
-  cursor: pointer;
-}
-
-/* Profile header */
+/* ===== Header ===== */
 .profile-header {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  text-align: center;
-  padding-bottom: 24px;
-  border-bottom: 1px solid #f0f0f0;
-  margin-bottom: 20px;
+  gap: 36px;
+  padding: 36px 0 28px;
 }
-.avatar-wrapper {
-  width: 80px;
-  height: 80px;
+.header-avatar { flex-shrink: 0; align-self: flex-start; }
+.avatar-ring {
+  width: 96px;
+  height: 96px;
   border-radius: 50%;
+  border: 3px solid #f5f5f5;
+  box-shadow: 0 0 0 1px #e8e8e8;
   overflow: hidden;
-  margin-bottom: 12px;
-  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
 }
-.avatar {
+.avatar-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+  border-radius: 50%;
 }
 .avatar-placeholder {
+  font-size: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #ff2442;
-  color: white;
-  font-size: 28px;
-  font-weight: 700;
+  background: #f9f9f9;
 }
-.username {
-  font-size: 22px;
+.header-info { flex: 1; min-width: 0; padding-top: 4px; }
+.header-name {
+  font-size: 24px;
   font-weight: 700;
-  margin: 0 0 4px;
   color: #222;
+  margin: 0 0 4px;
 }
-.user-id {
+.header-id {
   font-size: 13px;
-  color: #999;
+  color: #ccc;
   margin: 0 0 8px;
 }
-.bio {
+.header-bio {
   font-size: 14px;
-  color: #666;
-  margin: 0 0 16px;
+  color: #777;
+  margin: 0 0 20px;
   line-height: 1.5;
 }
-
-/* Social stats */
-.stat-row {
+.header-stats {
   display: flex;
-  gap: 32px;
-  justify-content: center;
-  margin-bottom: 16px;
+  gap: 24px;
+  margin-bottom: 18px;
 }
-.stat-item {
-  text-align: center;
-  cursor: pointer;
-  padding: 0 4px;
+.hs-item { cursor: pointer; }
+.hs-num { font-size: 15px; font-weight: 700; color: #222; }
+.hs-label { font-size: 12px; color: #bbb; margin-left: 4px; }
+.header-actions { display: flex; gap: 8px; }
+.ha-btn {
+  background: #ff2442; color: #fff; border: none;
+  border-radius: 20px; padding: 8px 28px; font-size: 14px;
+  font-weight: 600; cursor: pointer; transition: all 0.15s;
 }
-.stat-num {
-  display: block;
-  font-size: 18px;
-  font-weight: 700;
-  color: #222;
+.ha-btn:hover { background: #e01e38; }
+.ha-btn.following, .ha-btn.edit {
+  background: #fff; color: #666; border: 1px solid #ddd;
 }
-.stat-label {
-  font-size: 12px;
-  color: #999;
-  margin-top: 2px;
-}
+.ha-btn.following:hover, .ha-btn.edit:hover { border-color: #ff2442; color: #ff2442; }
 
-/* Action buttons */
-.action-row {
+/* ===== Tabs: equal 1/3, full underline ===== */
+.profile-tabs {
   display: flex;
-  gap: 8px;
-  justify-content: center;
+  border-bottom: 2px solid #eee;
+  margin-bottom: 20px;
 }
-.action-btn {
-  background: #ff2442;
-  color: #fff;
-  border: none;
-  border-radius: 20px;
-  padding: 8px 28px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.action-btn:hover {
-  background: #e01e38;
-}
-.action-btn.following {
-  background: #fff;
-  color: #666;
-  border: 1px solid #ddd;
-}
-.action-btn.following:hover {
-  border-color: #ff2442;
-  color: #ff2442;
-}
-.edit-btn {
-  background: #fff;
-  color: #666;
-  border: 1px solid #ddd;
-}
-.edit-btn:hover {
-  border-color: #ff2442;
-  color: #ff2442;
-  background: #fff;
-}
-
-/* Tabs */
-.tabs-bar {
-  display: flex;
-  gap: 0;
-  border-bottom: 1px solid #f0f0f0;
-  margin-bottom: 16px;
-}
-.tab {
+.pt-item {
   flex: 1;
   text-align: center;
-  padding: 12px 0;
+  padding: 14px 0 12px;
   font-size: 14px;
-  color: #888;
+  color: #ccc;
   cursor: pointer;
-  transition: all 0.15s;
   position: relative;
+  font-weight: 400;
+  transition: color 0.15s;
 }
-.tab:hover {
-  color: #555;
+.pt-item:hover { color: #999; }
+.pt-item.active {
+  color: #222;
+  font-weight: 700;
 }
-.tab.active {
-  color: #ff2442;
-  font-weight: 600;
-}
-.tab.active::after {
+.pt-item.active::after {
   content: "";
   position: absolute;
-  bottom: -1px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40px;
-  height: 3px;
-  background: #ff2442;
-  border-radius: 2px;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #222;
 }
 
-/* Loading & Empty */
-.center { text-align: center; padding: 40px; color: #999; font-size: 14px; }
-.empty-state {
-  text-align: center;
-  padding: 60px 0;
+/* ===== Waterfall: column-count 3, strict alignment ===== */
+.waterfall {
+  column-count: 3;
+  column-gap: 14px;
 }
-.empty-illustration {
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-.empty-text {
-  font-size: 14px;
-  color: #bbb;
-}
-
-/* Note grid */
-.note-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-.note-card {
-  background: white;
-  border-radius: 14px;
+.wf-card {
+  break-inside: avoid;
+  margin-bottom: 14px;
+  background: #fff;
+  border-radius: 12px;
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid #f0f0f0;
 }
-.note-card:hover {
+.wf-card:hover {
   transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
 }
-.card-cover {
-  aspect-ratio: 3/4;
-  overflow: hidden;
-  background: #f0f0f0;
-}
-.card-cover img {
+
+/* Cover: consistent rounded top, full width */
+.wf-cover {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  overflow: hidden;
+  background: #f5f5f5;
+  line-height: 0;
+}
+.wf-cover img {
+  width: 100%;
   display: block;
 }
-.card-placeholder {
-  width: 100%;
-  height: 100%;
+.wf-placeholder {
+  aspect-ratio: 3/4;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -412,14 +315,17 @@ function showFollowing() {
   color: white;
   background: linear-gradient(135deg, #ff6b6b, #ee5a24);
 }
-.card-info {
-  padding: 10px 12px;
+
+/* Bottom bar: consistent height, title left + like right */
+.wf-bar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  min-height: 40px;
+  gap: 6px;
 }
-.card-title {
-  margin: 0;
+.wf-title {
   font-size: 13px;
   font-weight: 600;
   color: #333;
@@ -427,13 +333,20 @@ function showFollowing() {
   text-overflow: ellipsis;
   white-space: nowrap;
   flex: 1;
+  line-height: 1.3;
 }
-.card-meta {
+.wf-like {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   font-size: 12px;
   color: #999;
   flex-shrink: 0;
+  line-height: 1;
 }
+
+/* ===== Utils ===== */
+.center { text-align: center; padding: 60px 0; color: #999; font-size: 14px; }
+.empty-state { text-align: center; padding: 80px 0; }
+.empty-text { font-size: 14px; color: #ccc; }
 </style>

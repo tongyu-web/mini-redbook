@@ -230,13 +230,13 @@ function switchCategory(key) {
 
 <style scoped>
 .topbar {
-  position: fixed;
-  top: 0;
-  left: 220px;
-  right: 0;
+  
+  
+  
+  
   height: auto;
   background: #fff;
-  z-index: 100;
+  
   border-bottom: 1px solid #eee;
 }
 .topbar-inner {
@@ -351,7 +351,7 @@ function switchCategory(key) {
   position: absolute;
   top: calc(100% + 0px);
   left: 0;
-  right: 0;
+  
   background: white;
   border-radius: 12px;
   box-shadow: 0 8px 30px rgba(0,0,0,0.12);

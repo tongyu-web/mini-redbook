@@ -62,7 +62,6 @@ function onCategoryChange(key) {
   --radius-md: 12px;
   --radius-lg: 24px;
   --sidebar-width: 220px;
-  --topbar-height: 96px;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
@@ -85,7 +84,5 @@ a { color: var(--primary); text-decoration: none; }
   flex: 1;
   background: #fff;
 }
-.content-area.with-topbar {
-  margin-top: var(--topbar-height);
-}
+
 </style>

@@ -237,7 +237,7 @@ function switchCategory(key) {
   height: auto;
   background: #fff;
   
-  border-bottom: 1px solid #eee;
+  
 }
 .topbar-inner {
   max-width: 1000px;
@@ -257,11 +257,11 @@ function switchCategory(key) {
   padding: 0 4px 0 8px;
   height: 44px;
   gap: 6px;
-  border: 1px solid transparent;
-  transition: border-color 0.2s;
+  
+  
 }
 .search-input-wrapper:focus-within {
-  border-color: #ff2442;
+
 }
 .quick-create-btn {
   display: flex;
@@ -311,7 +311,7 @@ function switchCategory(key) {
 
 /* Tabs section with divider */
 .tabs-section {
-  border-top: 1px solid #f0f0f0;
+  
   padding-top: 4px;
   display: flex;
   justify-content: center;

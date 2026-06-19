@@ -62,7 +62,7 @@ function onCategoryChange(key) {
   --radius-md: 12px;
   --radius-lg: 24px;
   --sidebar-width: 220px;
-  --topbar-height: 120px;
+  --topbar-height: 96px;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {

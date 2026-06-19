@@ -234,7 +234,7 @@ function switchCategory(key) {
   top: 0;
   left: 220px;
   right: 0;
-  height: 120px;
+  height: auto;
   background: #fff;
   z-index: 100;
   border-bottom: 1px solid #eee;
@@ -242,12 +242,12 @@ function switchCategory(key) {
 .topbar-inner {
   max-width: 1000px;
   margin: 0 auto;
-  padding: 14px 24px 0;
+  padding: 10px 24px 0;
 }
 
 /* Search section */
 .search-section {
-  padding-bottom: 12px;
+  padding-bottom: 6px;
 }
 .search-input-wrapper {
   display: flex;
@@ -312,7 +312,7 @@ function switchCategory(key) {
 /* Tabs section with divider */
 .tabs-section {
   border-top: 1px solid #f0f0f0;
-  padding-top: 8px;
+  padding-top: 4px;
   display: flex;
   justify-content: center;
 }

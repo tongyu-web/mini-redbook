@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 from django.db.models import F
 from django.utils import timezone
-from .models import Note, Comment, Tag
+from .models import Note, Comment, Tag, NoteTag
 from .serializers import (
     NoteListSerializer, NoteDetailSerializer, NoteCreateSerializer,
     CommentSerializer, TagSerializer
@@ -41,7 +41,7 @@ class NoteViewSet(viewsets.ModelViewSet):
         note = NoteTask.publish_note(request.user, data, images=images, video=video)
         return ApiResponse.success(
             data=NoteDetailSerializer(note, context={"request": request}).data,
-            message="閸欐垵绔烽幋鎰", status=201
+            message="发布成功", status=201
         )
 
     def retrieve(self, request, pk=None):
@@ -59,12 +59,12 @@ class NoteViewSet(viewsets.ModelViewSet):
         images = request.FILES.getlist("images") if request.FILES.getlist("images") else None
         NoteTask.edit_note(note, data, images=images)
         ser2 = NoteDetailSerializer(note, context={"request": request})
-        return ApiResponse.success(data=ser2.data, message="閺囧瓨鏌婇幋鎰")
+        return ApiResponse.success(data=ser2.data, message="更新成功")
 
     def destroy(self, request, pk=None):
         note = self.get_object()
         NoteTask.soft_delete(note)
-        return ApiResponse.success(message="瀹歌尙些閸忋儱娲栭弨鍓佺彲")
+        return ApiResponse.success(message="已移至回收站")
 
     @action(detail=False, methods=["get"], url_path="drafts")
     def drafts(self, request):
@@ -94,13 +94,9 @@ class NoteHardDeleteView(APIView):
     def delete(self, request, pk):
         note = get_object_or_404(Note, pk=pk, user=request.user)
         if note.status == 2:
-            # 娴犲骸娲栭弨鍓佺彲瑜拌绨抽崚鐘绘珟
             note.media_list.all().delete()
             note.delete()
         return ApiResponse.success(message="ok")
-        # 閻╁瓨甯撮崚鐘绘珟瀹告彃褰傜敮鍐應鐠?
-        NoteTask.soft_delete(note)
-        return ApiResponse.success(message="瀹歌尙些閸忋儱娲栭弨鍓佺彲")
 
 class RecycleBinCleanupView(APIView):
     permission_classes = [IsAuthenticated]
@@ -151,12 +147,32 @@ class CommentView(APIView):
     def post(self, request, note_id):
         note = get_object_or_404(Note, pk=note_id, status=NOTE_STATUS_PUBLISHED)
         content = request.data.get("content", "").strip()
-        if not content: return ApiResponse.error(code=4001, message="鐠囧嫯顔戦崘鍛啇娑撳秷鍏樻稉铏光敄", status=400)
-        comment = Comment.objects.create(note=note, user=request.user, content=content,
-            parent_id=request.data.get("parent_id") or None)
+        if not content: return ApiResponse.error(code=4001, message="评论内容不能为空", status=400)
+        # US-013: 支持图片评论
+        image = request.FILES.get("image") if request.FILES else None
+        comment = Comment.objects.create(
+            note=note, user=request.user, content=content,
+            parent_id=request.data.get("parent_id") or None,
+            image=image
+        )
         Note.objects.filter(pk=note_id).update(comment_count=F("comment_count") + 1)
+        # US-018: 创建评论通知
+        if comment.parent:
+            # 回复通知发给被回复的用户
+            notify_user_id = comment.parent.user_id
+        else:
+            notify_user_id = note.user_id
+        if str(notify_user_id) != str(request.user.id):
+            from apps.messaging.models import Notification
+            Notification.objects.create(
+                to_user_id=notify_user_id,
+                from_user=request.user,
+                note=note,
+                comment=comment,
+                type="comment"
+            )
         ser = CommentSerializer(comment, context={"request": request})
-        return ApiResponse.success(data=ser.data, message="鐠囧嫯顔戦幋鎰", status=201)
+        return ApiResponse.success(data=ser.data, message="评论成功", status=201)
 
 class TagListView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -165,6 +181,19 @@ class TagListView(APIView):
         return ApiResponse.success(data=ser.data)
     def post(self, request):
         name = request.data.get("name", "").strip()
-        return ApiResponse.success(message="ok")
         tag, _ = Tag.objects.get_or_create(name=name)
         return ApiResponse.success(data=TagSerializer(tag).data, status=201)
+
+# US-017: 话题详情页 - 获取指定标签下的笔记
+class TagNoteListView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    def get(self, request, tag_id):
+        tag = get_object_or_404(Tag, pk=tag_id)
+        note_ids = NoteTag.objects.filter(tag=tag).values_list("note_id", flat=True)
+        qs = Note.objects.filter(id__in=list(note_ids), status=NOTE_STATUS_PUBLISHED).order_by("-created_at")
+        paginator = StandardPagination(); page = paginator.paginate_queryset(qs, request)
+        ser = NoteListSerializer(page, many=True, context={"request": request})
+        return ApiResponse.success(data={
+            "tag": TagSerializer(tag).data,
+            "notes": paginator.get_paginated_response(ser.data).data
+        })

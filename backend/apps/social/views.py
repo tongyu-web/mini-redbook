@@ -1,4 +1,4 @@
-from rest_framework.views import APIView
+﻿from rest_framework.views import APIView
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.parsers import JSONParser
@@ -96,8 +96,27 @@ class RemoveFollowerView(APIView):
     def delete(self, request, user_id):
         from .models import Follow
         Follow.objects.filter(follower_id=user_id, following=request.user).delete()
-        # Update counts
         from apps.accounts.models import User
         User.objects.filter(id=user_id).update(following_count=F("following_count") - 1)
         User.objects.filter(id=request.user.id).update(follower_count=F("follower_count") - 1)
         return ApiResponse.success(message="已移除粉丝")
+
+class FavoriteRemoveAllView(APIView):
+    """从所有收藏夹中移除某篇笔记"""
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, note_id):
+        from .models import Favorite
+        from apps.notes.models import Note
+        from django.db.models import F
+        favs = Favorite.objects.filter(user=request.user, note_id=note_id)
+        count = favs.count()
+        if count > 0:
+            Note.objects.filter(pk=note_id).update(fav_count=F("fav_count") - 1)
+            for fav in favs:
+                from .models import FavoriteFolder
+                FavoriteFolder.objects.filter(pk=fav.folder_id).update(note_count=F("note_count") - 1)
+            favs.delete()
+            from apps.accounts.models import User
+            User.objects.filter(id=Note.objects.get(pk=note_id).user_id).update(fav_received_count=F("fav_received_count") - 1)
+        return ApiResponse.success(data={"is_favorited": False, "removed_count": count})

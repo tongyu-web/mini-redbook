@@ -41,6 +41,10 @@
           <span class="action-icon">{{ note.is_liked ? '❤️' : '🤍' }}</span>
           <span>{{ note.like_count || '点赞' }}</span>
         </div>
+        <div class="action-item" @click="showFolderDialog" v-if="userStore.isLoggedIn">
+          <span class="action-icon">{{ note.is_favorited ? '📁' : '🗂️' }}</span>
+          <span>{{ note.is_favorited ? '已收藏' : '收藏' }}</span>
+        </div>
         <div class="action-item"><span class="action-icon">💬</span><span>{{ note.comment_count || '评论' }}</span></div>
         <div class="action-item"><span class="action-icon">👁️</span><span>{{ note.view_count || '浏览' }}</span></div>
       </div>
@@ -100,6 +104,23 @@
       <template #footer>
         <el-button @click="deleteDialog = false">取消</el-button>
         <el-button type="danger" @click="confirmDelete">确定删除</el-button>
+      </template>
+    </el-dialog>
+    <!-- US-012: 收藏文件夹选择 -->
+    <el-dialog v-model="favDialogVisible" title="收藏到文件夹" width="90%" max-width="400px">
+      <div class="folder-list">
+        <div v-for="f in folders" :key="f.id" class="folder-item" @click="selectFolder(f)">
+          <span class="folder-icon">{{ f.is_public ? '📂' : '🔒' }}</span>
+          <span class="folder-name">{{ f.name }}</span>
+          <span class="folder-count">{{ f.note_count || 0 }} 篇</span>
+        </div>
+      </div>
+      <div class="folder-create" @click="createAndSelect">
+        <span class="folder-icon">➕</span>
+        <span class="folder-name">新建收藏夹</span>
+      </div>
+      <template #footer>
+        <el-button @click="favDialogVisible = false">取消</el-button>
       </template>
     </el-dialog>
     <Teleport to="body">
@@ -203,6 +224,44 @@ async function toggleLike() {
   note.value.like_count = res.like_count
 }
 
+// US-012: 收藏功能
+const favDialogVisible = ref(false)
+const folders = ref([])
+
+async function showFolderDialog() {
+  if (note.value.is_favorited) {
+    try {
+      await socialApi.removeFavoriteFromAll(route.params.id)
+      note.value.is_favorited = false
+      note.value.fav_count = (note.value.fav_count || 1) - 1
+    } catch (e) { console.error(e) }
+    return
+  }
+  try {
+    const res = await socialApi.getFolders()
+    folders.value = res || []
+    favDialogVisible.value = true
+  } catch (e) { console.error(e) }
+}
+
+async function selectFolder(folder) {
+  try {
+    await socialApi.addFavorite({ note_id: route.params.id, folder_id: folder.id })
+    note.value.is_favorited = true
+    note.value.fav_count = (note.value.fav_count || 0) + 1
+    favDialogVisible.value = false
+  } catch (e) { console.error(e) }
+}
+
+async function createAndSelect() {
+  const name = prompt('请输入新收藏夹名称：')
+  if (!name || !name.trim()) return
+  try {
+    const res = await socialApi.createFolder({ name: name.trim() })
+    await selectFolder(res)
+  } catch (e) { console.error(e) }
+}
+
 // Comment state
 const commentContent = ref("")
 const commentFile = ref(null)
@@ -298,6 +357,14 @@ async function submitComment() {
 .upload-label { cursor: pointer; display: flex; align-items: center; }
 .img-btn { font-size: 12px; color: #666; cursor: pointer; padding: 2px 8px; border: 1px solid #ddd; border-radius: 4px; }
 .img-btn:hover { color: #ff2442; border-color: #ff2442; }
+.folder-list { max-height: 300px; overflow-y: auto; }
+.folder-item { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 8px; cursor: pointer; transition: background 0.15s; }
+.folder-item:hover { background: #f5f5f5; }
+.folder-icon { font-size: 20px; }
+.folder-name { flex: 1; font-size: 14px; color: #333; }
+.folder-count { font-size: 12px; color: #999; }
+.folder-create { display: flex; align-items: center; gap: 10px; padding: 12px; border-top: 1px solid #f0f0f0; margin-top: 8px; cursor: pointer; border-radius: 8px; color: #ff2442; font-size: 14px; }
+.folder-create:hover { background: #fff0f0; }
 .img-name { font-size: 11px; color: #999; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .login-hint { text-align: center; padding: 16px; border-top: 1px solid #f0f0f0; margin-top: 16px; }
 .comment-img { max-width: 180px; max-height: 180px; border-radius: 8px; margin-top: 6px; cursor: pointer; }

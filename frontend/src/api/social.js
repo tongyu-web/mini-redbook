@@ -10,5 +10,6 @@ export const socialApi = {
   addFavorite(data) { return request.post("/social/favorites/", data) },
   removeFavorite(data) { return request.delete("/social/favorites/", { data }) },
   getAllFavorites() { return request.get("/social/favorites/all/") },
+  removeFavoriteFromAll(noteId) { return request.delete(`/social/favorites/note/${noteId}/`) },
   getFavorites(folderId) { return request.get(`/social/favorites/${folderId}/`) },
 }

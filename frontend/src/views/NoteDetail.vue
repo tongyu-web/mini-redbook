@@ -303,10 +303,13 @@ async function toggleLike() {
     store.close()
     return
   }
+  if (!note.value) return
   try {
     const res = await socialApi.toggleLike(store.currentNoteId.value)
-    note.value.is_liked = res.is_liked
-    note.value.like_count = res.like_count
+    if (note.value) {
+      note.value.is_liked = res.is_liked
+      note.value.like_count = res.like_count
+    }
   } catch (e) { console.error(e) }
 }
 
@@ -317,11 +320,14 @@ async function showFolderDialog() {
     store.close()
     return
   }
+  if (!note.value) return
   if (note.value.is_favorited) {
     try {
       await socialApi.removeFavoriteFromAll(store.currentNoteId.value)
-      note.value.is_favorited = false
-      note.value.fav_count = Math.max(0, (note.value.fav_count || 1) - 1)
+      if (note.value) {
+        note.value.is_favorited = false
+        note.value.fav_count = Math.max(0, (note.value.fav_count || 1) - 1)
+      }
     } catch (e) { console.error(e) }
     return
   }
@@ -388,13 +394,15 @@ function toggleCommentCompose() {
     store.close()
     return
   }
-  commentComposing.value = !commentComposing.value
   if (commentComposing.value) {
-    setTimeout(() => {
-      const el = document.querySelector(".bottom-input .el-textarea__inner")
-      if (el) el.focus()
-    }, 100)
+    cancelCompose()
+    return
   }
+  commentComposing.value = true
+  setTimeout(() => {
+    const el = document.querySelector(".compose-body .el-textarea__inner")
+    if (el) el.focus()
+  }, 100)
 }
 
 function scrollToComments() {
@@ -402,7 +410,14 @@ function scrollToComments() {
     if (el) el.scrollTop = 0;
   }
 
-  async function submitComment() {
+function cancelCompose() {
+  commentComposing.value = false
+  commentContent.value = ""
+  commentFile.value = null
+  replyTo.value = null
+}
+
+async function submitComment() {
   if (!userStore.isLoggedIn) return
   if (!commentContent.value.trim()) return
   commenting.value = true

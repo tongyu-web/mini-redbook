@@ -250,12 +250,14 @@ function switchCategory(key) {
   padding-bottom: 6px;
 }
 .search-input-wrapper {
+  max-width: 700px;
+  margin: 0 auto;
   display: flex;
   align-items: center;
   background: #fff;
-  border-radius: 24px;
+  border-radius: 16px;
   padding: 0 4px 0 8px;
-  height: 44px;
+  height: 50px;
   gap: 6px;
   
   

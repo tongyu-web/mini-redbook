@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="page-center">
     <div class="auth-card">
       <h2>登录</h2>

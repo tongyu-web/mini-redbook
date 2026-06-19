@@ -39,9 +39,7 @@ async function handleRegister() {
   loading.value = true
   try {
     const res = await accountsApi.register(form)
-    localStorage.setItem("access_token", res.access_token)
-    localStorage.setItem("refresh_token", res.refresh_token)
-    userStore.setUser(res.user)
+    userStore.addAccount(res.user, res.access_token, res.refresh_token)
     router.push("/")
   } catch (e) {
     errorMsg.value = e.message || "注册失败，请重试"

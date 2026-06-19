@@ -29,7 +29,12 @@
           </div>
         </div>
         <!-- Search Dropdown -->
-       <!-- Category tabs section -->
+        <Transition name="search-drop">
+          <div v-if="showDropdown" class="search-dropdown">
+          </div>
+        </Transition>
+      </div>
+      <!-- Category tabs section -->
       <div v-if="$route.path !== '/search'" class="tabs-section">
         <div class="category-tabs-wrapper">
           <div class="category-tabs" ref="tabsRef">
@@ -331,7 +336,9 @@ function switchCategory(key) {
   overflow-y: auto;
 }
 .sd-section { padding: 4px 0; }
-.sd-section + .sd-section { border-top: 1px solid.search-section { position: relative; padding: 0 24px; max-width: 800px; margin: 0 auto; }
+.sd-section + .sd-section { border-top: 1px solid #f5f5f5; }
+
+.search-section { position: relative; padding: 0 24px; max-width: 800px; margin: 0 auto; }
 
 .search-card {
   background: #fff;

@@ -20,25 +20,41 @@ class SearchTask:
             qs = Note.objects.filter(
                 Q(title__icontains=keyword) | Q(content__icontains=keyword),
                 status=NOTE_STATUS_PUBLISHED
-            ).order_by("-created_at")
+            ).select_related("user").order_by("-created_at")
         elif search_type == "user":
             qs = User.objects.filter(
-                nickname__icontains=keyword,
+                Q(nickname__icontains=keyword) | Q(username__icontains=keyword),
                 account_status=ACCOUNT_STATUS_NORMAL
             )
         elif search_type == "tag":
-            qs = Tag.objects.filter(name__icontains=keyword)
+            qs = Tag.objects.filter(name__icontains=keyword).order_by("-hot_value")
         else:
             qs = Note.objects.filter(
                 Q(title__icontains=keyword) | Q(content__icontains=keyword),
                 status=NOTE_STATUS_PUBLISHED
-            ).order_by("-created_at")
+            ).select_related("user").order_by("-created_at")
 
-        from common.pagination import StandardPagination
-        paginator = StandardPagination()
-        paginator.page_size = page_size
-        page_obj = paginator.paginate_queryset(qs, type("Req", (), {"query_params": {"page": str(page), "page_size": str(page_size)}})())
-        return paginator.get_paginated_response(page_obj).data if hasattr(paginator, "get_paginated_response") else {}
+        # Manual pagination
+        start = (page - 1) * page_size
+        end = start + page_size
+        total = qs.count()
+        page_items = qs[start:end]
+
+        if search_type == "note":
+            from apps.notes.serializers import NoteListSerializer
+            from django.http import HttpRequest
+            fake_req = HttpRequest()
+            fake_req.user = user
+            ser = NoteListSerializer(page_items, many=True, context={"request": fake_req})
+            return {"count": total, "results": ser.data}
+        elif search_type == "user":
+            from apps.accounts.serializers import UserSimpleSerializer
+            ser = UserSimpleSerializer(page_items, many=True)
+            return {"count": total, "results": ser.data}
+        elif search_type == "tag":
+            data = [{"name": t.name, "hot_value": t.hot_value, "note_count": t.note_count} for t in page_items]
+            return {"count": total, "results": data}
+        return {"count": 0, "results": []}
 
     @staticmethod
     def suggest(prefix):

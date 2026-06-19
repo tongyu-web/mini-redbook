@@ -1,4 +1,4 @@
-import request from "./request"
+﻿import request from "./request"
 
 export const searchApi = {
   search(params) { return request.get("/search/", { params }) },

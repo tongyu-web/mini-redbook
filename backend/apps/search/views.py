@@ -51,10 +51,14 @@ class SearchHistoryView(APIView):
 
     def get(self, request):
         from .models import SearchHistory
-        keywords = SearchHistory.objects.filter(user=request.user).values_list("keyword", flat=True)[:20]
-        return ApiResponse.success(data=list(keywords))
+        qs = SearchHistory.objects.filter(user=request.user).order_by("-created_at")[:20]
+        return ApiResponse.success(data=[{"id": h.id, "keyword": h.keyword, "created_at": h.created_at.isoformat()} for h in qs])
 
     def delete(self, request):
         from .models import SearchHistory
+        keyword = request.data.get("keyword") or request.query_params.get("keyword")
+        if keyword:
+            SearchHistory.objects.filter(user=request.user, keyword=keyword).delete()
+            return ApiResponse.success(message="已删除")
         SearchHistory.objects.filter(user=request.user).delete()
         return ApiResponse.success(message="已清空搜索历史")

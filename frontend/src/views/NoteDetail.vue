@@ -1,4 +1,4 @@
-
+﻿
 <template>
   <Teleport to="body">
     <Transition name="drawer-fade">
@@ -278,7 +278,7 @@ onUnmounted(() => {
 function handleAction(cmd) {
   if (cmd === "edit") {
     store.close()
-    router.push({ path: "/edit/" + store.currentNoteId.value })
+    router.push({ path: "/edit/" + store.currentNoteId })
   }
   if (cmd === "delete") deleteDialog.value = true
 }
@@ -286,7 +286,7 @@ function handleAction(cmd) {
 async function confirmDelete() {
   deleteDialog.value = false
   try {
-    await notesApi.deleteNote(store.currentNoteId.value)
+    await notesApi.deleteNote(store.currentNoteId)
     store.close()
   } catch (e) {}
 }
@@ -307,8 +307,8 @@ async function toggleLike() {
   }
   if (!note.value) return
   try {
-    console.log("toggleLike: calling API for note", store.currentNoteId.value)
-    const res = await socialApi.toggleLike(store.currentNoteId.value)
+    console.log("toggleLike: calling API for note", store.currentNoteId)
+    const res = await socialApi.toggleLike(store.currentNoteId)
     console.log("toggleLike: API response", res)
     if (note.value) {
       note.value.is_liked = res.is_liked
@@ -331,7 +331,7 @@ async function showFolderDialog() {
   if (!note.value) return
   if (note.value.is_favorited) {
     try {
-      await socialApi.removeFavoriteFromAll(store.currentNoteId.value)
+      await socialApi.removeFavoriteFromAll(store.currentNoteId)
       if (note.value) {
         note.value.is_favorited = false
         note.value.fav_count = Math.max(0, (note.value.fav_count || 1) - 1)
@@ -353,8 +353,8 @@ async function showFolderDialog() {
 
 async function selectFolder(folder) {
   try {
-    console.log("selectFolder: adding favorite", { note_id: store.currentNoteId.value, folder_id: folder.id })
-    const res = await socialApi.addFavorite({ note_id: store.currentNoteId.value, folder_id: folder.id })
+    console.log("selectFolder: adding favorite", { note_id: store.currentNoteId, folder_id: folder.id })
+    const res = await socialApi.addFavorite({ note_id: store.currentNoteId, folder_id: folder.id })
     console.log("selectFolder: API response", res)
     if (note.value) {
       note.value.is_favorited = true
@@ -446,12 +446,12 @@ async function submitComment() {
     fd.append("content", commentContent.value.trim())
     if (replyTo.value) fd.append("parent_id", replyTo.value.id)
     if (commentFile.value) fd.append("image", commentFile.value)
-    await notesApi.postComment(store.currentNoteId.value, fd)
+    await notesApi.postComment(store.currentNoteId, fd)
     commentContent.value = ""
     commentFile.value = null
     replyTo.value = null
     commentComposing.value = false
-    const res = await notesApi.getComments(store.currentNoteId.value)
+    const res = await notesApi.getComments(store.currentNoteId)
     comments.value = res.results || res || []
     if (note.value) note.value.comment_count = (note.value.comment_count || 0) + 1
   } catch (e) { console.error(e) }

@@ -22,7 +22,7 @@ class SocialTask:
     def toggle_like(user, note_id):
         from apps.notes.models import Note
         with transaction.atomic():
-            note = Note.objects.select_for_update().get(pk=note_id, status=NOTE_STATUS_PUBLISHED)
+            note = Note.objects.get(pk=note_id, status=NOTE_STATUS_PUBLISHED)
             like = Like.objects.filter(user=user, note=note).first()
             if like:
                 like.delete()
@@ -43,7 +43,7 @@ class SocialTask:
     def add_to_favorite(user, note_id, folder_id):
         from apps.notes.models import Note
         with transaction.atomic():
-            note = Note.objects.select_for_update().get(pk=note_id)
+            note = Note.objects.get(pk=note_id)
             folder = FavoriteFolder.objects.get(pk=folder_id, user=user)
             _, created = Favorite.objects.get_or_create(user=user, note=note, folder=folder)
             if created:

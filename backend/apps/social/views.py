@@ -9,6 +9,10 @@ from .serializers import FavoriteFolderSerializer
 from .tasks import SocialTask
 from common.response import ApiResponse
 from common.pagination import StandardPagination
+import logging
+import traceback
+logger = logging.getLogger(__name__)
+
 
 class FollowView(APIView):
     permission_classes = [IsAuthenticated]
@@ -23,8 +27,12 @@ class LikeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, note_id):
-        result = SocialTask.toggle_like(request.user, note_id)
-        return ApiResponse.success(data=result)
+        try:
+            result = SocialTask.toggle_like(request.user, note_id)
+            return ApiResponse.success(data=result)
+        except Exception as e:
+            logger.error("LikeView error for note %s: %s\n%s", note_id, e, traceback.format_exc())
+            return ApiResponse.error(code=5001, message=f"点赞失败: {str(e)}", status=500)
 
 class FavoriteFolderViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -59,23 +67,31 @@ class FavoriteView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        note_id = request.data.get("note_id")
-        folder_id = request.data.get("folder_id", "")
-        if not note_id:
-            return ApiResponse.error(code=4001, message="缺少 note_id", status=400)
-        if not folder_id:
-            folder, _ = FavoriteFolder.objects.get_or_create(user=request.user, name="默认收藏夹")
-            folder_id = folder.id
-        result = SocialTask.add_to_favorite(request.user, note_id, folder_id)
-        return ApiResponse.success(data=result)
+        try:
+            note_id = request.data.get("note_id")
+            folder_id = request.data.get("folder_id", "")
+            if not note_id:
+                return ApiResponse.error(code=4001, message="缺少 note_id", status=400)
+            if not folder_id:
+                folder, _ = FavoriteFolder.objects.get_or_create(user=request.user, name="默认收藏夹")
+                folder_id = folder.id
+            result = SocialTask.add_to_favorite(request.user, note_id, folder_id)
+            return ApiResponse.success(data=result)
+        except Exception as e:
+            logger.error("FavoriteView.post error: %s\n%s", e, traceback.format_exc())
+            return ApiResponse.error(code=5001, message=f"收藏失败: {str(e)}", status=500)
 
     def delete(self, request):
-        note_id = request.data.get("note_id")
-        folder_id = request.data.get("folder_id")
-        if not note_id or not folder_id:
-            return ApiResponse.error(code=4001, message="缺少参数", status=400)
-        result = SocialTask.remove_from_favorite(request.user, note_id, folder_id)
-        return ApiResponse.success(data=result)
+        try:
+            note_id = request.data.get("note_id")
+            folder_id = request.data.get("folder_id")
+            if not note_id or not folder_id:
+                return ApiResponse.error(code=4001, message="缺少参数", status=400)
+            result = SocialTask.remove_from_favorite(request.user, note_id, folder_id)
+            return ApiResponse.success(data=result)
+        except Exception as e:
+            logger.error("FavoriteView.delete error: %s\n%s", e, traceback.format_exc())
+            return ApiResponse.error(code=5001, message=f"取消收藏失败: {str(e)}", status=500)
 
     def get(self, request, folder_id):
         folder = get_object_or_404(FavoriteFolder, pk=folder_id, user=request.user)

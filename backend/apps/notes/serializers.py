@@ -80,6 +80,7 @@ class NoteCreateSerializer(serializers.Serializer):
     type = serializers.ChoiceField(choices=[0, 1], required=False, default=0)
     tag_ids = serializers.ListField(child=serializers.CharField(), required=False, max_length=8)
     tag_names = serializers.ListField(child=serializers.CharField(max_length=30), required=False, max_length=8)
+    category = serializers.CharField(max_length=20, required=False, default="")
 
     def validate_images(self, files):
         if len(files) > 8:

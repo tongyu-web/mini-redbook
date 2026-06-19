@@ -1,5 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework import serializers as drf_serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.utils import timezone
 from .models import User
@@ -130,6 +131,68 @@ class FollowersListView(APIView):
         ser = UserSimpleSerializer(page, many=True, context={"request": request})
         return ApiResponse.success(data=paginator.get_paginated_response(ser.data).data)
 
+class ChangePasswordView(APIView):
+    """修改密码"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        old_pw = request.data.get("old_password", "")
+        new_pw = request.data.get("new_password", "")
+        if not old_pw or not new_pw:
+            return ApiResponse.error(code=4001, message="请填写旧密码和新密码", status=400)
+        if len(new_pw) < 6:
+            return ApiResponse.error(code=4001, message="新密码至少6位", status=400)
+        if not request.user.check_password(old_pw):
+            return ApiResponse.error(code=4001, message="旧密码不正确", status=400)
+        request.user.set_password(new_pw)
+        request.user.save()
+        return ApiResponse.success(message="密码修改成功")
+
+
+class BindEmailView(APIView):
+    """绑定/换绑邮箱"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        email = request.data.get("email", "").strip()
+        if not email:
+            return ApiResponse.error(code=4001, message="请输入邮箱", status=400)
+        if User.objects.filter(email=email).exclude(id=request.user.id).exists():
+            return ApiResponse.error(code=4001, message="该邮箱已被绑定", status=409)
+        request.user.email = email
+        request.user.save()
+        return ApiResponse.success(data={"email": email}, message="邮箱绑定成功")
+
+
+class CancelAccountView(APIView):
+    """注销账号（需二次确认+填写原因）"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        reason = request.data.get("reason", "").strip()
+        password = request.data.get("password", "")
+        if not password:
+            return ApiResponse.error(code=4001, message="请输入密码确认注销", status=400)
+        if not request.user.check_password(password):
+            return ApiResponse.error(code=4001, message="密码不正确", status=400)
+        request.user.account_status = 2
+        request.user.is_active = False
+        request.user.save()
+        return ApiResponse.success(message="账号已注销")
+
+
+class PrivacySettingsView(APIView):
+    """隐私设置：0公开/1仅好友/2私密"""
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        privacy = request.data.get("privacy")
+        if privacy not in [0, 1, 2]:
+            return ApiResponse.error(code=4001, message="隐私设置无效（0:公开 1:好友 2:私密）", status=400)
+        request.user.privacy = privacy
+        request.user.save()
+        return ApiResponse.success(data={"privacy": privacy}, message="隐私设置已更新")
+
 class FollowingListView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -141,3 +204,65 @@ class FollowingListView(APIView):
         page = paginator.paginate_queryset(users, request)
         ser = UserSimpleSerializer(page, many=True, context={"request": request})
         return ApiResponse.success(data=paginator.get_paginated_response(ser.data).data)
+
+class ChangePasswordView(APIView):
+    """修改密码"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        old_pw = request.data.get("old_password", "")
+        new_pw = request.data.get("new_password", "")
+        if not old_pw or not new_pw:
+            return ApiResponse.error(code=4001, message="请填写旧密码和新密码", status=400)
+        if len(new_pw) < 6:
+            return ApiResponse.error(code=4001, message="新密码至少6位", status=400)
+        if not request.user.check_password(old_pw):
+            return ApiResponse.error(code=4001, message="旧密码不正确", status=400)
+        request.user.set_password(new_pw)
+        request.user.save()
+        return ApiResponse.success(message="密码修改成功")
+
+
+class BindEmailView(APIView):
+    """绑定/换绑邮箱"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        email = request.data.get("email", "").strip()
+        if not email:
+            return ApiResponse.error(code=4001, message="请输入邮箱", status=400)
+        if User.objects.filter(email=email).exclude(id=request.user.id).exists():
+            return ApiResponse.error(code=4001, message="该邮箱已被绑定", status=409)
+        request.user.email = email
+        request.user.save()
+        return ApiResponse.success(data={"email": email}, message="邮箱绑定成功")
+
+
+class CancelAccountView(APIView):
+    """注销账号（需二次确认+填写原因）"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        reason = request.data.get("reason", "").strip()
+        password = request.data.get("password", "")
+        if not password:
+            return ApiResponse.error(code=4001, message="请输入密码确认注销", status=400)
+        if not request.user.check_password(password):
+            return ApiResponse.error(code=4001, message="密码不正确", status=400)
+        request.user.account_status = 2
+        request.user.is_active = False
+        request.user.save()
+        return ApiResponse.success(message="账号已注销")
+
+
+class PrivacySettingsView(APIView):
+    """隐私设置：0公开/1仅好友/2私密"""
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        privacy = request.data.get("privacy")
+        if privacy not in [0, 1, 2]:
+            return ApiResponse.error(code=4001, message="隐私设置无效（0:公开 1:好友 2:私密）", status=400)
+        request.user.privacy = privacy
+        request.user.save()
+        return ApiResponse.success(data={"privacy": privacy}, message="隐私设置已更新")

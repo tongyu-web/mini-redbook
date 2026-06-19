@@ -1,5 +1,5 @@
 ﻿from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.views import APIView
 from rest_framework.decorators import action
@@ -183,6 +183,26 @@ class TagListView(APIView):
         name = request.data.get("name", "").strip()
         tag, _ = Tag.objects.get_or_create(name=name)
         return ApiResponse.success(data=TagSerializer(tag).data, status=201)
+
+# 预定义分类
+NOTE_CATEGORIES = [
+    {"key": "beauty", "name": "美妆"},
+    {"key": "travel", "name": "旅行"},
+    {"key": "food", "name": "美食"},
+    {"key": "fashion", "name": "穿搭"},
+    {"key": "fitness", "name": "健身"},
+    {"key": "tech", "name": "数码"},
+    {"key": "study", "name": "学习"},
+    {"key": "art", "name": "艺术"},
+    {"key": "life", "name": "生活"},
+    {"key": "other", "name": "其他"},
+]
+
+class CategoryListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        return ApiResponse.success(data=NOTE_CATEGORIES)
 
 # US-017: 话题详情页 - 获取指定标签下的笔记
 class TagNoteListView(APIView):

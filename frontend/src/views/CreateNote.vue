@@ -68,6 +68,11 @@
       <div v-if="previewUrl || imagePreviews.length" class="form-fields">
         <input v-model="form.title" class="field-input title-input" placeholder="添加标题..." maxlength="100" />
         <textarea v-model="form.content" class="field-input content-input" placeholder="填写正文..." rows="4" maxlength="2000"></textarea>
+        <div class="category-selector">
+          <el-select v-model="form.category" placeholder="选择分类" clearable size="small" class="category-select">
+            <el-option v-for="c in categories" :key="c.key" :label="c.name" :value="c.key" />
+          </el-select>
+        </div>
         <div class="tag-selector">
           <el-tag v-for="(t,i) in form.tag_names" :key="i" closable @close="removeTag(i)" class="tag-item">{{ t }}</el-tag>
           <el-input v-if="showTagInput" v-model="tagInput" size="small" class="tag-input" @keyup.enter="addTag" @blur="addTag" />
@@ -115,6 +120,13 @@ import { ref, reactive, computed, onMounted } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { useUserStore } from "../stores/user"
 import { notesApi } from "../api/notes"
+const categories = ref([])
+onMounted(async () => {
+  try {
+    const res = await notesApi.getCategories()
+    categories.value = res || []
+  } catch (e) {}
+})
 
 const route = useRoute()
 const router = useRouter()
@@ -132,7 +144,7 @@ const isEdit = computed(() => !!route.params.id)
 const editId = computed(() => route.params.id)
 
 const form = reactive({
-  title: "", content: "", tag_names: []
+  title: "", content: "", tag_names: [], category: ""
 })
 
 onMounted(async () => {
@@ -145,6 +157,7 @@ async function loadEditData() {
     form.title = note.title || ""
     form.content = note.content || ""
     form.tag_names = (note.tags || []).map(t => t.name)
+    form.category = note.category || ""
     if (note.media_list?.length) {
       note.media_list.forEach(m => imagePreviews.value.push(m.file))
     }
@@ -218,6 +231,7 @@ async function handlePublish() {
   fd.append("title", form.title)
   fd.append("content", form.content)
   fd.append("type", activeFormat.value === "video" ? 1 : 0)
+  if (form.category) fd.append("category", form.category)
   form.tag_names.forEach(t => fd.append("tag_names", t))
   if (activeFormat.value === "video" && videoFile.value) {
     fd.append("video", videoFile.value)
@@ -352,6 +366,8 @@ async function handlePublish() {
 .field-input:focus { border-color: #ff2442; }
 .title-input { font-size: 18px; font-weight: 600; }
 .content-input { resize: vertical; min-height: 100px; line-height: 1.6; }
+.category-selector { margin-bottom: 8px; }
+.category-select { width: 160px; }
 .tag-selector { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .tag-item { margin: 0; }
 .tag-input { width: 100px; }

@@ -7,6 +7,7 @@ router.register(r"", views.NoteViewSet, basename="note")
 
 urlpatterns = [
     path("tags/", views.TagListView.as_view(), name="tag-list"),
+    path("categories/", views.CategoryListView.as_view(), name="categories"),
     path("tags/<str:tag_id>/notes/", views.TagNoteListView.as_view(), name="tag-notes"),
     path("user/<str:user_id>/", views.UserNoteListView.as_view(), name="user-notes"),
     path("liked/", views.LikedNoteListView.as_view(), name="liked-notes"),

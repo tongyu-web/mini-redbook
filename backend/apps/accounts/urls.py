@@ -8,6 +8,10 @@ urlpatterns = [
     path("profile/avatar/", views.AvatarUploadView.as_view(), name="avatar-upload"),
     path("profile/", views.ProfileView.as_view(), name="my-profile"),
     path("profile/<str:user_id>/", views.ProfileView.as_view(), name="user-profile"),
+    path("password/change/", views.ChangePasswordView.as_view(), name="change-password"),
+    path("email/bind/", views.BindEmailView.as_view(), name="bind-email"),
+    path("privacy/", views.PrivacySettingsView.as_view(), name="privacy-settings"),
+    path("cancel/", views.CancelAccountView.as_view(), name="cancel-account"),
     path("<str:user_id>/followers/", views.FollowersListView.as_view(), name="followers"),
     path("<str:user_id>/following/", views.FollowingListView.as_view(), name="following"),
 ]

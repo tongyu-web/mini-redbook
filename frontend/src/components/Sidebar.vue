@@ -126,7 +126,7 @@ function addAccount() {
 }
 async function handleLogout() {
   showAccounts.value = false
-  userStore.removeAccount(userStore.activeAccountId)
+  userStore.clearUser()
   window.location.reload()
 }
 if (typeof document !== "undefined") {

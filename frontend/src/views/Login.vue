@@ -27,9 +27,7 @@ async function handleLogin() {
   loading.value = true
   try {
     const res = await accountsApi.login(form)
-    localStorage.setItem("access_token", res.access_token)
-    localStorage.setItem("refresh_token", res.refresh_token)
-    userStore.setUser(res.user)
+    userStore.addAccount(res.user, res.access_token, res.refresh_token)
     router.push("/")
   } catch (e) {
     // error handled by interceptor

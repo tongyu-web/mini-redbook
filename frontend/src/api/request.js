@@ -1,4 +1,4 @@
-import axios from "axios"
+﻿import axios from "axios"
 import router from "../router"
 
 const request = axios.create({
@@ -19,7 +19,7 @@ function processQueue(error, token = null) {
 
 request.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("access_token")
+    const token = sessionStorage.getItem("access_token")
     if (token) {
       config.headers.Authorization = "Bearer " + token
     }
@@ -41,19 +41,19 @@ request.interceptors.response.use(
       const originalRequest = error.config
       if (!originalRequest?._retry) {
         originalRequest._retry = true
-        const refreshToken = localStorage.getItem("refresh_token")
+        const refreshToken = sessionStorage.getItem("refresh_token")
         if (refreshToken) {
           try {
             const resp = await axios.post("/api/accounts/token/refresh/", { refresh: refreshToken })
             const newToken = resp.data.access || resp.data.access_token
-            localStorage.setItem("access_token", newToken)
+            sessionStorage.setItem("access_token", newToken)
             originalRequest.headers.Authorization = "Bearer " + newToken
             return request(originalRequest)
           } catch (e) {}
         }
       }
-      localStorage.removeItem("access_token")
-      localStorage.removeItem("refresh_token")
+      sessionStorage.removeItem("access_token")
+      sessionStorage.removeItem("refresh_token")
       router.push("/login")
       return Promise.reject(error)
     }

@@ -67,7 +67,7 @@
         <p class="empty-text">{{ emptyText }}</p>
       </div>
       <div v-else class="note-grid">
-        <div v-for="n in items" :key="n.id" class="note-card" @click="$router.push('/note/' + n.id)">
+        <div v-for="n in items" :key="n.id" class="note-card" @click="noteDetailStore.open(n.id)">
           <div class="card-cover">
             <img v-if="n.cover_img" :src="n.cover_img" :alt="n.title" />
             <div v-else class="card-placeholder">{{ n.title?.[0] || "?" }}</div>
@@ -91,6 +91,8 @@
       <button class="action-btn" @click="$router.push('/login')">去登录</button>
     </div>
   </div>
+  <!-- Note Detail Drawer -->
+  <NoteDetail />
 </template>
 
 <script setup>
@@ -100,7 +102,10 @@ import { useUserStore } from "../stores/user"
 import { accountsApi } from "../api/accounts"
 import { notesApi } from "../api/notes"
 import { socialApi } from "../api/social"
+import { useNoteDetailStore } from "../stores/noteDetail"
+import NoteDetail from "./NoteDetail.vue"
 
+const noteDetailStore = useNoteDetailStore()
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()

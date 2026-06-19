@@ -6,7 +6,7 @@
     </div>
     <div v-else-if="notes.length === 0" class="empty-state">暂无内容</div>
     <div v-else class="waterfall-grid">
-      <div v-for="note in notes" :key="note.id" class="feed-card" @click="$router.push('/note/' + note.id)">
+      <div v-for="note in notes" :key="note.id" class="feed-card" @click="openNote(note.id)">
         <div class="card-media">
           <img v-if="note.cover_img" :src="note.cover_img" :alt="note.title" />
           <div v-else class="card-placeholder">{{ note.title?.[0] || "R" }}</div>
@@ -39,13 +39,18 @@
       </div>
     </div>
   </div>
+  <!-- Note Detail Drawer -->
+  <NoteDetail />
 </template>
 
 <script setup>
 import { ref, watch } from "vue"
 import { searchApi } from "../api/search"
 import { notesApi } from "../api/notes"
+import { useNoteDetailStore } from "../stores/noteDetail"
+import NoteDetail from "./NoteDetail.vue"
 
+const noteDetailStore = useNoteDetailStore()
 const props = defineProps({
   category: { type: String, default: "recommend" }
 })
@@ -61,6 +66,10 @@ const NOTE_CATEGORIES = {
 
 function categoryLabel(key) {
   return NOTE_CATEGORIES[key] || key
+}
+
+function openNote(id) {
+  noteDetailStore.open(id)
 }
 
 async function loadNotes() {

@@ -2,7 +2,7 @@
   <div class="search-page">
     <div class="content">
       <div v-if="results.length" class="results">
-        <div v-for="n in results" :key="n.id" class="result-item" @click="$router.push('/note/' + n.id)">
+        <div v-for="n in results" :key="n.id" class="result-item" @click="noteDetailStore.open(n.id)">
           <img :src="n.cover_img" v-if="n.cover_img" class="result-cover" />
           <div class="result-info">
             <h4>{{ n.title }}</h4>
@@ -12,12 +12,17 @@
       </div>
     </div>
   </div>
+  <!-- Note Detail Drawer -->
+  <NoteDetail />
 </template>
 
 <script setup>
 import { ref } from "vue"
 
 const results = ref([])
+import { useNoteDetailStore } from "../stores/noteDetail"
+import NoteDetail from "./NoteDetail.vue"
+const noteDetailStore = useNoteDetailStore()
 </script>
 
 <style scoped>

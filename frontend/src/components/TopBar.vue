@@ -398,7 +398,12 @@ function switchCategory(key) {
   border-radius: 50%;
   transition: background 0.2s, transform 0.15s;
 }
-.sc-search-btn:hover { background: #ff2442; transform: scale(1.05); }ackground: none; border: none; color: #ccc; cursor: pointer; font-size: 12px; padding: 2px; }
+.sc-search-btn:hover { background: #ff2442; transform: scale(1.05); }
+.dd-remove {
+  background: none; border: none; color: #ccc; cursor: pointer; font-size: 14px; padding: 2px 4px; border-radius: 4px; line-height: 1;
+}
+.dd-remove:hover { color: #ff2442; background: #fff0f0; }
+.remove-history-btn { background: none; border: none; color: #ccc; cursor: pointer; font-size: 12px; padding: 2px; }
 .remove-history-btn:hover { color: #ff2442; }
 
 .sd-empty { text-align: center; padding: 24px 0; color: #ccc; font-size: 13px; }

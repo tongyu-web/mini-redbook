@@ -148,8 +148,8 @@ if (typeof document !== "undefined") {
   top: 0;
   bottom: 0;
   width: 220px;
-  background: #fff;
-  border-right: 1px solid #f0f0f0;
+  background: #f5f5f5;
+  border-right: 1px solid #e8e8e8;
   display: flex;
   flex-direction: column;
   z-index: 200;

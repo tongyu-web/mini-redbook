@@ -67,7 +67,7 @@ function onCategoryChange(key) {
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
-  background: var(--bg);
+  background: #fff;
   color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
@@ -83,7 +83,7 @@ a { color: var(--primary); text-decoration: none; }
 }
 .content-area {
   flex: 1;
-  background: var(--bg);
+  background: #fff;
 }
 .content-area.with-topbar {
   margin-top: var(--topbar-height);

@@ -1,10 +1,10 @@
-<template>
+﻿﻿<template>
   <div class="topbar">
     <div class="topbar-inner">
       <!-- Search bar section -->
       <div class="search-section" ref="searchSection">
         <div class="search-input-wrapper">
-          <button class="quick-create-btn" @click="goCreate" title="快速发布">
+          <button v-if="$route.path !== `/search`" class="quick-create-btn" @click="goCreate" title="快速发布">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
               <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
@@ -62,7 +62,7 @@
         </Transition>
       </div>
       <!-- Category tabs section -->
-      <div class="tabs-section">
+      <div v-if="$route.path !== '/search'" class="tabs-section">
         <div class="category-tabs-wrapper">
           <div class="category-tabs" ref="tabsRef">
             <div

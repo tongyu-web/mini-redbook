@@ -1,10 +1,5 @@
-<template>
+﻿<template>
   <div class="search-page">
-    <!-- Search bar -->
-    <div class="sp-search">
-      <input v-model="query" class="sp-input" placeholder="搜索笔记、用户、话题..." @keyup.enter="doSearch" />
-      <button class="sp-btn" @click="doSearch">搜索</button>
-    </div>
     <!-- Tabs -->
     <div class="sp-tabs">
       <div v-for="t in tabs" :key="t.key" class="sp-tab" :class="{ active: activeTab === t.key }" @click="switchTab(t.key)">
@@ -133,19 +128,6 @@ watch(() => route.query.q, (q) => {
 .search-page {
   max-width: 800px; margin: 0 auto; padding: 20px 24px;
 }
-.sp-search { display: flex; gap: 10px; margin-bottom: 16px; }
-.sp-input {
-  flex: 1; height: 42px; border: 1px solid #eee; border-radius: 21px;
-  padding: 0 20px; font-size: 14px; outline: none; transition: border-color 0.2s;
-}
-.sp-input:focus { border-color: #ff2442; }
-.sp-btn {
-  height: 42px; padding: 0 24px; background: #ff2442; color: white;
-  border: none; border-radius: 21px; font-size: 14px; cursor: pointer;
-  transition: background 0.15s;
-}
-.sp-btn:hover { background: #e61e3a; }
-
 /* Tabs */
 .sp-tabs { display: flex; gap: 0; border-bottom: 1px solid #f0f0f0; margin-bottom: 16px; }
 .sp-tab {

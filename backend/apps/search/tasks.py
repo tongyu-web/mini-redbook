@@ -45,6 +45,7 @@ class SearchTask:
             from django.http import HttpRequest
             fake_req = HttpRequest()
             fake_req.user = user
+            fake_req.META = {"SERVER_NAME": "localhost", "SERVER_PORT": "8000", "HTTP_HOST": "localhost:8000", "wsgi.url_scheme": "http"}
             ser = NoteListSerializer(page_items, many=True, context={"request": fake_req})
             return {"count": total, "results": ser.data}
         elif search_type == "user":

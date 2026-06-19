@@ -88,6 +88,7 @@ import { ref } from "vue"
 import { useRouter } from "vue-router"
 import { useUserStore } from "../stores/user"
 import { useNotificationStore } from "../stores/notification"
+import { openLoginDialog } from "../utils/dialogState"
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -97,19 +98,19 @@ const showAccounts = ref(false)
 const defaultAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ddd'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E"
 
 function goCreate() {
-  if (!userStore.isLoggedIn) { router.push("/login"); return }
+  if (!userStore.isLoggedIn) { openLoginDialog(); return }
   router.push("/create")
 }
 function goProfile() {
-  if (!userStore.isLoggedIn) { router.push("/login"); return }
+  if (!userStore.isLoggedIn) { openLoginDialog(); return }
   router.push("/user/" + userStore.user.id)
 }
 function goRecycle() {
-  if (!userStore.isLoggedIn) { router.push("/login"); return }
+  if (!userStore.isLoggedIn) { openLoginDialog(); return }
   router.push("/recycle")
 }
 function goLogin() {
-  router.push("/login")
+  openLoginDialog()
 }
 function switchTo(accountId) {
   userStore.switchAccount(accountId)
@@ -118,18 +119,14 @@ function switchTo(accountId) {
 }
 function removeAccount(accountId) {
   userStore.removeAccount(accountId)
-  if (!userStore.isLoggedIn) {
-    window.location.reload()
-  }
 }
 function addAccount() {
   showAccounts.value = false
-  router.push("/login")
+  openLoginDialog()
 }
 async function handleLogout() {
   showAccounts.value = false
   userStore.clearUser()
-  window.location.reload()
 }
 if (typeof document !== "undefined") {
   document.addEventListener("click", function(e) {

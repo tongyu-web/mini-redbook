@@ -8,15 +8,26 @@
     </div>
     <!-- Results -->
     <div class="sp-results" v-if="query">
-      <div v-if="activeTab === 'note'" class="note-results">
-        <div v-for="n in results" :key="n.id" class="nr-item" @click="noteDetailStore.open(n.id)">
-          <img :src="n.cover_img" v-if="n.cover_img" class="nr-cover" />
-          <div class="nr-info" :class="{ 'no-cover': !n.cover_img }">
-            <h4 class="nr-title">{{ n.title }}</h4>
-            <p class="nr-desc">{{ n.content }}</p>
-            <div class="nr-meta">
-              <span class="nr-user">{{ n.user_nickname }}</span>
-              <span class="nr-stats">{{ n.like_count || 0 }} 赞 · {{ n.comment_count || 0 }} 评论</span>
+      <div v-if="activeTab === 'note'" class="note-waterfall">
+        <div v-for="n in results" :key="n.id" class="sc-card" @click="noteDetailStore.open(n.id)">
+          <div class="sc-media">
+            <img v-if="n.cover_img" :src="n.cover_img" :alt="n.title" />
+            <div v-else class="sc-placeholder">{{ n.title?.[0] || "R" }}</div>
+          </div>
+          <div class="sc-body">
+            <h3 class="sc-title">{{ n.title }}</h3>
+            <div class="sc-footer">
+              <div class="sc-author">
+                <img v-if="n.user_avatar" :src="n.user_avatar" class="sc-avatar" />
+                <div v-else class="sc-avatar sc-avatar-placeholder">{{ n.user_nickname?.[0] || "?" }}</div>
+                <span class="sc-name">{{ n.user_nickname }}</span>
+              </div>
+              <div class="sc-likes">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" width="14" height="14">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+                <span>{{ n.like_count || 0 }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -54,6 +65,7 @@
 <script setup>
 import { ref, onMounted, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
+import NoteDetail from "./NoteDetail.vue"
 import { searchApi } from "../api/search"
 import { useNoteDetailStore } from "../stores/noteDetail"
 
@@ -137,17 +149,48 @@ watch(() => route.query.q, (q) => {
 .sp-tab:hover { color: #555; }
 .sp-tab.active { color: #ff2442; border-bottom-color: #ff2442; font-weight: 600; }
 
-/* Note results */
-.nr-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f8f8f8; cursor: pointer; transition: background 0.12s; }
-.nr-item:hover { background: #fafafa; margin: 0 -12px; padding: 12px; border-radius: 8px; }
-.nr-cover { width: 100px; height: 100px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
-.nr-info { flex: 1; min-width: 0; }
-.nr-info.no-cover { }
-.nr-title { margin: 0 0 4px; font-size: 15px; color: #222; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.nr-desc { margin: 0 0 8px; font-size: 13px; color: #777; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.nr-meta { display: flex; gap: 12px; font-size: 12px; color: #bbb; }
-.nr-user { color: #999; }
-
+/* Note waterfall */
+.note-waterfall {
+  column-count: 3;
+  column-gap: 14px;
+}
+.sc-card {
+  break-inside: avoid;
+  margin-bottom: 14px;
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid #f0f0f0;
+}
+.sc-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+.sc-media { position: relative; overflow: hidden; background: #f0f0f0; }
+.sc-media img { width: 100%; display: block; }
+.sc-placeholder {
+  width: 100%; aspect-ratio: 3/4;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2em; color: white;
+  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+}
+.sc-body { padding: 10px 12px 12px; }
+.sc-title {
+  font-size: 13px; font-weight: 600; line-height: 1.4;
+  margin: 0 0 6px; color: #222;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.sc-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 6px; border-top: 1px solid #f5f5f5;
+}
+.sc-author { display: flex; align-items: center; gap: 5px; min-width: 0; }
+.sc-avatar { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.sc-avatar-placeholder {
+  display: flex; align-items: center; justify-content: center;
+  background: #ff2442; color: white; font-size: 9px; font-weight: 600;
+}
+.sc-name { font-size: 11px; color: #999; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sc-likes { display: flex; align-items: center; gap: 3px; font-size: 11px; color: #999; flex-shrink: 0; }
 /* User results */
 .ur-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f8f8f8; cursor: pointer; }
 .ur-item:hover { background: #fafafa; margin: 0 -12px; padding: 12px; border-radius: 8px; }

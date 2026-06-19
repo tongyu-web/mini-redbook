@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="app-layout">
     <template v-if="!isAuthPage">
       <Sidebar />
@@ -13,6 +13,7 @@
       <router-view />
     </template>
   </div>
+  <LoginDialog v-model:visible="loginDialogVisible" />
 </template>
 
 <script setup>
@@ -23,6 +24,8 @@ import { useNotificationStore } from "./stores/notification"
 import { useUserStore } from "./stores/user"
 import Sidebar from "./components/Sidebar.vue"
 import TopBar from "./components/TopBar.vue"
+import LoginDialog from "./components/LoginDialog.vue"
+import { loginDialogVisible, closeLoginDialog } from "./utils/dialogState"
 
 const route = useRoute()
 const notificationStore = useNotificationStore()
@@ -86,3 +89,4 @@ a { color: var(--primary); text-decoration: none; }
 }
 
 </style>
+

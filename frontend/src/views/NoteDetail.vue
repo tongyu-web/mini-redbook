@@ -91,16 +91,17 @@
                   </div>
                 </div>
                 <!-- Bottom action bar -->
-                <div class="bottom-bar">
+                <div class="bottom-bar" :class="{ 'is-composing': commentComposing }">
                   <div class="reply-hint" v-if="replyTo">
                     <span>回复 @{{ replyTo.nickname }}</span>
                     <el-button text size="small" @click="cancelReply">取消</el-button>
                   </div>
-                  <div class="bottom-row">
+                  <!-- Normal mode: input + icons -->
+                  <div class="bottom-row" v-if="!commentComposing">
                     <div class="bottom-input" v-if="userStore.isLoggedIn">
                       <el-avatar :size="26" :src="userStore.user?.avatar_url" />
                       <div class="input-wrap">
-                        <el-input v-model="commentContent" type="textarea" :rows="1" :maxlength="300" placeholder="写下你的评论..." resize="none" @keydown.enter.ctrl="submitComment" />
+                        <el-input v-model="commentContent" type="textarea" :rows="1" :maxlength="300" placeholder="写下你的评论..." resize="none" @keydown.enter.ctrl="submitComment" @focus="commentComposing = true" />
                       </div>
                       <label class="upload-btn" for="comment-image-bottom">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#999" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
@@ -115,16 +116,38 @@
                         <svg :class="note.is_liked ? 'like-active' : ''" viewBox="0 0 24 24" width="20" height="20"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                         <span>{{ note.like_count || 0 }}</span>
                       </div>
-                      <div class="bottom-icon-item" @click="showFolderDialog" v-if="userStore.isLoggedIn">
+                      <div class="bottom-icon-item" @click="showFolderDialog">
                         <svg :class="note.is_favorited ? 'fav-active' : ''" viewBox="0 0 24 24" width="20" height="20"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
                         <span>{{ note.fav_count || 0 }}</span>
                       </div>
-                      <div class="bottom-icon-item" @click="scrollToComments">
+                      <div class="bottom-icon-item" @click="toggleCommentCompose">
                         <svg viewBox="0 0 24 24" width="20" height="20"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
                         <span>{{ note.comment_count || 0 }}</span>
                       </div>
                       <div class="bottom-icon-item">
                         <svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Composing mode: full editor with send/cancel -->
+                  <div class="compose-panel" v-if="commentComposing">
+                    <div class="compose-header">
+                      <span class="compose-label">{{ replyTo ? "回复 @" + replyTo.nickname : "发表评论" }}</span>
+                      <el-button text size="small" @click="cancelCompose">取消</el-button>
+                    </div>
+                    <div class="compose-body">
+                      <el-input v-model="commentContent" type="textarea" :rows="3" :maxlength="300" placeholder="写下你的评论..." show-word-limit resize="none" ref="composeInputRef" />
+                      <div class="compose-footer">
+                        <label class="upload-label" for="comment-image-compose">
+                          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#999" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                          <span class="upload-text" v-if="!commentFile">添加图片</span>
+                          <span class="upload-text" v-else>{{ commentFile.name }}</span>
+                        </label>
+                        <input id="comment-image-compose" ref="commentInput" type="file" accept="image/jpeg,image/png,image/webp" hidden @change="handleCommentImage" />
+                        <div class="compose-actions">
+                          <el-button size="small" @click="cancelCompose">取消</el-button>
+                          <el-button size="small" type="primary" :loading="commenting" @click="submitComment" :disabled="!commentContent.trim()">发送</el-button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -219,6 +242,7 @@ const commentContent = ref("")
 const commentFile = ref(null)
 const commenting = ref(false)
 const replyTo = ref(null)
+const commentComposing = ref(false)
 
 const isOwner = computed(() => userStore.isLoggedIn && userStore.user?.id === note.value?.user_id)
 const images = computed(() => note.value?.media_list?.filter(m => m.media_type === 0) || [])
@@ -274,18 +298,30 @@ async function toggleFollow() {
 }
 
 async function toggleLike() {
-  const res = await socialApi.toggleLike(store.currentNoteId.value)
-  note.value.is_liked = res.is_liked
-  note.value.like_count = res.like_count
+  if (!userStore.isLoggedIn) {
+    router.push("/login")
+    store.close()
+    return
+  }
+  try {
+    const res = await socialApi.toggleLike(store.currentNoteId.value)
+    note.value.is_liked = res.is_liked
+    note.value.like_count = res.like_count
+  } catch (e) { console.error(e) }
 }
 
 // Favorite
 async function showFolderDialog() {
+  if (!userStore.isLoggedIn) {
+    router.push("/login")
+    store.close()
+    return
+  }
   if (note.value.is_favorited) {
     try {
       await socialApi.removeFavoriteFromAll(store.currentNoteId.value)
       note.value.is_favorited = false
-      note.value.fav_count = (note.value.fav_count || 1) - 1
+      note.value.fav_count = Math.max(0, (note.value.fav_count || 1) - 1)
     } catch (e) { console.error(e) }
     return
   }
@@ -337,8 +373,29 @@ function handleCommentImage(e) {
   commentFile.value = f
   e.target.value = ""
 }
-function cancelReply() { replyTo.value = null }
-function replyToComment(c) { replyTo.value = { id: c.id, nickname: c.user_nickname } }
+function cancelReply() { 
+  replyTo.value = null
+  commentComposing.value = false
+}
+function replyToComment(c) { 
+  replyTo.value = { id: c.id, nickname: c.user_nickname }
+  commentComposing.value = true
+}
+
+function toggleCommentCompose() {
+  if (!userStore.isLoggedIn) {
+    router.push("/login")
+    store.close()
+    return
+  }
+  commentComposing.value = !commentComposing.value
+  if (commentComposing.value) {
+    setTimeout(() => {
+      const el = document.querySelector(".bottom-input .el-textarea__inner")
+      if (el) el.focus()
+    }, 100)
+  }
+}
 
 function scrollToComments() {
     const el = document.querySelector('.comments-list');
@@ -346,6 +403,7 @@ function scrollToComments() {
   }
 
   async function submitComment() {
+  if (!userStore.isLoggedIn) return
   if (!commentContent.value.trim()) return
   commenting.value = true
   try {
@@ -357,6 +415,7 @@ function scrollToComments() {
     commentContent.value = ""
     commentFile.value = null
     replyTo.value = null
+    commentComposing.value = false
     const res = await notesApi.getComments(store.currentNoteId.value)
     comments.value = res.results || res || []
     if (note.value) note.value.comment_count = (note.value.comment_count || 0) + 1
@@ -663,6 +722,57 @@ function scrollToComments() {
 .bottom-icon-item .fav-active {
   fill: #ffb800;
   stroke: #ffb800;
+}
+
+/* Composing panel */
+.bottom-bar.is-composing {
+  padding: 0;
+}
+.compose-panel {
+  padding: 12px 16px;
+}
+.compose-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.compose-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+}
+.compose-body :deep(.el-textarea__inner) {
+  font-size: 14px;
+  border-radius: 8px;
+  min-height: 80px !important;
+}
+.compose-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+.upload-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.upload-label:hover {
+  background: #f5f5f5;
+}
+.upload-text {
+  font-size: 12px;
+  color: #999;
+}
+.compose-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* Comments section */

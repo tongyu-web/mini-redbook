@@ -27,6 +27,9 @@ class NoteViewSet(viewsets.ModelViewSet):
 
     def list(self, request):
         qs = self.get_queryset().order_by("-created_at")
+        category = request.query_params.get("category", "")
+        if category:
+            qs = qs.filter(category=category)
         page = self.paginate_queryset(qs)
         ser = NoteListSerializer(page, many=True, context={"request": request})
         return ApiResponse.success(data=self.get_paginated_response(ser.data).data)

@@ -2,6 +2,7 @@
 
 export const notesApi = {
   getNotes(page = 1) { return request.get(`/notes/?page=${page}`) },
+  getNotesByCategory(category, page = 1) { return request.get(`/notes/?category=${category}&page=${page}`) },
   getNote(id) { return request.get(`/notes/${id}/`) },
   createNote(formData) { return request.post("/notes/", formData) },
   updateNote(id, data) { return request.patch(`/notes/${id}/`, data) },

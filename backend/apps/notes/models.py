@@ -31,6 +31,7 @@ class Note(models.Model):
     type = models.IntegerField(choices=[(NOTE_TYPE_IMAGE, "图文"), (NOTE_TYPE_VIDEO, "视频")], default=NOTE_TYPE_IMAGE)
     cover_img = models.ImageField(upload_to="covers/", blank=True, null=True)
     status = models.IntegerField(choices=[(NOTE_STATUS_DRAFT, "草稿"), (NOTE_STATUS_PUBLISHED, "已发布"), (NOTE_STATUS_TAKEN_DOWN, "下架")], default=NOTE_STATUS_DRAFT)
+    category = models.CharField(max_length=20, blank=True, default="")
     like_count = models.IntegerField(default=0)
     fav_count = models.IntegerField(default=0)
     comment_count = models.IntegerField(default=0)

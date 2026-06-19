@@ -20,7 +20,7 @@ class NoteListSerializer(serializers.ModelSerializer):
         model = Note
         fields = ["id", "title", "cover_img", "like_count", "fav_count",
                    "comment_count", "view_count", "type", "type_label",
-                   "user_nickname", "user_avatar", "created_at"]
+                   "user_nickname", "user_avatar", "category", "created_at"]
 
     def get_user_nickname(self, obj):
         return obj.user.nickname
@@ -49,7 +49,7 @@ class NoteDetailSerializer(serializers.ModelSerializer):
                    "like_count", "fav_count", "comment_count", "view_count",
                    "is_edited", "media_list", "tags", "user_nickname",
                    "user_avatar", "user_id", "is_liked", "is_favorited",
-                   "created_at", "updated_at"]
+                   "category", "created_at", "updated_at"]
 
     def get_user_nickname(self, obj):
         return obj.user.nickname

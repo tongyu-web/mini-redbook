@@ -15,9 +15,12 @@
           </div>
         </div>
         <div class="card-body">
+          <div class="card-category" v-if="note.category">
+            <span class="cat-badge">{{ categoryLabel(note.category) }}</span>
+          </div>
           <h3 class="card-title">{{ note.title }}</h3>
           <div class="card-tags" v-if="note.tags?.length">
-            <span class="card-tag" v-for="tag in note.tags.slice(0,2)" :key="tag.id">#{{ tag.name }}</span>
+            <span class="card-tag" v-for="tag in note.tags.slice(0,3)" :key="tag.id">#{{ tag.name }}</span>
           </div>
           <div class="card-footer">
             <div class="card-author">
@@ -50,6 +53,16 @@ const props = defineProps({
 const notes = ref([])
 const loading = ref(true)
 
+const NOTE_CATEGORIES = {
+  beauty: "\u7f8e\u5986", travel: "\u65c5\u884c", food: "\u7f8e\u98df", fashion: "\u7a7f\u642d",
+  fitness: "\u5065\u8eab", tech: "\u6570\u7801", study: "\u5b66\u4e60", art: "\u827a\u672f",
+  life: "\u751f\u6d3b", other: "\u5176\u4ed6"
+}
+
+function categoryLabel(key) {
+  return NOTE_CATEGORIES[key] || key
+}
+
 async function loadNotes() {
   loading.value = true
   try {
@@ -57,7 +70,7 @@ async function loadNotes() {
       const res = await searchApi.recommend()
       notes.value = res.results || res || []
     } else {
-      const res = await notesApi.getNotes()
+      const res = await notesApi.getNotesByCategory(props.category)
       notes.value = res.results || res || []
     }
   } catch (e) {
@@ -148,4 +161,6 @@ watch(() => props.category, loadNotes)
 }
 .author-name { font-size: 12px; color: #999; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .card-likes { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #999; flex-shrink: 0; }
+.card-category { margin-bottom: 4px; }
+.cat-badge { display: inline-block; background: #fff0f0; color: #ff2442; font-size: 10px; padding: 1px 8px; border-radius: 8px; font-weight: 600; }
 </style>

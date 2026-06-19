@@ -54,15 +54,16 @@ const tabsRef = ref(null)
 
 const categories = [
   { key: "recommend", label: "推荐" },
-  { key: "dress", label: "穿搭" },
-  { key: "food", label: "美食" },
-  { key: "makeup", label: "化妆" },
-  { key: "movie", label: "影视" },
-  { key: "emotion", label: "情感" },
-  { key: "home", label: "家居" },
-  { key: "game", label: "游戏" },
+  { key: "beauty", label: "美妆" },
   { key: "travel", label: "旅行" },
-  { key: "video", label: "视频" },
+  { key: "food", label: "美食" },
+  { key: "fashion", label: "穿搭" },
+  { key: "fitness", label: "健身" },
+  { key: "tech", label: "数码" },
+  { key: "study", label: "学习" },
+  { key: "art", label: "艺术" },
+  { key: "life", label: "生活" },
+  { key: "other", label: "其他" },
 ]
 
 const emit = defineEmits(["search", "categoryChange"])

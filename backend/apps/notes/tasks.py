@@ -36,6 +36,7 @@ class NoteTask:
             user=user, title=data["title"],
             content=data.get("content", ""),
             type=data.get("type", 0),
+            category=data.get("category", ""),
             status=NOTE_STATUS_PUBLISHED
         )
         if images:

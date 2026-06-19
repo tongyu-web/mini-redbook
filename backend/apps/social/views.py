@@ -29,9 +29,21 @@ class LikeView(APIView):
 class FavoriteFolderViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = FavoriteFolderSerializer
+    pagination_class = None
 
     def get_queryset(self):
         return FavoriteFolder.objects.filter(user=self.request.user)
+
+    def list(self, request):
+        qs = self.get_queryset()
+        ser = self.get_serializer(qs, many=True)
+        return ApiResponse.success(data=ser.data)
+
+    def create(self, request):
+        ser = self.get_serializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        self.perform_create(ser)
+        return ApiResponse.success(data=ser.data, status=201)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)

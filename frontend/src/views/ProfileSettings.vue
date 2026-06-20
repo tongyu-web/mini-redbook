@@ -1,108 +1,108 @@
 ﻿<template>
-  <div class="settings">
-<div class="content">
-      <div class="header">
-        <el-button text @click="$router.back()">← 返回</el-button>
-        <h2>编辑个人资料</h2>
-      </div>
+  <div class="edit-profile-page">
+    <!-- Top Navigation -->
+    <div class="top-nav">
+      <button class="back-btn" @click="$router.back()">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#333" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <span class="nav-title">编辑资料</span>
+      <button class="preview-btn" @click="handlePreview">预览</button>
+    </div>
 
+    <div class="content">
       <el-alert v-if="saveMsg" :title="saveMsg" :type="saveType" show-icon closable @close="saveMsg=''" class="mb-3" />
 
-      <!-- 头像 -->
-      <div class="section">
-        <div class="section-title">头像</div>
-        <div class="avatar-upload" @click="triggerUpload">
-          <el-avatar :size="80" :src="previewUrl || form.avatar_url" />
-          <div class="upload-overlay">
-            <span>更换头像</span>
+      <!-- Card: 头像 -->
+      <div class="profile-card">
+        <div class="info-row" @click="triggerUpload">
+          <span class="row-label">头像</span>
+          <div class="row-right">
+            <el-avatar :size="48" :src="previewUrl || form.avatar_url" />
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ccc" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
           </div>
         </div>
-        <input ref="fileInput" type="file" accept="image/jpeg,image/png" hidden @change="handleFile" />
-        <p class="hint">支持 JPG/PNG，最大 5MB</p>
+        <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/webp" hidden @change="handleFile" />
       </div>
 
-      <!-- 昵称 -->
-      <div class="section">
-        <div class="section-title">昵称</div>
-        <el-input v-model="form.nickname" :maxlength="15" show-word-limit placeholder="输入昵称（15字符以内）" />
-        <p class="hint">昵称将展示在你的个人主页</p>
-      </div>
-
-      <!-- 个人简介 -->
-      <div class="section">
-        <div class="section-title">个人简介</div>
-        <el-input v-model="form.bio" type="textarea" :rows="3" :maxlength="500" show-word-limit placeholder="介绍一下自己..." />
-      </div>
-
-      <!-- 性别 -->
-      <div class="section">
-        <div class="section-title">性别</div>
-        <el-radio-group v-model="form.gender">
-          <el-radio value="MALE">男</el-radio>
-          <el-radio value="FEMALE">女</el-radio>
-          <el-radio value="UNKNOWN">保密</el-radio>
-        </el-radio-group>
-      </div>
-
-      <!-- 隐私设置 -->
-      <div class="section">
-        <div class="section-title">隐私设置</div>
-        <el-radio-group v-model="form.privacy">
-          <el-radio :value="0">公开 - 所有人可见</el-radio>
-          <el-radio :value="1">仅互关好友可见</el-radio>
-          <el-radio :value="2">私密 - 仅自己可见</el-radio>
-        </el-radio-group>
-      </div>
-
-      <el-button type="primary" class="w-full" :loading="saving" @click="saveProfile">保存</el-button>
-
-      <el-divider />
-
-      <!-- 安全设置 -->
-      <div class="section">
-        <div class="section-title">修改密码</div>
-        <el-input v-model="pwForm.old_password" type="password" placeholder="旧密码" class="mb-2" show-password />
-        <el-input v-model="pwForm.new_password" type="password" placeholder="新密码（至少6位）" class="mb-2" show-password />
-        <el-button size="small" :loading="pwSaving" @click="changePassword">确认修改</el-button>
-      </div>
-
-      <div class="section">
-        <div class="section-title">绑定邮箱</div>
-        <div class="email-row">
-          <el-input v-model="emailForm.email" placeholder="输入邮箱地址" class="email-input" />
-          <el-button size="small" :loading="emailSaving" @click="bindEmail">绑定</el-button>
+      <!-- Card: 基本信息 -->
+      <div class="profile-card">
+        <div class="info-row">
+          <span class="row-label">昵称</span>
+          <div class="row-right input-row">
+            <el-input v-model="form.nickname" :maxlength="15" placeholder="输入昵称" class="inline-input" />
+          </div>
         </div>
-        <p class="hint" v-if="currentEmail">当前绑定：{{ currentEmail }}</p>
+        <div class="info-row">
+          <span class="row-label">简介</span>
+          <div class="row-right input-row">
+            <el-input v-model="form.bio" :maxlength="500" placeholder="介绍一下自己" class="inline-input" />
+          </div>
+        </div>
+        <div class="info-row">
+          <span class="row-label">性别</span>
+          <div class="row-right select-row" @click="showGenderPicker = true">
+            <span :class="{ 'placeholder': !form.gender }">{{ genderLabel }}</span>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ccc" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+        <div class="info-row">
+          <span class="row-label">生日</span>
+          <div class="row-right select-row" @click="showBirthPicker = true">
+            <span :class="{ 'placeholder': !form.birthday }">{{ form.birthday || '选择生日' }}</span>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ccc" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
       </div>
 
-      <div class="section">
-        <div class="section-title">退出登录</div>
-        <p class="hint">退出后需要重新登录</p>
-        <el-button size="small" @click="handleLogout">退出登录</el-button>
+      <!-- Card: 更多信息 -->
+      <div class="profile-card">
+        <div class="info-row">
+          <span class="row-label">地区</span>
+          <div class="row-right input-row">
+            <el-input v-model="form.region" placeholder="选择所在地区" class="inline-input" />
+          </div>
+        </div>
+        <div class="info-row">
+          <span class="row-label">职业</span>
+          <div class="row-right input-row">
+            <el-input v-model="form.occupation" placeholder="选择职业" class="inline-input" />
+          </div>
+        </div>
+        <div class="info-row">
+          <span class="row-label">学校</span>
+          <div class="row-right input-row">
+            <el-input v-model="form.school" placeholder="选择学校" class="inline-input" />
+          </div>
+        </div>
       </div>
 
-      <div class="section">
-        <div class="section-title danger-zone">注销账号</div>
-        <p class="hint">注销后账号将被永久停用，所有数据不可恢复</p>
-        <el-button size="small" type="danger" :loading="cancelSaving" @click="showCancelDialog = true">注销账号</el-button>
-      </div>
-
-      <!-- 注销确认弹窗 -->
-      <el-dialog v-model="showCancelDialog" title="确认注销账号" width="90%" max-width="400px">
-        <p class="cancel-warning">此操作不可逆，请确认：</p>
-        <el-input v-model="cancelForm.reason" type="textarea" :rows="3" placeholder="请告诉我们注销原因（选填）" />
-        <el-input v-model="cancelForm.password" type="password" placeholder="请输入密码确认" class="mt-2" show-password />
-        <template #footer>
-          <el-button @click="showCancelDialog = false">取消</el-button>
-          <el-button type="danger" :loading="cancelSaving" @click="confirmCancel">确认注销</el-button>
-        </template>
-      </el-dialog>
+      <button class="save-btn" :disabled="saving" @click="saveProfile">{{ saving ? '保存中...' : '保存' }}</button>
     </div>
+
+    <!-- Gender picker dialog -->
+    <el-dialog v-model="showGenderPicker" title="选择性别" width="85%" max-width="360px">
+      <div class="picker-options">
+        <div class="picker-option" @click="form.gender = 'MALE'; showGenderPicker = false">男</div>
+        <div class="picker-option" @click="form.gender = 'FEMALE'; showGenderPicker = false">女</div>
+        <div class="picker-option" @click="form.gender = 'UNKNOWN'; showGenderPicker = false">保密</div>
+      </div>
+    </el-dialog>
+
+    <!-- Birthday picker dialog -->
+    <el-dialog v-model="showBirthPicker" title="选择生日" width="85%" max-width="360px">
+      <el-date-picker v-model="birthdayTemp" type="date" placeholder="选择日期" style="width:100%" value-format="YYYY-MM-DD" />
+      <template #footer>
+        <el-button @click="showBirthPicker = false">取消</el-button>
+        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" @click="form.birthday = birthdayTemp; showBirthPicker = false">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from "vue"
+import { ref, reactive, computed, onMounted } from "vue"
 import { useRouter } from "vue-router"
 import { useUserStore } from "../stores/user"
 import { accountsApi } from "../api/accounts"
@@ -114,63 +114,60 @@ const saving = ref(false)
 const previewUrl = ref("")
 const saveMsg = ref("")
 const saveType = ref("success")
-const file = ref(null)
+
+const showGenderPicker = ref(false)
+const showBirthPicker = ref(false)
+const birthdayTemp = ref("")
 
 const form = reactive({
-  nickname: "",
   avatar_url: "",
+  nickname: "",
   bio: "",
   gender: "UNKNOWN",
-  privacy: 0,
+  birthday: "",
+  region: "",
+  occupation: "",
+  school: "",
+})
+
+const genderLabel = computed(() => {
+  const map = { MALE: "男", FEMALE: "女", UNKNOWN: "保密" }
+  return map[form.gender] || "选择性别"
 })
 
 onMounted(async () => {
   try {
-    const res = await accountsApi.getProfile()
-    form.nickname = res.nickname || ""
-    form.avatar_url = res.avatar_url || ""
-    form.bio = res.bio || ""
-    form.gender = res.gender || "UNKNOWN"
-    form.privacy = res.privacy !== undefined ? res.privacy : 0
-    currentEmail.value = res.email || ""
-    emailForm.email = res.email || ""
+    const userData = await accountsApi.getProfile()
+    form.avatar_url = userData.avatar_url || ""
+    form.nickname = userData.nickname || ""
+    form.bio = userData.bio || ""
+    form.gender = userData.gender || "UNKNOWN"
+    form.birthday = userData.birthday || ""
   } catch (e) {
-    saveMsg.value = "加载资料失败"
-    saveType.value = "error"
+    console.error(e)
   }
 })
+
+function handlePreview() {
+  router.push("/user/" + userStore.user?.id)
+}
 
 function triggerUpload() {
   fileInput.value?.click()
 }
 
-function handleFile(e) {
+async function handleFile(e) {
   const f = e.target.files?.[0]
   if (!f) return
-  
-  const validTypes = ["image/jpeg", "image/png", "image/jpg"]
-  if (!validTypes.includes(f.type)) {
-    saveMsg.value = "仅支持 JPG/PNG 格式"
-    saveType.value = "error"
-    return
-  }
-  if (f.size > 5 * 1024 * 1024) {
-    saveMsg.value = "头像大小不能超过 5MB"
-    saveType.value = "error"
-    return
-  }
-  
-  file.value = f
   previewUrl.value = URL.createObjectURL(f)
-  uploadAvatar()
+  await uploadAvatar(f)
 }
 
-async function uploadAvatar() {
-  if (!file.value) return
+async function uploadAvatar(file) {
   saving.value = true
   try {
     const fd = new FormData()
-    fd.append("avatar", file.value)
+    fd.append("avatar", file)
     const res = await accountsApi.uploadAvatar(fd)
     form.avatar_url = res.avatar_url
     previewUrl.value = ""
@@ -184,15 +181,6 @@ async function uploadAvatar() {
   }
 }
 
-const currentEmail = ref("")
-const pwForm = reactive({ old_password: "", new_password: "" })
-const pwSaving = ref(false)
-const emailForm = reactive({ email: "" })
-const emailSaving = ref(false)
-const showCancelDialog = ref(false)
-const cancelForm = reactive({ reason: "", password: "" })
-const cancelSaving = ref(false)
-
 async function saveProfile() {
   if (!form.nickname.trim()) {
     saveMsg.value = "昵称不能为空"
@@ -205,10 +193,10 @@ async function saveProfile() {
       nickname: form.nickname,
       bio: form.bio,
       gender: form.gender,
-      privacy: form.privacy,
+      birthday: form.birthday || undefined,
     })
     userStore.setUser(res)
-    saveMsg.value = "保存成功！"
+    saveMsg.value = "保存成功"
     saveType.value = "success"
   } catch (e) {
     saveMsg.value = e.message || "保存失败"
@@ -217,108 +205,153 @@ async function saveProfile() {
     saving.value = false
   }
 }
-
-async function changePassword() {
-  if (!pwForm.old_password || !pwForm.new_password) {
-    saveMsg.value = "请填写完整"
-    saveType.value = "error"
-    return
-  }
-  if (pwForm.new_password.length < 6) {
-    saveMsg.value = "新密码至少6位"
-    saveType.value = "error"
-    return
-  }
-  pwSaving.value = true
-  try {
-    await accountsApi.changePassword({ old_password: pwForm.old_password, new_password: pwForm.new_password })
-    saveMsg.value = "密码修改成功"
-    saveType.value = "success"
-    pwForm.old_password = ""
-    pwForm.new_password = ""
-  } catch (e) {
-    saveMsg.value = e.message || "修改失败"
-    saveType.value = "error"
-  } finally {
-    pwSaving.value = false
-  }
-}
-
-async function bindEmail() {
-  if (!emailForm.email.trim()) {
-    saveMsg.value = "请输入邮箱"
-    saveType.value = "error"
-    return
-  }
-  emailSaving.value = true
-  try {
-    await accountsApi.bindEmail({ email: emailForm.email.trim() })
-    currentEmail.value = emailForm.email.trim()
-    saveMsg.value = "邮箱绑定成功"
-    saveType.value = "success"
-  } catch (e) {
-    saveMsg.value = e.message || "绑定失败"
-    saveType.value = "error"
-  } finally {
-    emailSaving.value = false
-  }
-}
-
-async function handleLogout() {
-  try {
-    const refresh = localStorage.getItem("refresh_token")
-    if (refresh) {
-      await accountsApi.logout({ refresh })
-    }
-  } catch (e) { /* ignore */ }
-  localStorage.removeItem("access_token")
-  localStorage.removeItem("refresh_token")
-  userStore.clearUser()
-  router.push("/login")
-}
-
-async function confirmCancel() {
-  if (!cancelForm.password) {
-    saveMsg.value = "请输入密码确认"
-    saveType.value = "error"
-    return
-  }
-  cancelSaving.value = true
-  try {
-    await accountsApi.cancelAccount({
-      reason: cancelForm.reason,
-      password: cancelForm.password,
-    })
-    localStorage.removeItem("access_token")
-    localStorage.removeItem("refresh_token")
-    userStore.clearUser()
-    router.push("/login")
-  } catch (e) {
-    saveMsg.value = e.message || "注销失败"
-    saveType.value = "error"
-    cancelSaving.value = false
-  }
-}
 </script>
 
 <style scoped>
-.settings { padding-bottom: 60px; }
-.content { max-width: 600px; margin: 0 auto; padding: 16px; }
-.header { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
-.header h2 { margin: 0; font-size: 18px; }
-.section { margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid #f0f0f0; }
-.section-title { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 12px; }
-.avatar-upload { position: relative; width: 80px; height: 80px; cursor: pointer; border-radius: 50%; overflow: hidden; }
-.upload-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; border-radius: 50%; }
-.avatar-upload:hover .upload-overlay { opacity: 1; }
-.upload-overlay span { color: white; font-size: 12px; }
-.hint { font-size: 12px; color: #999; margin-top: 6px; }
-.mb-3 { margin-bottom: 16px; }
-.w-full { width: 100%; }
-.mb-2 { margin-bottom: 8px; }
-.mt-2 { margin-top: 8px; }
-.email-row { display: flex; gap: 8px; align-items: center; }
-.email-input { flex: 1; }
-.danger-zone { color: #ff2442; }
-.cancel-warning { font-size: 14px; color: #ff2442; margin-bottom: 12px; font-weight: 600; }
+.edit-profile-page {
+  min-height: 100vh;
+  background: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+.top-nav {
+  display: flex;
+  align-items: center;
+  height: 52px;
+  padding: 0 16px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.back-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+.nav-title {
+  flex: 1;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+.preview-btn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: #ff2442;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.content {
+  padding: 12px 16px 40px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.mb-3 { margin-bottom: 12px; }
+
+/* Profile cards */
+.profile-card {
+  background: #f7f7f7;
+  border-radius: 12px;
+  padding: 0 16px;
+  margin-bottom: 12px;
+}
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+  padding: 6px 0;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+.info-row:last-child {
+  border-bottom: none;
+}
+.row-label {
+  font-size: 15px;
+  color: #666;
+  white-space: nowrap;
+  min-width: 56px;
+}
+.row-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: flex-end;
+}
+.input-row {
+  flex: 1;
+  max-width: 70%;
+}
+.inline-input {
+  width: 100%;
+}
+.inline-input :deep(.el-input__wrapper) {
+  background: transparent;
+  box-shadow: none !important;
+  padding: 0;
+  border: none;
+}
+.inline-input :deep(.el-input__inner) {
+  text-align: right;
+  font-size: 14px;
+  color: #333;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+.inline-input :deep(.el-input__inner::placeholder) {
+  color: #bbb;
+}
+.select-row {
+  cursor: pointer;
+  gap: 4px;
+}
+.select-row span {
+  font-size: 14px;
+  color: #333;
+}
+.select-row span.placeholder {
+  color: #bbb;
+}
+
+/* Save button */
+.save-btn {
+  width: 100%;
+  height: 44px;
+  border: none;
+  border-radius: 22px;
+  background: #ff2442;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: opacity 0.2s;
+}
+.save-btn:hover { opacity: 0.9; }
+.save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Pickers */
+.picker-options {
+  padding: 8px 0;
+}
+.picker-option {
+  padding: 14px 0;
+  text-align: center;
+  font-size: 15px;
+  color: #333;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+}
+.picker-option:last-child { border-bottom: none; }
+.picker-option:hover { color: #ff2442; }
 </style>

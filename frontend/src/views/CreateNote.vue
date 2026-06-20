@@ -119,7 +119,7 @@
       </div>
 
       <!-- Image: edit cards (shown after images uploaded) -->
-      <div v-if="activeFormat === 'image' && imagePreviews.length" class="image-edit-wrapper">
+      <div v-if="activeFormat === 'image' && (imagePreviews.length || textStepDone)" class="image-edit-wrapper">
         <div class="edit-card">
           <div class="edit-card-header">
             <svg class="card-header-icon" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2">
@@ -137,7 +137,7 @@
             <div v-for="(img,i) in imagePreviews" :key="i" class="thumb-card" @click="previewImage(i)">
               <img :src="img" />
               <div class="thumb-remove" @click.stop="removeImage(i)">
-                <svg viewBox="0 0 24 24" fill="white" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <svg viewBox="0 0 24 24" width="12" height="12" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </div>
               <div class="thumb-order">{{ i + 1 }}</div>
             </div>
@@ -403,7 +403,8 @@ function triggerUpload() {
       previewUrl.value = URL.createObjectURL(files[0])
     } else {
       files.forEach(f => {
-        imageFiles.value.push(f)
+        textStepDone.value = true
+      imageFiles.value.push(f)
         imagePreviews.value.push(URL.createObjectURL(f))
       })
     }
@@ -411,6 +412,10 @@ function triggerUpload() {
   input.click()
 }
 
+function removeImage(idx) {
+  imageFiles.value.splice(idx, 1)
+  imagePreviews.value.splice(idx, 1)
+}
 function handleDrop(e) {
   const files = Array.from(e.dataTransfer.files || [])
   if (activeFormat.value === "video" && files[0]) {
@@ -419,6 +424,7 @@ function handleDrop(e) {
     captureVideoFrame(files[0])
   } else {
     files.forEach(f => {
+      textStepDone.value = true
       imageFiles.value.push(f)
       imagePreviews.value.push(URL.createObjectURL(f))
     })
@@ -663,7 +669,7 @@ async function handlePublish() {
 .thumb-card { width: 100px; height: 100px; border-radius: 12px; overflow: hidden; position: relative; flex-shrink: 0; background: #f5f5f5; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .thumb-card img { width: 100%; height: 100%; object-fit: cover; }
 .thumb-card.thumb-empty { border: 1px dashed #e8e8e8; cursor: default; }
-.thumb-remove { position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity 0.15s; }
+.thumb-remove { position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 1; }
 .thumb-card:hover .thumb-remove { opacity: 1; }
 .thumb-order { position: absolute; bottom: 4px; left: 4px; width: 18px; height: 18px; background: rgba(0,0,0,0.5); color: white; font-size: 10px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 .img-title-input { width: 100%; border: none; border-bottom: 1px solid #f0f0f0; padding: 12px 0; font-size: 17px; font-weight: 600; outline: none; font-family: inherit; color: #222; }

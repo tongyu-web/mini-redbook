@@ -119,19 +119,20 @@ watch(() => props.category, loadNotes)
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .waterfall-grid {
-  column-count: 2;
-  column-gap: 10px;
+  column-count: 3;
+  column-gap: 14px;
 }
 .feed-card {
   break-inside: avoid;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
   background: #fff;
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
 }
 .feed-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+.feed-card { border: 1px solid #f0f0f0; }
 .card-media {
   position: relative;
   overflow: hidden;
@@ -150,9 +151,9 @@ watch(() => props.category, loadNotes)
   background: rgba(0,0,0,0.7); border-radius: 4px;
   padding: 3px 6px; display: flex; align-items: center; gap: 3px;
 }
-.card-body { padding: 8px 10px 10px; }
+.card-body { padding: 6px 8px 8px; }
 .card-title {
-  font-size: 13px; font-weight: 600; line-height: 1.3;
+  font-size: 12px; font-weight: 600; line-height: 1.3;
   margin: 0 0 4px; color: #222;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
@@ -163,13 +164,13 @@ watch(() => props.category, loadNotes)
   padding-top: 6px; border-top: 1px solid #f5f5f5;
 }
 .card-author { display: flex; align-items: center; gap: 6px; min-width: 0; }
-.author-avatar { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.author-avatar { width: 16px; height: 16px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
 .author-avatar-placeholder {
   display: flex; align-items: center; justify-content: center;
   background: #ff2442; color: white; font-size: 10px; font-weight: 600;
 }
-.author-name { font-size: 12px; color: #999; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.card-likes { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #999; flex-shrink: 0; }
+.author-name { font-size: 11px; color: #999; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card-likes { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #999; flex-shrink: 0; }
 .card-category { margin-bottom: 4px; }
 .cat-badge { display: inline-block; background: #fff0f0; color: #ff2442; font-size: 10px; padding: 1px 8px; border-radius: 8px; font-weight: 600; }
 </style>

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="create-page">
     <!-- Format tabs bar -->
     <div class="tabs-bar">
@@ -42,7 +42,7 @@
     <!-- Upload area -->
         <div class="upload-container">
       <!-- Upload zone (same big box for all formats, shown when no media) -->
-      <div v-if="activeFormat !== 'image' || !imagePreviews.length" class="upload-zone" @click="triggerUpload" @dragover.prevent @drop.prevent="handleDrop">
+      <div v-if="!(activeFormat === 'image' && imagePreviews.length) && !(activeFormat === 'video' && previewUrl)" class="upload-zone" @click="triggerUpload" @dragover.prevent @drop.prevent="handleDrop">
         <div class="upload-icon-wrapper">
           <svg class="cloud-icon" viewBox="0 0 64 64" fill="none" stroke="#ccc" stroke-width="2.5">
             <path d="M44 28a12 12 0 0 0-23.7-2.5A8 8 0 0 0 20 41h22a10 10 0 0 0 2-19.8z"/>
@@ -55,12 +55,63 @@
         <p class="upload-note" v-else-if="activeFormat === 'image'">支持 JPG、PNG、WEBP 格式，单张不超过20MB</p>
       </div>
 
-      <!-- Video / Article: preview + form (same as before) -->
-      <div v-if="activeFormat !== 'image'">
+      <!-- Video editing module (shown after video uploaded) -->
+      <div v-if="activeFormat === 'video' && previewUrl" class="image-edit-wrapper">
+        <div class="edit-card">
+          <div class="edit-card-header">
+            <svg class="card-header-icon" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2">
+              <polygon points="5,3 19,12 5,21"/>
+            </svg>
+            <span class="edit-card-title">视频编辑</span>
+          </div>
+          <div class="video-preview-area">
+            <video :src="previewUrl" controls class="edit-video" />
+          </div>
+        </div>
+        <div class="edit-card">
+          <div class="edit-card-header">
+            <svg class="card-header-icon" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <span class="edit-card-title">内容编辑</span>
+          </div>
+          <input v-model="form.title" class="img-title-input" placeholder="添加标题..." maxlength="100" />
+          <div class="img-content-wrapper">
+            <textarea v-model="form.content" class="img-content-input" placeholder="分享你的故事、经验或灵感..." rows="5" maxlength="1000"></textarea>
+            <span class="content-counter">{{ form.content.length }}/1000</span>
+          </div>
+          <div class="quick-bar">
+            <div class="quick-actions">
+              <button class="quick-btn" @click="addTagToContent()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                <span>话题 #</span>
+              </button>
+            </div>
+            <div class="hot-tags">
+              <span class="hot-tag-label">热门推荐：</span>
+              <span v-for="t in hotTags" :key="t.name" class="hot-tag" :class="{ 'tag-active': TAG_TO_CATEGORY[t.name] && form.category === TAG_TO_CATEGORY[t.name] }" @click="insertTagToContent(t.name)">#{{ t.name }}</span>
+            <span v-if="autoCategoryLabel" class="auto-category-label">{{ autoCategoryLabel }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="edit-card publish-card">
+          <div class="publish-row">
+            <div class="publish-info">
+              <span class="publish-count">视频已就绪</span>
+              <span class="publish-divider">|</span>
+              <span class="publish-count">{{ form.content.length }}/1000 字</span>
+            </div>
+            <button class="publish-btn-primary" :disabled="!form.title || !previewUrl" @click="handlePublish">{{ isEdit ? "保存修改" : "发布笔记" }}</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Article: simple form -->
+      <div v-if="activeFormat === 'article'">
         <div v-if="previewUrl" class="preview-area">
           <video v-if="activeFormat === 'video'" :src="previewUrl" controls class="preview-video" />
         </div>
-        <div v-if="previewUrl || imagePreviews.length" class="form-fields">
+        <div v-if="previewUrl" class="form-fields">
           <input v-model="form.title" class="field-input title-input" placeholder="添加标题..." maxlength="100" />
           <textarea v-model="form.content" class="field-input content-input" placeholder="填写正文..." rows="4" maxlength="2000"></textarea>
           <div class="category-selector">
@@ -270,6 +321,7 @@ const userStore = useUserStore()
 const activeFormat = ref("video")
 const previewUrl = ref("")
 const videoFile = ref(null)
+const videoCoverFile = ref(null)
 const imageFiles = ref([])
 const imagePreviews = ref([])
 const previewImgVisible = ref(false)
@@ -357,6 +409,7 @@ function triggerUpload() {
     const files = Array.from(e.target.files || [])
     if (activeFormat.value === "video" && files[0]) {
       videoFile.value = files[0]
+      captureVideoFrame(files[0])
       previewUrl.value = URL.createObjectURL(files[0])
     } else {
       files.forEach(f => {
@@ -373,6 +426,7 @@ function handleDrop(e) {
   if (activeFormat.value === "video" && files[0]) {
     videoFile.value = files[0]
     previewUrl.value = URL.createObjectURL(files[0])
+    captureVideoFrame(files[0])
   } else {
     files.forEach(f => {
       imageFiles.value.push(f)
@@ -381,25 +435,34 @@ function handleDrop(e) {
   }
 }
 
-function removeImage(i) {
-  imageFiles.value.splice(i, 1)
-  imagePreviews.value.splice(i, 1)
-}
 
-function addTag() {
-  const name = tagInput.value.trim()
-  if (!name || form.tag_names.length >= 8) { showTagInput.value = false; return }
-  if (!form.tag_names.includes(name)) form.tag_names.push(name)
-  tagInput.value = ""
-  showTagInput.value = false
-}
-
-function removeTag(i) { form.tag_names.splice(i, 1) }
-
-function parseTagsFromContent(text) {
-  const matches = text.match(/#([^#\s]+)/g)
-  if (!matches) return []
-  return matches.map(t => t.slice(1)).filter(Boolean)
+function captureVideoFrame(file) {
+  const video = document.createElement("video")
+  video.preload = "metadata"
+  video.muted = true
+  video.playsInline = true
+  video.src = URL.createObjectURL(file)
+  video.onloadeddata = () => {
+    video.currentTime = 0.1
+  }
+  video.onseeked = () => {
+    const canvas = document.createElement("canvas")
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+    const ctx = canvas.getContext("2d")
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+    canvas.toBlob((blob) => {
+      if (blob) {
+        videoCoverFile.value = new File([blob], "cover.jpg", { type: "image/jpeg" })
+      }
+    }, "image/jpeg", 0.85)
+    URL.revokeObjectURL(video.src)
+    video.remove()
+  }
+  video.onerror = () => {
+    URL.revokeObjectURL(video.src)
+    video.remove()
+  }
 }
 
 async function handlePublish() {
@@ -422,6 +485,9 @@ async function handlePublish() {
   form.tag_names.forEach(t => fd.append("tag_names", t))
   if (activeFormat.value === "video" && videoFile.value) {
     fd.append("video", videoFile.value)
+    if (videoCoverFile.value) {
+      fd.append("cover_img", videoCoverFile.value)
+    }
   } else {
     imageFiles.value.forEach(f => fd.append("images", f))
   }
@@ -527,6 +593,8 @@ async function handlePublish() {
   background: #000;
 }
 .preview-video { width: 100%; max-height: 500px; display: block; }
+.video-preview-area { width: 100%; border-radius: 12px; overflow: hidden; background: #000; }
+.edit-video { width: 100%; max-height: 400px; display: block; }
 .preview-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .preview-img-wrapper { position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden; }
 .preview-img-wrapper img { width: 100%; height: 100%; object-fit: cover; }
@@ -646,3 +714,8 @@ async function handlePublish() {
 .preview-fade-enter-from, .preview-fade-leave-to { opacity: 0; }
 
 </style>
+
+
+
+
+

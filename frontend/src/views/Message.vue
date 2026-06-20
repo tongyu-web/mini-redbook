@@ -1,8 +1,14 @@
 ﻿<template>
   <div class="message-page">
     <div class="content">
-      <el-tabs v-model="activeTab" @tab-change="loadTab">
-        <el-tab-pane label="私信" name="conversations">
+      <el-tabs v-model="activeTab" @tab-change="loadTab" class="msg-tabs">
+        <el-tab-pane name="conversations">
+          <template #label>
+            <span class="tab-label">
+              私信
+              <sup v-if="unreadMsgCount > 0" class="tab-dot">{{ unreadMsgCount > 99 ? "99+" : unreadMsgCount }}</sup>
+            </span>
+          </template>
           <div v-if="conversations.length" class="conv-list">
             <div v-for="conv in conversations" :key="conv.user_id" class="conv-item" @click="openChat(conv.user_id)">
               <img class="conv-avatar" :src="conv.avatar_url || defaultAvatar" />
@@ -20,51 +26,75 @@
           </div>
           <div v-else class="empty-state">暂无私信</div>
         </el-tab-pane>
-        <el-tab-pane label="评论和@" name="comment">
+        <el-tab-pane name="comment">
+          <template #label>
+            <span class="tab-label">
+              评论和 @
+              <sup v-if="commentUnread > 0" class="tab-dot">{{ commentUnread > 99 ? "99+" : commentUnread }}</sup>
+            </span>
+          </template>
           <div v-if="commentItems.length" class="notif-list">
             <div v-for="n in commentItems" :key="n.id" class="notif-item" @click="handleClick(n)">
               <el-avatar :size="40" :src="n.from_user_avatar" />
               <div class="notif-body">
                 <p><strong>{{ n.from_user_nickname }}</strong> 评论了你的笔记</p>
                 <p class="notif-preview">{{ n.comment_preview || n.content }}</p>
-                <span class="time">{{ n.created_at }}</span>
+                <span class="time">{{ formatTime(n.created_at) }}</span>
               </div>
             </div>
           </div>
           <div v-else class="empty-state">暂无评论</div>
         </el-tab-pane>
-        <el-tab-pane label="赞和收藏" name="like">
+        <el-tab-pane name="like">
+          <template #label>
+            <span class="tab-label">
+              赞和收藏
+              <sup v-if="likeUnread > 0" class="tab-dot">{{ likeUnread > 99 ? "99+" : likeUnread }}</sup>
+            </span>
+          </template>
           <div v-if="likeItems.length" class="notif-list">
             <div v-for="n in likeItems" :key="n.id" class="notif-item" @click="handleClick(n)">
               <el-avatar :size="40" :src="n.from_user_avatar" />
               <div class="notif-body">
                 <p><strong>{{ n.from_user_nickname }}</strong> {{ n.type === "favorite" ? "收藏" : "赞" }}了你的笔记</p>
-                <span class="time">{{ n.created_at }}</span>
+                <span class="time">{{ formatTime(n.created_at) }}</span>
               </div>
             </div>
           </div>
           <div v-else class="empty-state">暂无赞和收藏</div>
         </el-tab-pane>
-        <el-tab-pane label="新增关注" name="follow">
+        <el-tab-pane name="follow">
+          <template #label>
+            <span class="tab-label">
+              新增关注
+              <sup v-if="followUnread > 0" class="tab-dot">{{ followUnread > 99 ? "99+" : followUnread }}</sup>
+            </span>
+          </template>
           <div v-if="followItems.length" class="notif-list">
             <div v-for="n in followItems" :key="n.id" class="notif-item" @click="handleClick(n)">
               <el-avatar :size="40" :src="n.from_user_avatar" />
               <div class="notif-body">
                 <p><strong>{{ n.from_user_nickname }}</strong> 关注了你</p>
-                <span class="time">{{ n.created_at }}</span>
+                <span class="time">{{ formatTime(n.created_at) }}</span>
               </div>
             </div>
           </div>
           <div v-else class="empty-state">暂无新增关注</div>
         </el-tab-pane>
-        <el-tab-pane label="消息通知" name="message">
+        <el-tab-pane name="message">
+          <template #label>
+            <span class="tab-label">
+              消息通知
+              <sup v-if="msgNotifUnread > 0" class="tab-dot">{{ msgNotifUnread > 99 ? "99+" : msgNotifUnread }}</sup>
+            </span>
+          </template>
           <div v-if="messageItems.length" class="notif-list">
             <div v-for="n in messageItems" :key="n.id" class="notif-item" @click="handleMessageNotif(n)">
               <el-avatar :size="40" :src="n.from_user_avatar" />
               <div class="notif-body">
                 <p><strong>{{ n.from_user_nickname }}</strong> 给你发了一条私信</p>
                 <p class="notif-preview">{{ n.content }}</p>
-                <span class="time">{{ n.created_at }}</span>
+                <span class="time">{{ formatTime(n.created_at) }}</span>
               </div>
             </div>
           </div>
@@ -87,6 +117,12 @@ const activeTab = ref("conversations")
 
 const defaultAvatar = computed(() => "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23f0f0f0'/%3E%3Ctext x='50' y='55' text-anchor='middle' font-size='40' fill='%23ccc'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E")
 
+const unreadMsgCount = computed(() => notificationStore.unreadMessageCount || 0)
+const commentUnread = computed(() => notificationStore.byType?.comment || 0)
+const likeUnread = computed(() => (notificationStore.byType?.like || 0) + (notificationStore.byType?.favorite || 0))
+const followUnread = computed(() => notificationStore.byType?.follow || 0)
+const msgNotifUnread = computed(() => notificationStore.byType?.message || 0)
+
 const notifications = ref([])
 const commentItems = ref([])
 const likeItems = ref([])
@@ -98,6 +134,22 @@ onMounted(() => {
   loadConversations()
   loadNotifications()
 })
+
+
+function formatTime(t) {
+  if (!t) return ""
+  const d = new Date(t)
+  if (isNaN(d.getTime())) return t
+  const now = new Date()
+  const pad = n => String(n).padStart(2, "0")
+  if (d.toDateString() === now.toDateString()) {
+    return pad(d.getHours()) + ":" + pad(d.getMinutes())
+  }
+  const yesterday = new Date(now)
+  yesterday.setDate(yesterday.getDate() - 1)
+  if (d.toDateString() === yesterday.toDateString()) return "昨天 " + pad(d.getHours()) + ":" + pad(d.getMinutes())
+  return pad(d.getFullYear()) + '/' + pad(d.getMonth() + 1) + '/' + pad(d.getDate())
+}
 
 async function loadConversations() {
   try {
@@ -131,7 +183,6 @@ function loadTab() {
   }
 }
 
-
 function openChat(userId) {
   router.push("/chat/" + userId)
 }
@@ -157,6 +208,62 @@ async function handleClick(n) {
 <style scoped>
 .content { max-width: 700px; margin: 0 auto; padding: 16px; }
 .empty-state { text-align: center; padding: 60px 0; color: #bbb; font-size: 14px; }
+
+/* ===== Tab bar overrides ===== */
+.msg-tabs { --el-tabs-header-height: 44px; }
+.msg-tabs :deep(.el-tabs__header) {
+  margin: 0 0 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.msg-tabs :deep(.el-tabs__nav-wrap::after) {
+  height: 1px;
+  background: #f0f0f0;
+}
+.msg-tabs :deep(.el-tabs__active-bar) {
+  background: #ff2442;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+}
+.msg-tabs :deep(.el-tabs__item) {
+  height: 44px;
+  line-height: 44px;
+  font-size: 14px;
+  color: #555;
+  padding: 0 10px;
+  transition: color 0.15s;
+}
+.msg-tabs :deep(.el-tabs__item:hover) {
+  color: #333;
+}
+.msg-tabs :deep(.el-tabs__item.is-active) {
+  color: #ff2442;
+  font-weight: 600;
+}
+
+/* Tab badge — red dot at top-right */
+.tab-label {
+  position: relative;
+  display: inline-block;
+  line-height: 1;
+}
+.tab-dot {
+  position: absolute;
+  top: -6px;
+  right: -14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background: #ff2442;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 500;
+  border-radius: 10px;
+  line-height: 1;
+  box-sizing: border-box;
+}
 
 /* Conversations */
 .conv-list { display: flex; flex-direction: column; }
@@ -197,6 +304,4 @@ async function handleClick(n) {
 .notif-preview { font-size: 13px; color: #999; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .time { font-size: 12px; color: #bbb; }
 </style>
-
-
 

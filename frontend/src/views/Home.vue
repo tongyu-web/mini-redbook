@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="home-page">
     <div v-if="loading" class="loading-state">
       <div class="loading-spinner"></div>
@@ -9,6 +9,12 @@
       <div v-for="note in notes" :key="note.id" class="feed-card" @click="openNote(note.id)">
         <div class="card-media">
           <img v-if="note.cover_img" :src="note.cover_img" :alt="note.title" />
+          <div v-else-if="note.type === 1" class="card-video-placeholder">
+            <div class="video-play-circle">
+              <svg viewBox="0 0 24 24" fill="white" width="28" height="28"><polygon points="6,4 20,12 6,20"/></svg>
+            </div>
+            <span class="video-placeholder-label">视频</span>
+          </div>
           <div v-else class="card-placeholder">{{ note.title?.[0] || "R" }}</div>
           <div v-if="note.type === 1" class="video-badge">
             <svg viewBox="0 0 24 24" fill="white" width="12" height="12"><polygon points="5,3 19,12 5,21"/></svg>
@@ -146,6 +152,29 @@ watch(() => props.category, loadNotes)
   font-size: 2em; color: white;
   background: linear-gradient(135deg, #ff6b6b, #ee5a24);
 }
+.card-video-placeholder {
+  width: 100%;
+  aspect-ratio: 3/4;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+}
+.video-play-circle {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.2s, background 0.2s;
+}
+.feed-card:hover .video-play-circle {
+  transform: scale(1.1);
+  background: rgba(255,255,255,0.25);
+}
+.video-placeholder-label {
+  font-size: 11px; color: rgba(255,255,255,0.5);
+  letter-spacing: 2px; text-transform: uppercase;
+}
 .video-badge {
   position: absolute; bottom: 8px; left: 8px;
   background: rgba(0,0,0,0.7); border-radius: 4px;
@@ -174,3 +203,5 @@ watch(() => props.category, loadNotes)
 .card-category { margin-bottom: 4px; }
 .cat-badge { display: inline-block; background: #fff0f0; color: #ff2442; font-size: 10px; padding: 1px 8px; border-radius: 8px; font-weight: 600; }
 </style>
+
+

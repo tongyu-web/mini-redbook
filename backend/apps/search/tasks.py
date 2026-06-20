@@ -1,4 +1,4 @@
-from django.db.models import Q
+﻿from django.db.models import Q
 from .models import SearchHistory
 from config.constants import NOTE_STATUS_PUBLISHED, MAX_SEARCH_HISTORY, ACCOUNT_STATUS_NORMAL
 
@@ -69,17 +69,7 @@ class SearchTask:
 
     @staticmethod
     def recommend(user):
-        from apps.notes.models import Note, NoteTag, Tag
+        from apps.notes.models import Note
         from config.constants import NOTE_STATUS_PUBLISHED
-        if user and user.is_authenticated:
-            user_tags = NoteTag.objects.filter(note__user=user).values_list("tag_id", flat=True).distinct()
-            from apps.social.models import Follow
-            following_ids = Follow.objects.filter(follower=user).values_list("following_id", flat=True)
-            qs = Note.objects.filter(
-                Q(tags__in=list(user_tags)) | Q(user_id__in=list(following_ids)),
-                status=NOTE_STATUS_PUBLISHED
-            ).distinct().order_by("-created_at")
-        else:
-            hot_tags = Tag.objects.order_by("-hot_value")[:5]
-            qs = Note.objects.filter(tags__in=list(hot_tags), status=NOTE_STATUS_PUBLISHED).order_by("-created_at")
+        qs = Note.objects.filter(status=NOTE_STATUS_PUBLISHED).order_by("-created_at")
         return qs

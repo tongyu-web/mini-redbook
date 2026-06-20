@@ -23,7 +23,7 @@
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
         </svg>
         <span class="nav-label">消息</span>
-        <span v-if="notificationStore.totalUnread > 0" class="nav-badge">{{ notificationStore.totalUnread > 99 ? "99+" : notificationStore.totalUnread }}</span>
+        <span v-if="notificationStore.totalUnread > 0" class="nav-badge">{{ notificationStore.totalUnread > 9 ? (notificationStore.totalUnread > 99 ? "99+" : notificationStore.totalUnread + "+") : notificationStore.totalUnread }}</span>
       </div>
       <div class="nav-item" :class="{ active: userStore.isLoggedIn && $route.path === '/user/' + userStore.user?.id }" @click="goProfile">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -288,3 +288,4 @@ if (typeof document !== "undefined") {
 .account-fade-enter-active, .account-fade-leave-active { transition: opacity 0.15s, transform 0.15s; }
 .account-fade-enter-from, .account-fade-leave-to { opacity: 0; transform: translateY(4px); }
 </style>
+

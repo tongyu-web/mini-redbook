@@ -1,4 +1,4 @@
-from rest_framework import serializers
+﻿from rest_framework import serializers
 from .models import Note, Tag, Media, NoteTag, Comment
 
 class TagSerializer(serializers.ModelSerializer):
@@ -15,6 +15,7 @@ class NoteListSerializer(serializers.ModelSerializer):
     user_nickname = serializers.SerializerMethodField()
     user_avatar = serializers.SerializerMethodField()
     type_label = serializers.SerializerMethodField()
+    cover_img = serializers.SerializerMethodField()
 
     class Meta:
         model = Note
@@ -32,6 +33,14 @@ class NoteListSerializer(serializers.ModelSerializer):
 
     def get_type_label(self, obj):
         return "视频" if obj.type == 1 else "图文"
+
+    def get_cover_img(self, obj):
+        try:
+            if obj.cover_img and hasattr(obj.cover_img, "url") and obj.cover_img.url:
+                return obj.cover_img.url
+        except Exception:
+            pass
+        return None
 
 class NoteDetailSerializer(serializers.ModelSerializer):
     media_list = MediaSerializer(many=True, read_only=True)

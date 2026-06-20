@@ -103,9 +103,15 @@
       <template #footer>
         <el-button @click="pwdDialog = false">取消</el-button>
         <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="pwdSaving" @click="changePassword">确认修改</el-button>
+          <!-- Change Password Dialog -->
+    <el-dialog v-model="pwdDialog" title="修改密码" width="90%" max-width="380px">
+      <el-input v-model="pwdForm.old_password" type="password" placeholder="旧密码" class="dialog-input" show-password />
+      <el-input v-model="pwdForm.new_password" type="password" placeholder="新密码（至少6位）" class="dialog-input" show-password />
+      <template #footer>
+        <el-button @click="pwdDialog = false">取消</el-button>
+        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="pwdSaving" @click="changePassword">确认修改</el-button>
       </template>
     </el-dialog>
-
     <!-- Bind Email Dialog -->
     <el-dialog v-model="emailDialog" title="绑定邮箱" width="90%" max-width="380px">
       <el-input v-model="emailForm.email" placeholder="输入邮箱地址" class="dialog-input" />
@@ -115,7 +121,109 @@
         <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="emailSaving" @click="bindEmail">绑定</el-button>
       </template>
     </el-dialog>
+    <!-- Cancel Account Dialog -->
+    <el-dialog v-model="cancelDialog" title="注销账号" width="90%" max-width="380px">
+      <p style="font-size:14px;color:#ff2442;font-weight:600;margin-bottom:12px">此操作不可逆，请确认：</p>
+      <el-input v-model="cancelForm.reason" type="textarea" :rows="3" placeholder="请告诉我们注销原因（选填）" class="dialog-input" />
+      <el-input v-model="cancelForm.password" type="password" placeholder="请输入密码确认" class="dialog-input" show-password />
+      <template #footer>
+        <el-button @click="cancelDialog = false">取消</el-button>
+        <el-button type="danger" :loading="cancelSaving" @click="confirmCancel">确认注销</el-button>
+      </template>
+    </el-dialog></template>
+    </el-dialog>
 
+    <!-- Bind Email Dialog -->
+    <el-dialog v-model="emailDialog" title="绑定邮箱" width="90%" max-width="380px">
+      <el-input v-model="emailForm.email" placeholder="输入邮箱地址" class="dialog-input" />
+      <p v-if="currentEmail" style="font-size:12px;color:#999;margin:4px 0 0">当前绑定：{{ currentEmail }}</p>
+      <template #footer>
+        <el-button @click="emailDialog = false">取消</el-button>
+        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="emailSaving" @click="bindEmail">绑定</el-button>
+          <!-- Change Password Dialog -->
+    <el-dialog v-model="pwdDialog" title="修改密码" width="90%" max-width="380px">
+      <el-input v-model="pwdForm.old_password" type="password" placeholder="旧密码" class="dialog-input" show-password />
+      <el-input v-model="pwdForm.new_password" type="password" placeholder="新密码（至少6位）" class="dialog-input" show-password />
+      <template #footer>
+        <el-button @click="pwdDialog = false">取消</el-button>
+        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="pwdSaving" @click="changePassword">确认修改</el-button>
+      </template>
+    </el-dialog>
+    <!-- Bind Email Dialog -->
+    <el-dialog v-model="emailDialog" title="绑定邮箱" width="90%" max-width="380px">
+      <el-input v-model="emailForm.email" placeholder="输入邮箱地址" class="dialog-input" />
+      <p v-if="currentEmail" style="font-size:12px;color:#999;margin:4px 0 0">当前绑定：{{ currentEmail }}</p>
+      <template #footer>
+        <el-button @click="emailDialog = false">取消</el-button>
+        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="emailSaving" @click="bindEmail">绑定</el-button>
+      </template>
+    </el-dialog>
+    <!-- Cancel Account Dialog -->
+    <el-dialog v-model="cancelDialog" title="注销账号" width="90%" max-width="380px">
+      <p style="font-size:14px;color:#ff2442;font-weight:600;margin-bottom:12px">此操作不可逆，请确认：</p>
+      <el-input v-model="cancelForm.reason" type="textarea" :rows="3" placeholder="请告诉我们注销原因（选填）" class="dialog-input" />
+      <el-input v-model="cancelForm.password" type="password" placeholder="请输入密码确认" class="dialog-input" show-password />
+      <template #footer>
+        <el-button @click="cancelDialog = false">取消</el-button>
+        <el-button type="danger" :loading="cancelSaving" @click="confirmCancel">确认注销</el-button>
+      </template>
+    </el-dialog></template>
+    </el-dialog>
+
+    <!-- Cancel Account Dialog -->
+    <el-dialog v-model="cancelDialog" title="注销账号" width="90%" max-width="380px">
+      <p style="font-size:14px;color:#ff2442;font-weight:600;margin-bottom:12px">此操作不可逆，请确认：</p>
+      <el-input v-model="cancelForm.reason" type="textarea" :rows="3" placeholder="请告诉我们注销原因（选填）" class="dialog-input" />
+      <el-input v-model="cancelForm.password" type="password" placeholder="请输入密码确认" class="dialog-input" show-password />
+      <template #footer>
+        <el-button @click="cancelDialog = false">取消</el-button>
+        <el-button type="danger" :loading="cancelSaving" @click="confirmCancel">确认注销</el-button>
+          <!-- Change Password Dialog -->
+    <el-dialog v-model="pwdDialog" title="修改密码" width="90%" max-width="380px">
+      <el-input v-model="pwdForm.old_password" type="password" placeholder="旧密码" class="dialog-input" show-password />
+      <el-input v-model="pwdForm.new_password" type="password" placeholder="新密码（至少6位）" class="dialog-input" show-password />
+      <template #footer>
+        <el-button @click="pwdDialog = false">取消</el-button>
+        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="pwdSaving" @click="changePassword">确认修改</el-button>
+      </template>
+    </el-dialog>
+    <!-- Bind Email Dialog -->
+    <el-dialog v-model="emailDialog" title="绑定邮箱" width="90%" max-width="380px">
+      <el-input v-model="emailForm.email" placeholder="输入邮箱地址" class="dialog-input" />
+      <p v-if="currentEmail" style="font-size:12px;color:#999;margin:4px 0 0">当前绑定：{{ currentEmail }}</p>
+      <template #footer>
+        <el-button @click="emailDialog = false">取消</el-button>
+        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="emailSaving" @click="bindEmail">绑定</el-button>
+      </template>
+    </el-dialog>
+    <!-- Cancel Account Dialog -->
+    <el-dialog v-model="cancelDialog" title="注销账号" width="90%" max-width="380px">
+      <p style="font-size:14px;color:#ff2442;font-weight:600;margin-bottom:12px">此操作不可逆，请确认：</p>
+      <el-input v-model="cancelForm.reason" type="textarea" :rows="3" placeholder="请告诉我们注销原因（选填）" class="dialog-input" />
+      <el-input v-model="cancelForm.password" type="password" placeholder="请输入密码确认" class="dialog-input" show-password />
+      <template #footer>
+        <el-button @click="cancelDialog = false">取消</el-button>
+        <el-button type="danger" :loading="cancelSaving" @click="confirmCancel">确认注销</el-button>
+      </template>
+    </el-dialog></template>
+    </el-dialog>    <!-- Change Password Dialog -->
+    <el-dialog v-model="pwdDialog" title="修改密码" width="90%" max-width="380px">
+      <el-input v-model="pwdForm.old_password" type="password" placeholder="旧密码" class="dialog-input" show-password />
+      <el-input v-model="pwdForm.new_password" type="password" placeholder="新密码（至少6位）" class="dialog-input" show-password />
+      <template #footer>
+        <el-button @click="pwdDialog = false">取消</el-button>
+        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="pwdSaving" @click="changePassword">确认修改</el-button>
+      </template>
+    </el-dialog>
+    <!-- Bind Email Dialog -->
+    <el-dialog v-model="emailDialog" title="绑定邮箱" width="90%" max-width="380px">
+      <el-input v-model="emailForm.email" placeholder="输入邮箱地址" class="dialog-input" />
+      <p v-if="currentEmail" style="font-size:12px;color:#999;margin:4px 0 0">当前绑定：{{ currentEmail }}</p>
+      <template #footer>
+        <el-button @click="emailDialog = false">取消</el-button>
+        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="emailSaving" @click="bindEmail">绑定</el-button>
+      </template>
+    </el-dialog>
     <!-- Cancel Account Dialog -->
     <el-dialog v-model="cancelDialog" title="注销账号" width="90%" max-width="380px">
       <p style="font-size:14px;color:#ff2442;font-weight:600;margin-bottom:12px">此操作不可逆，请确认：</p>
@@ -214,7 +322,7 @@ async function confirmCancel() {
     window.location.reload()
   } catch (e) { ElMessage.error(e.message || "注销失败") }
   finally { cancelSaving.value = false }
-} = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ddd'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E"
+}
 
 function goCreate() {
   if (!userStore.isLoggedIn) { openLoginDialog(); return }

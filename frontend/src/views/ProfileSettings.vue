@@ -56,8 +56,6 @@
         </div>
       </div>
 
-
-
       <button class="save-btn" :disabled="saving" @click="saveProfile">{{ saving ? '保存中...' : '保存' }}</button>
     </div>
 
@@ -105,8 +103,6 @@ const form = reactive({
   bio: "",
   gender: "UNKNOWN",
   birthday: "",
-
-
 
 })
 

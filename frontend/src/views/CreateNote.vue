@@ -412,8 +412,8 @@ function triggerUpload() {
 }
 
 function removeImage(idx) {
-  imageFiles.value.splice(idx, 1)
-  imagePreviews.value.splice(idx, 1)
+  imageFiles.value = imageFiles.value.filter((_, i) => i !== idx)
+  imagePreviews.value = imagePreviews.value.filter((_, i) => i !== idx)
 }
 function handleDrop(e) {
   const files = Array.from(e.dataTransfer.files || [])

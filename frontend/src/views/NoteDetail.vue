@@ -50,8 +50,8 @@
                       <el-button text circle size="small"><span style="font-size:18px">&#8942;</span></el-button>
                       <template #dropdown>
                         <el-dropdown-menu>
-                          <el-dropdown-item command="edit">&#9998;&#65039; 编辑</el-dropdown-item>
-                          <el-dropdown-item command="delete" divided>&#128465;&#65039; 删除</el-dropdown-item>
+                          <el-dropdown-item command="edit">编辑</el-dropdown-item>
+                          <el-dropdown-item command="delete" divided>删除</el-dropdown-item>
                         </el-dropdown-menu>
                       </template>
                     </el-dropdown>
@@ -1030,7 +1030,29 @@ function formatTime(dateStr) {
 .follow-btn-red:hover { background: #d61e38 !important; border-color: #d61e38 !important; }
 .send-btn-red { background: #ff2442 !important; border-color: #ff2442 !important; }
 .send-btn-red:hover { background: #d61e38 !important; border-color: #d61e38 !important; }
+
 </style>
+<style>
+/* Dropdown red theme - global style for teleported menus */
+.el-dropdown-menu__item {
+  font-size: 13px !important;
+  padding: 8px 20px !important;
+  transition: all 0.15s !important;
+}
+.el-dropdown-menu__item:hover,
+.el-dropdown-menu__item:focus {
+  background: #fff0f0 !important;
+  color: #ff2442 !important;
+}
+.el-dropdown-menu__item.is-active {
+  background: #fff0f0 !important;
+  color: #ff2442 !important;
+  font-weight: 600 !important;
+}
+</style>
+
+
+
 
 
 

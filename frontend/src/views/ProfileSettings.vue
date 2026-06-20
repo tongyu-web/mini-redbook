@@ -56,27 +56,7 @@
         </div>
       </div>
 
-      <!-- Card: 更多信息 -->
-      <div class="profile-card">
-        <div class="info-row">
-          <span class="row-label">地区</span>
-          <div class="row-right input-row">
-            <el-input v-model="form.region" placeholder="选择所在地区" class="inline-input" />
-          </div>
-        </div>
-        <div class="info-row">
-          <span class="row-label">职业</span>
-          <div class="row-right input-row">
-            <el-input v-model="form.occupation" placeholder="选择职业" class="inline-input" />
-          </div>
-        </div>
-        <div class="info-row">
-          <span class="row-label">学校</span>
-          <div class="row-right input-row">
-            <el-input v-model="form.school" placeholder="选择学校" class="inline-input" />
-          </div>
-        </div>
-      </div>
+
 
       <button class="save-btn" :disabled="saving" @click="saveProfile">{{ saving ? '保存中...' : '保存' }}</button>
     </div>
@@ -125,9 +105,9 @@ const form = reactive({
   bio: "",
   gender: "UNKNOWN",
   birthday: "",
-  region: "",
-  occupation: "",
-  school: "",
+
+
+
 })
 
 const genderLabel = computed(() => {

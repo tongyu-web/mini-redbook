@@ -45,7 +45,7 @@
                   </div>
                   <div class="author-actions">
                     <el-button v-if="!isOwner && userStore.isLoggedIn" size="small" round plain @click="sendPrivateMessage">发私信</el-button>
-                    <el-button v-if="!isOwner && userStore.isLoggedIn" size="small" :type="note.is_following ? 'default' : 'primary'" round @click="toggleFollow">{{ note.is_following ? '已关注' : '+ 关注' }}</el-button>
+                    <el-button v-if="!isOwner && userStore.isLoggedIn" size="small" :type="note.is_following ? 'default' : 'danger'" round :class="{ 'follow-btn-red': !note.is_following }" @click="toggleFollow">{{ note.is_following ? '已关注' : '+ 关注' }}</el-button>
                     <el-dropdown v-if="isOwner" @command="handleAction" trigger="click">
                       <el-button text circle size="small"><span style="font-size:18px">&#8942;</span></el-button>
                       <template #dropdown>
@@ -1022,7 +1022,12 @@ function formatTime(dateStr) {
     border-top: 1px solid #f0f0f0;
   }
 }
+.follow-btn-red { background: #ff2442 !important; border-color: #ff2442 !important; }
+.follow-btn-red:hover { background: #d61e38 !important; border-color: #d61e38 !important; }
 </style>
+
+
+
 
 
 

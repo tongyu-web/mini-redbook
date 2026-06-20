@@ -49,8 +49,8 @@
         </div>
         <div class="info-row">
           <span class="row-label">生日</span>
-          <div class="row-right select-row" @click="showBirthPicker = true">
-            <span :class="{ 'placeholder': !form.birthday }">{{ form.birthday || '选择生日' }}</span>
+          <div class="row-right date-picker-row">
+            <el-date-picker v-model="form.birthday" type="date" placeholder="选择生日" value-format="YYYY-MM-DD" :teleported="false" class="birthday-picker" />
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ccc" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
           </div>
         </div>
@@ -68,14 +68,7 @@
       </div>
     </el-dialog>
 
-    <!-- Birthday picker dialog -->
-    <el-dialog v-model="showBirthPicker" title="选择生日" width="85%" max-width="360px">
-      <el-date-picker v-model="birthdayTemp" type="date" placeholder="选择日期" style="width:100%" value-format="YYYY-MM-DD" />
-      <template #footer>
-        <el-button @click="showBirthPicker = false">取消</el-button>
-        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" @click="form.birthday = birthdayTemp; showBirthPicker = false">确定</el-button>
-      </template>
-    </el-dialog>
+    
   </div>
 </template>
 
@@ -92,10 +85,6 @@ const saving = ref(false)
 const previewUrl = ref("")
 const saveMsg = ref("")
 const saveType = ref("success")
-
-const showGenderPicker = ref(false)
-const showBirthPicker = ref(false)
-const birthdayTemp = ref("")
 
 const form = reactive({
   avatar_url: "",
@@ -299,6 +288,36 @@ async function saveProfile() {
   color: #bbb;
 }
 
+/* Birthday date picker */
+.date-picker-row {
+  flex: 1;
+  max-width: 70%;
+  gap: 4px;
+}
+.birthday-picker {
+  width: 100%;
+}
+.birthday-picker :deep(.el-input__wrapper) {
+  background: transparent;
+  box-shadow: none !important;
+  padding: 0;
+  border: none;
+}
+.birthday-picker :deep(.el-input__inner) {
+  text-align: right;
+  font-size: 14px;
+  color: #333;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+.birthday-picker :deep(.el-input__inner::placeholder) {
+  color: #bbb;
+}
+.birthday-picker :deep(.el-input__prefix) {
+  display: none;
+}
 /* Save button */
 .save-btn {
   width: 100%;

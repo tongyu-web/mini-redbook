@@ -137,7 +137,7 @@
             <div v-for="(img,i) in imagePreviews" :key="i" class="thumb-card" @click="previewImage(i)">
               <img :src="img" />
               <div class="thumb-remove" @click.stop="removeImage(i)">
-                <svg viewBox="0 0 24 24" fill="white" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <svg viewBox="0 0 24 24" width="12" height="12" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </div>
               <div class="thumb-order">{{ i + 1 }}</div>
             </div>
@@ -426,6 +426,13 @@ function handleDrop(e) {
 }
 
 
+function removeImage(idx) {
+  imageFiles.value = imageFiles.value.filter((_, i) => i !== idx)
+  imagePreviews.value = imagePreviews.value.filter((_, i) => i !== idx)
+}
+
+function parseTagsFromContent(text) { return (text.match(/#[^\s#]+/g) || []).map(t => t.slice(1)) }
+
 function captureVideoFrame(file) {
   const video = document.createElement("video")
   video.preload = "metadata"
@@ -704,6 +711,7 @@ async function handlePublish() {
 .preview-fade-enter-from, .preview-fade-leave-to { opacity: 0; }
 
 </style>
+
 
 
 

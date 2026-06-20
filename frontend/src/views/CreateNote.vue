@@ -119,7 +119,7 @@
       </div>
 
       <!-- Image: edit cards (shown after images uploaded) -->
-      <div v-if="activeFormat === 'image' && (imagePreviews.length || textStepDone)" class="image-edit-wrapper">
+      <div v-if="activeFormat === 'image' && (imagePreviews.length || hasEdited)" class="image-edit-wrapper">
         <div class="edit-card">
           <div class="edit-card-header">
             <svg class="card-header-icon" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2">
@@ -310,6 +310,7 @@ const userStore = useUserStore()
 
 const activeFormat = ref("video")
 const previewUrl = ref("")
+const hasEdited = ref(false)
 const videoFile = ref(null)
 const videoCoverFile = ref(null)
 const imageFiles = ref([])
@@ -402,9 +403,9 @@ function triggerUpload() {
       captureVideoFrame(files[0])
       previewUrl.value = URL.createObjectURL(files[0])
     } else {
+      hasEdited.value = true
       files.forEach(f => {
-        textStepDone.value = true
-      imageFiles.value.push(f)
+        imageFiles.value.push(f)
         imagePreviews.value.push(URL.createObjectURL(f))
       })
     }
@@ -423,8 +424,8 @@ function handleDrop(e) {
     previewUrl.value = URL.createObjectURL(files[0])
     captureVideoFrame(files[0])
   } else {
-    files.forEach(f => {
-      textStepDone.value = true
+    hasEdited.value = true
+      files.forEach(f => {
       imageFiles.value.push(f)
       imagePreviews.value.push(URL.createObjectURL(f))
     })
@@ -669,7 +670,7 @@ async function handlePublish() {
 .thumb-card { width: 100px; height: 100px; border-radius: 12px; overflow: hidden; position: relative; flex-shrink: 0; background: #f5f5f5; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .thumb-card img { width: 100%; height: 100%; object-fit: cover; }
 .thumb-card.thumb-empty { border: 1px dashed #e8e8e8; cursor: default; }
-.thumb-remove { position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 1; }
+.thumb-remove { position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity 0.15s; }
 .thumb-card:hover .thumb-remove { opacity: 1; }
 .thumb-order { position: absolute; bottom: 4px; left: 4px; width: 18px; height: 18px; background: rgba(0,0,0,0.5); color: white; font-size: 10px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 .img-title-input { width: 100%; border: none; border-bottom: 1px solid #f0f0f0; padding: 12px 0; font-size: 17px; font-weight: 600; outline: none; font-family: inherit; color: #222; }

@@ -411,6 +411,10 @@ function triggerUpload() {
   input.click()
 }
 
+function removeImage(idx) {
+  imageFiles.value = imageFiles.value.filter((_, i) => i !== idx)
+  imagePreviews.value = imagePreviews.value.filter((_, i) => i !== idx)
+}
 function handleDrop(e) {
   const files = Array.from(e.dataTransfer.files || [])
   if (activeFormat.value === "video" && files[0]) {

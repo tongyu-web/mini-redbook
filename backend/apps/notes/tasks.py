@@ -47,6 +47,18 @@ class NoteTask:
             note.cover_img = video.get("cover"); note.type = 1
             note.save(update_fields=["cover_img", "type"])
             Media.objects.create(note=note, file=video.get("file"), media_type=1, order=0)
+        # Auto-set category from tag names
+        TAG_TO_CATEGORY = {
+            "美妆": "beauty", "旅行": "travel", "美食": "food",
+            "穿搭": "fashion", "健身": "fitness", "数码": "tech",
+            "学习": "study", "艺术": "art", "生活": "life", "其他": "other",
+        }
+        tag_names = data.get("tag_names", [])
+        for name in tag_names:
+            if name in TAG_TO_CATEGORY:
+                note.category = TAG_TO_CATEGORY[name]
+                note.save(update_fields=["category"])
+                break
         tag_ids = data.get("tag_ids", []); tag_names = data.get("tag_names", [])
         all_ids = list(tag_ids)
         for name in tag_names:
@@ -81,9 +93,21 @@ class NoteTask:
         if "tag_ids" in validated_data or "tag_names" in validated_data:
             NoteTag.objects.filter(note=note).delete()
             all_ids = list(validated_data.get("tag_ids", []))
-            for name in validated_data.get("tag_names", []):
+            tag_names = validated_data.get("tag_names", [])
+            for name in tag_names:
                 t, _ = Tag.objects.get_or_create(name=name); all_ids.append(t.id)
             for tid in all_ids: NoteTag.objects.create(note=note, tag_id=tid)
+            # Auto-set category from tag names
+            TAG_TO_CATEGORY = {
+                "美妆": "beauty", "旅行": "travel", "美食": "food",
+                "穿搭": "fashion", "健身": "fitness", "数码": "tech",
+                "学习": "study", "艺术": "art", "生活": "life", "其他": "other",
+            }
+            for name in tag_names:
+                if name in TAG_TO_CATEGORY:
+                    note.category = TAG_TO_CATEGORY[name]
+                    note.save(update_fields=["category"])
+                    break
         note.save()
         return note
 

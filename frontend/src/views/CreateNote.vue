@@ -126,7 +126,8 @@
             </div>
             <div class="hot-tags">
               <span class="hot-tag-label">热门推荐：</span>
-              <span v-for="t in hotTags" :key="t.name" class="hot-tag" @click="insertTagToContent(t.name)">#{{ t.name }}</span>
+              <span v-for="t in hotTags" :key="t.name" class="hot-tag" :class="{ 'tag-active': TAG_TO_CATEGORY[t.name] && form.category === TAG_TO_CATEGORY[t.name] }" @click="insertTagToContent(t.name)">#{{ t.name }}</span>
+            <span v-if="autoCategoryLabel" class="auto-category-label">{{ autoCategoryLabel }}</span>
             </div>
           </div>
         </div>
@@ -251,7 +252,9 @@ import { useRoute, useRouter } from "vue-router"
 import { useUserStore } from "../stores/user"
 import { notesApi } from "../api/notes"
 const categories = ref([])
-const hotTags = ref([{name:'美食'},{name:'旅行'},{name:'美妆'},{name:'穿搭'},{name:'数码'},{name:'生活'}])
+const TAG_TO_CATEGORY = { '美妆':'beauty','旅行':'travel','美食':'food','穿搭':'fashion','健身':'fitness','数码':'tech','学习':'study','艺术':'art','生活':'life','其他':'other' }
+const hotTags = ref([{name:'美妆'},{name:'旅行'},{name:'美食'},{name:'穿搭'},{name:'健身'},{name:'数码'},{name:'学习'},{name:'艺术'},{name:'生活'},{name:'其他'}])
+const autoCategoryLabel = ref('')
 onMounted(async () => {
   try {
     const res = await notesApi.getCategories()
@@ -292,6 +295,12 @@ function addTagToContent() {
 function insertTagToContent(name) {
   const tag = '#' + name
   if (!form.content.includes(tag)) { form.content += (form.content ? ' ' : '') + tag }
+  // Auto-set category from tag name
+  const catKey = TAG_TO_CATEGORY[name]
+  if (catKey) {
+    form.category = catKey
+    autoCategoryLabel.value = '已分类：' + name
+  }
   setTimeout(() => { const ta = document.querySelector('.img-content-input'); if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length) } }, 50)
 }
 const isEdit = computed(() => !!route.params.id)
@@ -379,8 +388,24 @@ function addTag() {
 
 function removeTag(i) { form.tag_names.splice(i, 1) }
 
+function parseTagsFromContent(text) {
+  const matches = text.match(/#([^#\s]+)/g)
+  if (!matches) return []
+  return matches.map(t => t.slice(1)).filter(Boolean)
+}
+
 async function handlePublish() {
   if (!form.title) return
+  // Auto-parse #tags from content and set category
+  if (activeFormat.value === 'image') {
+    const contentTags = parseTagsFromContent(form.content)
+    contentTags.forEach(t => {
+      if (!form.tag_names.includes(t)) form.tag_names.push(t)
+      if (!form.category && TAG_TO_CATEGORY[t]) {
+        form.category = TAG_TO_CATEGORY[t]
+      }
+    })
+  }
   const fd = new FormData()
   fd.append("title", form.title)
   fd.append("content", form.content)
@@ -588,6 +613,10 @@ async function handlePublish() {
 .hot-tag-label { font-size: 11px; color: #bbb; white-space: nowrap; }
 .hot-tag { font-size: 11px; color: #ff2442; cursor: pointer; padding: 2px 8px; border-radius: 10px; background: #fff0f0; transition: background 0.15s; }
 .hot-tag:hover { background: #ffe0e0; }
+.hot-tag.tag-active { background: #ff2442; color: #fff; }
+.auto-category-label { display: inline-block; font-size: 11px; color: #999; margin-left: 8px; }
+.hot-tag.tag-active { background: #ff2442; color: #fff; }
+.auto-category-label { display: inline-block; font-size: 11px; color: #999; margin-left: 8px; }
 .publish-card { background: #fafafa; border-color: #e8e8e8; }
 .publish-row { display: flex; align-items: center; justify-content: space-between; }
 .publish-info { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #999; }

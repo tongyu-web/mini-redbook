@@ -1,4 +1,4 @@
-﻿
+
 <template>
   <Teleport to="body">
     <Transition name="drawer-fade">
@@ -12,8 +12,11 @@
               <!-- LEFT: Image gallery -->
               <div class="drawer-left">
                 <div class="image-gallery">
-                  <div v-if="images.length" class="main-image" @click="openViewer(0)">
-                    <img :src="images[0].file" />
+                  <div v-if="images.length" class="main-image" :class="{ clickable: images.length > 1 }">
+                    <button v-if="images.length > 1" class="img-nav-btn prev" @click.stop="prevGallery">&#8249;</button>
+                    <img :src="images[galleryIdx].file" @click="openViewer(galleryIdx)" />
+                    <button v-if="images.length > 1" class="img-nav-btn next" @click.stop="nextGallery">&#8250;</button>
+                    <div v-if="images.length > 1" class="img-counter">{{ galleryIdx + 1 }} / {{ images.length }}</div>
                   </div>
                   <div v-else-if="note.cover_img" class="main-image">
                     <img :src="note.cover_img" />
@@ -225,6 +228,8 @@ const store = useNoteDetailStore()
 const note = ref(null)
 const comments = ref([])
 const galleryIdx = ref(0)
+const prevGallery = () => { galleryIdx.value = (galleryIdx.value - 1 + images.value.length) % images.value.length }
+const nextGallery = () => { galleryIdx.value = (galleryIdx.value + 1) % images.value.length }
 const commentsRef = ref(null)
 
 // Image viewer
@@ -554,6 +559,27 @@ async function submitComment() {
   justify-content: center;
   overflow: hidden;
   cursor: zoom-in;
+}
+.main-image { position: relative; }
+.main-image.clickable { cursor: default; }
+.img-nav-btn {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(0,0,0,0.08); border: none;
+  color: rgba(0,0,0,0.25); font-size: 18px;
+  cursor: pointer; z-index: 5;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+  padding: 0;
+}
+.img-nav-btn:hover { background: rgba(0,0,0,0.15); color: rgba(0,0,0,0.5); }
+.img-nav-btn.prev { left: 4px; }
+.img-nav-btn.next { right: 4px; }
+.img-counter {
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.06); color: rgba(0,0,0,0.3);
+  font-size: 11px; padding: 2px 10px; border-radius: 10px;
+  z-index: 5; pointer-events: none;
 }
 .main-image img {
   max-width: 100%;

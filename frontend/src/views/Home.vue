@@ -120,13 +120,13 @@ watch(() => props.category, loadNotes)
 
 .waterfall-grid {
   column-count: 2;
-  column-gap: 16px;
+  column-gap: 10px;
 }
 .feed-card {
   break-inside: avoid;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
   background: #fff;
-  border-radius: 14px;
+  border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
@@ -150,20 +150,20 @@ watch(() => props.category, loadNotes)
   background: rgba(0,0,0,0.7); border-radius: 4px;
   padding: 3px 6px; display: flex; align-items: center; gap: 3px;
 }
-.card-body { padding: 12px 14px 14px; }
+.card-body { padding: 8px 10px 10px; }
 .card-title {
-  font-size: 14px; font-weight: 600; line-height: 1.4;
-  margin: 0 0 6px; color: #222;
+  font-size: 13px; font-weight: 600; line-height: 1.3;
+  margin: 0 0 4px; color: #222;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 .card-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
 .card-tag { font-size: 11px; color: #999; }
 .card-footer {
   display: flex; align-items: center; justify-content: space-between;
-  padding-top: 8px; border-top: 1px solid #f5f5f5;
+  padding-top: 6px; border-top: 1px solid #f5f5f5;
 }
 .card-author { display: flex; align-items: center; gap: 6px; min-width: 0; }
-.author-avatar { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.author-avatar { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
 .author-avatar-placeholder {
   display: flex; align-items: center; justify-content: center;
   background: #ff2442; color: white; font-size: 10px; font-weight: 600;

@@ -25,17 +25,7 @@
           </svg>
           <span>上传图文</span>
         </div>
-        <div
-          class="format-tab"
-          :class="{ active: activeFormat === 'article' }"
-          @click="switchFormat('article')"
-        >
-          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-          </svg>
-          <span>写长文</span>
-        </div>
+        
       </div>
     </div>
 
@@ -49,10 +39,10 @@
             <line x1="32" y1="22" x2="32" y2="36"/><line x1="25" y1="29" x2="32" y2="36"/><line x1="39" y1="29" x2="32" y2="36"/>
           </svg>
         </div>
-        <p class="upload-guide">{{ activeFormat === "video" ? "拖拽视频到此或点击上传" : activeFormat === "image" ? "拖拽图片到此或点击上传" : "开始撰写你的长文吧" }}</p>
-        <button class="upload-btn">{{ activeFormat === "video" ? "上传视频" : activeFormat === "image" ? "上传图片" : "开始创作" }}</button>
+        <p class="upload-guide">{{ activeFormat === "video" ? "拖拽视频到此或点击上传" : "拖拽图片到此或点击上传" }}</p>
+        <button class="upload-btn">{{ activeFormat === "video" ? "上传视频" : "上传图片" }}</button>
         <p class="upload-note" v-if="activeFormat === 'video'">支持 MP4、MOV 格式，单文件最大 500MB</p>
-        <p class="upload-note" v-else-if="activeFormat === 'image'">支持 JPG、PNG、WEBP 格式，单张不超过20MB</p>
+        <p class="upload-note" v-else>支持 JPG、PNG、WEBP 格式，单张不超过20MB</p>
       </div>
 
       <!-- Video editing module (shown after video uploaded) -->
@@ -107,7 +97,7 @@
       </div>
 
       <!-- Article: simple form -->
-      <div v-if="activeFormat === 'article'">
+      <div v-if="false">
         <div v-if="previewUrl" class="preview-area">
           <video v-if="activeFormat === 'video'" :src="previewUrl" controls class="preview-video" />
         </div>
@@ -265,7 +255,7 @@
         </div>
       </div>
     </div>
-    <div class="spec-bar" v-if="activeFormat === 'article'">
+    <div class="spec-bar" v-if="false">
       <div class="spec-item">
         <svg class="spec-icon" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>

@@ -97,11 +97,13 @@ class CommentSerializer(serializers.ModelSerializer):
     replies = serializers.SerializerMethodField()
     user_nickname = serializers.SerializerMethodField()
     user_avatar = serializers.SerializerMethodField()
+    user_id = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
         fields = ["id", "note", "user", "parent", "content", "image",
-                   "like_count", "created_at", "replies", "user_nickname", "user_avatar"]
+                   "like_count", "created_at", "replies", "user_nickname", "user_avatar", "user_id", "is_liked"]
         read_only_fields = ["id", "user", "like_count", "created_at"]
 
     def get_replies(self, obj):
@@ -114,3 +116,11 @@ class CommentSerializer(serializers.ModelSerializer):
         if obj.user.avatar and hasattr(obj.user.avatar, "url"):
             return obj.user.avatar.url
         return ""
+    def get_user_id(self, obj):
+        return obj.user_id
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            from apps.social.models import CommentLike
+            return CommentLike.objects.filter(user=request.user, comment=obj).exists()
+        return False

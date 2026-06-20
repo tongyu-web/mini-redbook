@@ -1,4 +1,4 @@
-# ============ 用户相关 ============
+﻿# ============ 用户相关 ============
 ACCOUNT_STATUS_NORMAL = 0
 ACCOUNT_STATUS_BANNED = 1
 ACCOUNT_STATUS_CANCELLED = 2
@@ -34,12 +34,14 @@ NOTIFICATION_TYPE_LIKE = "like"
 NOTIFICATION_TYPE_COMMENT = "comment"
 NOTIFICATION_TYPE_FOLLOW = "follow"
 NOTIFICATION_TYPE_FAVORITE = "favorite"
+NOTIFICATION_TYPE_MESSAGE = "message"
 
 NOTIFICATION_TYPE_CHOICES = [
     (NOTIFICATION_TYPE_LIKE, "点赞"),
     (NOTIFICATION_TYPE_COMMENT, "评论"),
     (NOTIFICATION_TYPE_FOLLOW, "关注"),
     (NOTIFICATION_TYPE_FAVORITE, "收藏"),
+    (NOTIFICATION_TYPE_MESSAGE, "私信"),
 ]
 
 # ============ 安全相关 ============

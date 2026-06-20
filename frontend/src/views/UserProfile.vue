@@ -28,10 +28,11 @@
             </div>
           </div>
           <div class="header-actions">
-            <button v-if="isOwn" class="ha-btn edit" @click="$router.push('/settings')">编辑资料</button>
-            <button v-else class="ha-btn" :class="{ following: isFollowing }" @click="toggleFollow">
-              {{ isFollowing ? "已关注" : "关注" }}
-            </button>
+                        <button v-if="isOwn" class="ha-btn edit" @click="$router.push('/settings')">编辑资料</button>
+            <template v-else>
+              <button class="ha-btn" :class="{ following: isFollowing }" @click="toggleFollow">{{ isFollowing ? "已关注" : "关注" }}</button>
+              <button class="ha-btn msg" @click="$router.push('/chat/' + route.params.id)">发私信</button>
+            </template>
           </div>
         </div>
       </div>
@@ -110,7 +111,9 @@ watch(() => route.params.id, async () => {
 
 async function loadProfile() {
   try {
-    profile.value = await accountsApi.getProfile(route.params.id)
+    const p = await accountsApi.getProfile(route.params.id)
+    profile.value = p
+    isFollowing.value = p.is_following || false
   } catch (e) {}
 }
 
@@ -241,7 +244,8 @@ function showFollowing() {
 .ha-btn.following, .ha-btn.edit {
   background: #fff; color: #666; border: 1px solid #ddd;
 }
-.ha-btn.following:hover, .ha-btn.edit:hover { border-color: #ff2442; color: #ff2442; }
+.ha-btn.following:hover, .ha-btn.edit:hover, .ha-btn.msg:hover { border-color: #ff2442; color: #ff2442; }
+.ha-btn.msg { background: #fff; color: #ff2442; border: 1px solid #ff2442; }
 
 /* ===== Tabs: equal 1/3, full underline ===== */
 .profile-tabs {
@@ -350,3 +354,6 @@ function showFollowing() {
 .empty-state { text-align: center; padding: 80px 0; }
 .empty-text { font-size: 14px; color: #ccc; }
 </style>
+
+
+

@@ -120,6 +120,21 @@ class NoteTask:
         from apps.accounts.models import User
         User.objects.filter(id=note.user_id).update(note_count=F("note_count") - 1)
         Tag.objects.filter(notetag__note=note).update(note_count=F("note_count") - 1)
+        # 删除所有用户的收藏和点赞（笔记下架后自动清除）
+        from apps.social.models import Favorite, Like
+        fav_count = Favorite.objects.filter(note=note).count()
+        Favorite.objects.filter(note=note).delete()
+        Like.objects.filter(note=note).delete()
+        # 更新收藏夹计数
+        if fav_count:
+            from apps.social.models import FavoriteFolder
+            from django.db.models import Subquery, OuterRef, Count
+            folders_with_deleted = FavoriteFolder.objects.filter(
+                favorites__note=note
+            ).distinct()
+            for folder in folders_with_deleted:
+                folder.note_count = Favorite.objects.filter(folder=folder).count()
+                folder.save(update_fields=["note_count"])
 
     @staticmethod
     def restore_note(note):

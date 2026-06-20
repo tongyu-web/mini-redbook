@@ -249,6 +249,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from "vue"
 import { useRoute, useRouter } from "vue-router"
+import { ElMessage } from "element-plus"
 import { useUserStore } from "../stores/user"
 import { notesApi } from "../api/notes"
 const categories = ref([])
@@ -317,15 +318,22 @@ onMounted(async () => {
 async function loadEditData() {
   try {
     const note = await notesApi.getNote(editId.value)
+    if (!note) { console.error("笔记不存在"); router.back(); return }
     form.title = note.title || ""
     form.content = note.content || ""
     form.tag_names = (note.tags || []).map(t => t.name)
     form.category = note.category || ""
+    imagePreviews.value = []
     if (note.media_list?.length) {
-      note.media_list.forEach(m => imagePreviews.value.push(m.file))
+      if (note.type === 1) {
+        const video = note.media_list.find(m => m.media_type === 1)
+        if (video) previewUrl.value = video.file
+      } else {
+        note.media_list.forEach(m => imagePreviews.value.push(m.file))
+      }
     }
     activeFormat.value = note.type === 1 ? "video" : "image"
-  } catch (e) { router.back() }
+  } catch (e) { console.error("加载编辑数据失败:", e); router.back() }
 }
 
 function switchFormat(fmt) {
@@ -420,11 +428,12 @@ async function handlePublish() {
   try {
     if (isEdit.value) {
       await notesApi.updateNote(editId.value, fd)
+      ElMessage.success("修改已保存")
     } else {
       await notesApi.createNote(fd)
     }
     router.push("/user/" + userStore.user.id)
-  } catch (e) {}
+  } catch (e) { ElMessage.error("保存失败:" + (e.message || e)) }
 }
 </script>
 
@@ -437,6 +446,7 @@ async function handlePublish() {
 }
 
 /* Tabs bar */
+.edit-title { font-size: 18px; font-weight: 700; color: #222; }
 .tabs-bar {
   display: flex;
   align-items: center;

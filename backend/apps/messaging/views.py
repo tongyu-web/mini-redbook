@@ -1,8 +1,9 @@
-from rest_framework.views import APIView
+﻿from rest_framework.views import APIView
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q, Max
 from django.shortcuts import get_object_or_404
+from apps.accounts.models import User
 from .models import Notification, Message, BlockedContact
 from .serializers import NotificationSerializer, MessageSerializer
 from common.response import ApiResponse
@@ -38,9 +39,15 @@ class UnreadCountView(APIView):
         qs = Notification.objects.filter(to_user=request.user, is_read=False)
         total = qs.count()
         by_type = {}
-        for nt in ["like", "comment", "follow", "favorite"]:
+        for nt in ["like", "comment", "follow", "favorite", "message"]:
             by_type[nt] = qs.filter(type=nt).count()
-        return ApiResponse.success(data={"unread_count": total, "by_type": by_type})
+        # Also count unread private messages (from Message model)
+        unread_msg_count = Message.objects.filter(to_user=request.user, is_read=False).count()
+        return ApiResponse.success(data={
+            "unread_count": total,
+            "by_type": by_type,
+            "unread_message_count": unread_msg_count,
+        })
 
 class MarkAllReadView(APIView):
     permission_classes = [IsAuthenticated]
@@ -69,8 +76,10 @@ class ConversationView(APIView):
                 Q(from_user=user, to_user_id=other_id) | Q(from_user_id=other_id, to_user=user)
             ).order_by("-created_at").first()
             unread = Message.objects.filter(from_user_id=other_id, to_user=user, is_read=False).count()
-            from apps.accounts.models import User
-            other_user = User.objects.get(id=other_id)
+            try:
+                other_user = User.objects.get(id=other_id)
+            except User.DoesNotExist:
+                continue
             conversations.append({
                 "user_id": other_id,
                 "nickname": other_user.nickname,
@@ -102,6 +111,13 @@ class MessageView(APIView):
         if BlockedContact.objects.filter(user_id=to_user_id, blocked_user=request.user).exists():
             return ApiResponse.error(code=4001, message="对方已屏蔽你", status=403)
         msg = Message.objects.create(from_user=request.user, to_user_id=to_user_id, content=content)
+        # Create notification for the recipient
+        Notification.objects.create(
+            to_user_id=to_user_id,
+            from_user=request.user,
+            type="message",
+            content=content[:100],
+        )
         return ApiResponse.success(data=MessageSerializer(msg).data, message="发送成功", status=201)
 
 class BlockContactView(APIView):
@@ -123,3 +139,4 @@ class DeleteConversationView(APIView):
             Q(from_user=request.user, to_user_id=user_id) | Q(from_user_id=user_id, to_user=request.user)
         ).delete()
         return ApiResponse.success(message="会话已删除")
+

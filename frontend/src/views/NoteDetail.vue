@@ -1,4 +1,4 @@
-
+﻿
 <template>
   <Teleport to="body">
     <Transition name="drawer-fade">
@@ -40,10 +40,11 @@
                     <el-avatar :size="36" :src="note.user_avatar" />
                     <div class="author-meta">
                       <span class="author-name">{{ note.user_nickname }}</span>
-                      <span class="author-time">{{ note.created_at }}</span>
+                      <span class="author-time">{{ formatTime(note.created_at) }}</span>
                     </div>
                   </div>
                   <div class="author-actions">
+                    <el-button v-if="!isOwner && userStore.isLoggedIn" size="small" round plain @click="sendPrivateMessage">发私信</el-button>
                     <el-button v-if="!isOwner && userStore.isLoggedIn" size="small" :type="note.is_following ? 'default' : 'primary'" round @click="toggleFollow">{{ note.is_following ? '已关注' : '+ 关注' }}</el-button>
                     <el-dropdown v-if="isOwner" @command="handleAction" trigger="click">
                       <el-button text circle size="small"><span style="font-size:18px">&#8942;</span></el-button>
@@ -76,17 +77,31 @@
                   <div class="comments-list" ref="commentsRef">
                     <div v-for="c in comments" :key="c.id" class="comment-item">
                       <div class="comment-user">
-                        <el-avatar :size="26" :src="c.user_avatar" />
+                        <span style="cursor:pointer" @click="store.close();$router.push('/user/' + c.user_id)"><el-avatar :size="26" :src="c.user_avatar" /></span>
                         <div class="comment-body">
                           <div class="comment-top">
-                            <span class="c-nickname">{{ c.user_nickname }}</span>
-                            <el-button v-if="userStore.isLoggedIn" text size="small" @click="replyToComment(c)" class="reply-btn">回复</el-button>
-                              <el-button v-if="userStore.isLoggedIn &amp;&amp; userStore.user?.id === c.user_id" text size="small" type="danger" @click="deleteComment(c.id)" class="reply-btn" style="color:#999">删除</el-button>
+                            <span class="c-nickname" style="cursor:pointer;color:#333" @click="store.close();$router.push('/user/' + c.user_id)">{{ c.user_nickname }}</span>
+                            <span class="c-time">{{ formatTime(c.created_at) }}</span>
+                            <el-button v-if="userStore.isLoggedIn &amp;&amp; userStore.user?.id === c.user_id" text size="small" type="danger" @click="deleteComment(c.id)" class="reply-btn" style="color:#999;margin-left:auto">删除</el-button>
                           </div>
                           <p>{{ c.content }}</p>
                           <img v-if="c.image" :src="c.image" class="comment-img" @click="openUrlViewer(c.image)" />
+                          <div class="comment-actions">
+                            <span class="ca-item" @click="toggleCommentLike(c.id)">
+                              <svg viewBox="0 0 24 24" :fill="c.is_liked ? '#ff2442' : 'none'" :stroke="c.is_liked ? '#ff2442' : '#999'" stroke-width="2" width="14" height="14"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                              <span>{{ c.like_count || 0 }}</span>
+                            </span>
+                            <span class="ca-item" @click="replyToComment(c)">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" width="14" height="14"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                              <span>回复</span>
+                            </span>
+                          </div>
                           <div v-if="c.replies?.length" class="replies">
-                            <div v-for="r in c.replies" :key="r.id" class="reply-item"><strong>{{ r.user_nickname }}:</strong> {{ r.content }}</div>
+                                                        <div v-for="r in c.replies" :key="r.id" class="reply-item" style="display:flex;align-items:center;gap:6px;margin:6px 0">
+                            <span style="cursor:pointer;display:inline-flex" @click="store.close();$router.push('/user/' + r.user_id)"><el-avatar :size="20" :src="r.user_avatar" /></span>
+                            <strong style="cursor:pointer;color:#333;font-size:12px" @click="store.close();$router.push('/user/' + r.user_id)">{{ r.user_nickname }}:</strong>
+                            <span style="font-size:12px;color:#555">{{ r.content }}</span>
+                          </div>
                           </div>
                         </div>
                       </div>
@@ -443,6 +458,18 @@ function cancelCompose() {
   replyTo.value = null
 }
 
+async function toggleCommentLike(id) {
+  try {
+    const res = await notesApi.toggleCommentLike(id)
+    const c = comments.value.find(c => c.id === id)
+    if (c) { c.is_liked = res.is_liked; c.like_count = res.like_count }
+    comments.value.forEach(com => {
+      const r = com.replies?.find(r => r.id === id)
+      if (r) { r.is_liked = res.is_liked; r.like_count = res.like_count }
+    })
+  } catch (e) { console.error(e) }
+}
+
 async function deleteComment(id) {
   try {
     await notesApi.deleteComment(id)
@@ -471,6 +498,18 @@ async function submitComment() {
   } catch (e) { console.error(e) }
   finally { commenting.value = false }
 }
+function formatTime(dateStr) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  const now = new Date()
+  const diff = now - d
+  if (diff < 60000) return '\u521a\u521a'
+  if (diff < 3600000) return Math.floor(diff / 60000) + '\u5206\u949f\u524d'
+  if (diff < 86400000) return Math.floor(diff / 3600000) + '\u5c0f\u65f6\u524d'
+  if (diff < 172800000) return '\u6628\u5929'
+  return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
+}
+
 </script>
 
 <style scoped>
@@ -901,6 +940,10 @@ async function submitComment() {
   font-size: 12px;
   color: #555;
 }
+.c-time { font-size: 11px; color: #bbb; margin-left: 8px; }
+.comment-actions { display: flex; align-items: center; gap: 16px; margin-top: 6px; }
+.ca-item { display: flex; align-items: center; gap: 3px; cursor: pointer; color: #999; font-size: 12px; transition: color 0.15s; }
+.ca-item:hover { color: #ff2442; }
 .no-comments {
   text-align: center;
   padding: 32px 0;
@@ -980,4 +1023,6 @@ async function submitComment() {
   }
 }
 </style>
+
+
 

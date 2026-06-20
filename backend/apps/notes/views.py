@@ -198,6 +198,22 @@ class TagListView(APIView):
         tag, _ = Tag.objects.get_or_create(name=name)
         return ApiResponse.success(data=TagSerializer(tag).data, status=201)
 
+class CommentLikeToggleView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request, comment_id):
+        from apps.social.models import CommentLike
+        from django.db.models import F
+        comment = get_object_or_404(Comment, pk=comment_id)
+        like = CommentLike.objects.filter(user=request.user, comment=comment)
+        if like.exists():
+            like.delete()
+            Comment.objects.filter(pk=comment_id).update(like_count=F("like_count") - 1)
+            return ApiResponse.success(data={"is_liked": False, "like_count": max(0, comment.like_count - 1)})
+        else:
+            CommentLike.objects.create(user=request.user, comment=comment)
+            Comment.objects.filter(pk=comment_id).update(like_count=F("like_count") + 1)
+            return ApiResponse.success(data={"is_liked": True, "like_count": comment.like_count + 1})
+
 # 预定义分类
 NOTE_CATEGORIES = [
     {"key": "beauty", "name": "美妆"},

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="follow-list">
     <div class="header">
       <el-button text @click="$router.back()">← 返回</el-button>
@@ -17,6 +17,7 @@
             </div>
           </div>
           <div class="user-actions">
+            <el-button size="small" text @click="$router.push('/chat/' + item.id)">发私信</el-button>
             <el-button
               v-if="tab === 'followers' && isOwn"
               size="small"
@@ -98,3 +99,4 @@ async function removeFollower(userId) {
 .nickname { font-weight: 600; font-size: 14px; }
 .bio { font-size: 12px; color: #999; margin-top: 2px; }
 </style>
+

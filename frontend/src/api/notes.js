@@ -18,5 +18,6 @@ export const notesApi = {
   getCategories() { return request.get("/notes/categories/") },
   getComments(noteId, page = 1) { return request.get(`/notes/${noteId}/comments/?page=${page}`) },
   deleteComment(id) { return request.delete(`/notes/comments/${id}/delete/`) },
+  toggleCommentLike(id) { return request.post(`/notes/comments/${id}/like/`) },
   postComment(noteId, data) { return request.post(`/notes/${noteId}/comments/`, data) },
 }

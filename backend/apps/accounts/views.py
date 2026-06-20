@@ -63,7 +63,7 @@ class LoginView(APIView):
         }, message="登录成功")
 
 class ProfileView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, user_id=None):
         target_id = user_id or request.user.id

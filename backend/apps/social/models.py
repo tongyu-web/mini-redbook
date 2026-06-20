@@ -27,6 +27,16 @@ class Like(models.Model):
         db_table = "likes"
         unique_together = [("user", "note")]
 
+class CommentLike(models.Model):
+    id = models.CharField(max_length=32, primary_key=True, default=uuid4_hex, editable=False)
+    user = models.ForeignKey("accounts.User", related_name="comment_likes", on_delete=models.CASCADE)
+    comment = models.ForeignKey("notes.Comment", related_name="likes", on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "comment_likes"
+        unique_together = [("user", "comment")]
+
 class FavoriteFolder(models.Model):
     id = models.CharField(max_length=32, primary_key=True, default=uuid4_hex, editable=False)
     user = models.ForeignKey("accounts.User", related_name="favorite_folders", on_delete=models.CASCADE)

@@ -165,7 +165,7 @@
                         <input id="comment-image-compose" ref="commentInput" type="file" accept="image/jpeg,image/png,image/webp" hidden @change="handleCommentImage" />
                         <div class="compose-actions">
                           <el-button size="small" @click="cancelCompose">取消</el-button>
-                          <el-button size="small" type="primary" :loading="commenting" @click="submitComment" :disabled="!commentContent.trim() && !commentFile">发送</el-button>
+                          <el-button size="small" class="send-btn-red" :loading="commenting" @click="submitComment" :disabled="!commentContent.trim() && !commentFile">发送</el-button>
                         </div>
                       </div>
                     </div>
@@ -844,6 +844,10 @@ function formatTime(dateStr) {
   border-radius: 8px;
   min-height: 80px !important;
 }
+.compose-body :deep(.el-textarea__inner:focus) {
+  border-color: #ff2442 !important;
+  box-shadow: 0 0 0 1px #ff2442 inset !important;
+}
 .compose-footer {
   display: flex;
   align-items: center;
@@ -1024,6 +1028,8 @@ function formatTime(dateStr) {
 }
 .follow-btn-red { background: #ff2442 !important; border-color: #ff2442 !important; }
 .follow-btn-red:hover { background: #d61e38 !important; border-color: #d61e38 !important; }
+.send-btn-red { background: #ff2442 !important; border-color: #ff2442 !important; }
+.send-btn-red:hover { background: #d61e38 !important; border-color: #d61e38 !important; }
 </style>
 
 

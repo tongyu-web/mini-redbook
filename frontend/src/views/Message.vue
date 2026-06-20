@@ -131,10 +131,10 @@ const messageItems = ref([])
 const conversations = ref([])
 
 onMounted(() => {
+  notificationStore.fetchUnreadCount()
   loadConversations()
   loadNotifications()
 })
-
 
 function formatTime(t) {
   if (!t) return ""
@@ -148,7 +148,7 @@ function formatTime(t) {
   const yesterday = new Date(now)
   yesterday.setDate(yesterday.getDate() - 1)
   if (d.toDateString() === yesterday.toDateString()) return "昨天 " + pad(d.getHours()) + ":" + pad(d.getMinutes())
-  return pad(d.getFullYear()) + '/' + pad(d.getMonth() + 1) + '/' + pad(d.getDate())
+  return pad(d.getFullYear()) + "/" + pad(d.getMonth() + 1) + "/" + pad(d.getDate())
 }
 
 async function loadConversations() {
@@ -178,6 +178,7 @@ function filterItems() {
 }
 
 function loadTab() {
+  notificationStore.fetchUnreadCount()
   if (activeTab.value === "conversations") {
     loadConversations()
   }
@@ -209,7 +210,6 @@ async function handleClick(n) {
 .content { max-width: 700px; margin: 0 auto; padding: 16px; }
 .empty-state { text-align: center; padding: 60px 0; color: #bbb; font-size: 14px; }
 
-/* ===== Tab bar overrides ===== */
 .msg-tabs { --el-tabs-header-height: 44px; }
 .msg-tabs :deep(.el-tabs__header) {
   margin: 0 0 16px;
@@ -240,7 +240,6 @@ async function handleClick(n) {
   font-weight: 600;
 }
 
-/* Tab badge — red dot at top-right */
 .tab-label {
   position: relative;
   display: inline-block;
@@ -265,7 +264,6 @@ async function handleClick(n) {
   box-sizing: border-box;
 }
 
-/* Conversations */
 .conv-list { display: flex; flex-direction: column; }
 .conv-item {
   display: flex;
@@ -294,8 +292,6 @@ async function handleClick(n) {
   background: #ff2442; color: white; font-size: 10px; border-radius: 10px;
   padding: 1px 5px; min-width: 16px; text-align: center; flex-shrink: 0;
 }
-
-/* Notifications */
 .notif-list { display: flex; flex-direction: column; }
 .notif-item { display: flex; gap: 12px; padding: 14px 0; border-bottom: 1px solid #f5f5f5; cursor: pointer; }
 .notif-item:hover { background: #fafafa; }
@@ -304,4 +300,3 @@ async function handleClick(n) {
 .notif-preview { font-size: 13px; color: #999; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .time { font-size: 12px; color: #bbb; }
 </style>
-

@@ -119,7 +119,7 @@
       </div>
 
       <!-- Image: edit cards (shown after images uploaded) -->
-      <div v-if="activeFormat === 'image' && (imagePreviews.length || hasEdited)" class="image-edit-wrapper">
+      <div v-if="activeFormat === 'image' && imagePreviews.length" class="image-edit-wrapper">
         <div class="edit-card">
           <div class="edit-card-header">
             <svg class="card-header-icon" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2">
@@ -310,7 +310,6 @@ const userStore = useUserStore()
 
 const activeFormat = ref("video")
 const previewUrl = ref("")
-const hasEdited = ref(false)
 const videoFile = ref(null)
 const videoCoverFile = ref(null)
 const imageFiles = ref([])
@@ -403,7 +402,6 @@ function triggerUpload() {
       captureVideoFrame(files[0])
       previewUrl.value = URL.createObjectURL(files[0])
     } else {
-      hasEdited.value = true
       files.forEach(f => {
         imageFiles.value.push(f)
         imagePreviews.value.push(URL.createObjectURL(f))
@@ -424,8 +422,7 @@ function handleDrop(e) {
     previewUrl.value = URL.createObjectURL(files[0])
     captureVideoFrame(files[0])
   } else {
-    hasEdited.value = true
-      files.forEach(f => {
+    files.forEach(f => {
       imageFiles.value.push(f)
       imagePreviews.value.push(URL.createObjectURL(f))
     })

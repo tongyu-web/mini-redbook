@@ -47,7 +47,22 @@
         </svg>
         <span class="nav-label">回收站</span>
       </div>
-      <!-- Account Switcher -->
+            <div class="nav-item more-trigger" :class="{ active: showMore }" @click="showMore = !showMore">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+        </svg>
+        <span class="nav-label">更多</span>
+        <svg class="more-arrow" :class="{ open: showMore }" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#999" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <Transition name="more-fade">
+        <div v-if="showMore" class="more-dropdown">
+          <div class="more-item" @click="openChangePwd"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#555" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>修改密码</span></div>
+          <div class="more-item" @click="openBindEmail"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#555" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg><span>绑定邮箱</span></div>
+          <div class="more-item" @click="goPrivacy"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#555" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>隐私设置</span></div>
+          <div class="more-item more-item-danger" @click="openCancelAccount"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ff2442" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg><span>注销账号</span></div>
+        </div>
+      </Transition>
+<!-- Account Switcher -->
       <div class="account-section">
         <div v-if="userStore.isLoggedIn" class="account-trigger" @click="showAccounts = !showAccounts">
           <img class="account-avatar" :src="userStore.user?.avatar_url || defaultAvatar" />
@@ -81,13 +96,43 @@
       </div>
     </div>
   </div>
-</template>
+    <!-- Change Password Dialog -->
+    <el-dialog v-model="pwdDialog" title="修改密码" width="90%" max-width="380px">
+      <el-input v-model="pwdForm.old_password" type="password" placeholder="旧密码" class="dialog-input" show-password />
+      <el-input v-model="pwdForm.new_password" type="password" placeholder="新密码（至少6位）" class="dialog-input" show-password />
+      <template #footer>
+        <el-button @click="pwdDialog = false">取消</el-button>
+        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="pwdSaving" @click="changePassword">确认修改</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- Bind Email Dialog -->
+    <el-dialog v-model="emailDialog" title="绑定邮箱" width="90%" max-width="380px">
+      <el-input v-model="emailForm.email" placeholder="输入邮箱地址" class="dialog-input" />
+      <p v-if="currentEmail" style="font-size:12px;color:#999;margin:4px 0 0">当前绑定：{{ currentEmail }}</p>
+      <template #footer>
+        <el-button @click="emailDialog = false">取消</el-button>
+        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="emailSaving" @click="bindEmail">绑定</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- Cancel Account Dialog -->
+    <el-dialog v-model="cancelDialog" title="注销账号" width="90%" max-width="380px">
+      <p style="font-size:14px;color:#ff2442;font-weight:600;margin-bottom:12px">此操作不可逆，请确认：</p>
+      <el-input v-model="cancelForm.reason" type="textarea" :rows="3" placeholder="请告诉我们注销原因（选填）" class="dialog-input" />
+      <el-input v-model="cancelForm.password" type="password" placeholder="请输入密码确认" class="dialog-input" show-password />
+      <template #footer>
+        <el-button @click="cancelDialog = false">取消</el-button>
+        <el-button type="danger" :loading="cancelSaving" @click="confirmCancel">确认注销</el-button>
+      </template>
+    </el-dialog></template>
 
 <script setup>
-import { ref } from "vue"
+import { ref, reactive } from "vue"
 import { useRouter } from "vue-router"
 import { useUserStore } from "../stores/user"
 import { useNotificationStore } from "../stores/notification"
+import { ElMessage } from "element-plus"
 import { openLoginDialog } from "../utils/dialogState"
 
 const router = useRouter()
@@ -205,7 +250,36 @@ if (typeof document !== "undefined") {
   background: #ff2442; color: white; font-size: 10px; border-radius: 10px;
   padding: 1px 5px; min-width: 16px; text-align: center; font-weight: 600;
 }
-.nav-bottom {
+/* More dropdown */
+.more-trigger { position: relative; }
+.more-arrow { transition: transform 0.2s; }
+.more-arrow.open { transform: rotate(180deg); }
+.more-dropdown {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  padding: 6px;
+  margin: 2px 0 0 14px;
+}
+.more-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #555;
+  transition: background 0.12s;
+}
+.more-item:hover { background: #f5f5f5; color: #222; }
+.more-item-danger { color: #ff2442; }
+.more-item-danger:hover { background: #fff0f0; }
+
+.more-fade-enter-active, .more-fade-leave-active { transition: opacity 0.15s, transform 0.15s; }
+.more-fade-enter-from, .more-fade-leave-to { opacity: 0; transform: translateY(-4px); }
+
+.dialog-input { margin-bottom: 10px; }.nav-bottom {
   padding: 12px 10px 20px;
   border-top: 1px solid #f5f5f5;
   display: flex;

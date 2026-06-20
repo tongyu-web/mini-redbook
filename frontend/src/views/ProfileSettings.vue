@@ -69,17 +69,29 @@
 
     <!-- Birthday picker dialog -->
     <el-dialog v-model="showBirthPicker" title="选择生日" width="85%" max-width="360px">
-      <el-date-picker v-model="birthdayTemp" type="date" placeholder="选择日期" style="width:100%" value-format="YYYY-MM-DD" />
+      <div class="birth-calendar">
+        <div class="birth-year-month">
+          <button class="birth-nav" @click="birthYear--">&lt;</button>
+          <span>{{ birthYear }} 年 {{ String(birthMonth).padStart(2, '0') }} 月</span>
+          <button class="birth-nav" @click="birthMonth >= 12 ? (birthYear++, birthMonth=1) : birthMonth++">&gt;</button>
+        </div>
+        <div class="birth-weekdays">
+          <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+        </div>
+        <div class="birth-days">
+          <button v-for="d in birthDays" :key="d.key" class="birth-day" :class="{ selected: d.val === birthSelected }" @click="birthSelected = d.val" :disabled="!d.val">{{ d.label }}</button>
+        </div>
+      </div>
       <template #footer>
         <el-button @click="showBirthPicker = false">取消</el-button>
-        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" @click="form.birthday = birthdayTemp; showBirthPicker = false">确定</el-button>
+        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" @click="selectBirthDate">确定</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from "vue"
+import { ref, reactive, computed, watch, onMounted } from "vue"
 import { useRouter } from "vue-router"
 import { useUserStore } from "../stores/user"
 import { accountsApi } from "../api/accounts"
@@ -94,7 +106,24 @@ const saveType = ref("success")
 
 const showGenderPicker = ref(false)
 const showBirthPicker = ref(false)
-const birthdayTemp = ref("")
+const birthYear = ref(new Date().getFullYear())
+const birthMonth = ref(new Date().getMonth() + 1)
+const birthSelected = ref("")
+const birthDays = computed(() => {
+  const days = []
+  const firstDay = new Date(birthYear.value, birthMonth.value - 1, 1).getDay()
+  const totalDays = new Date(birthYear.value, birthMonth.value, 0).getDate()
+  for (let i = 0; i < firstDay; i++) days.push({ key: 'empty-' + i, label: '', val: null })
+  for (let d = 1; d <= totalDays; d++) {
+    const val = birthYear.value + '-' + String(birthMonth.value).padStart(2, '0') + '-' + String(d).padStart(2, '0')
+    days.push({ key: val, label: String(d), val: val })
+  }
+  return days
+})
+function selectBirthDate() {
+  if (birthSelected.value) form.birthday = birthSelected.value
+  showBirthPicker.value = false
+}
 
 const form = reactive({
   avatar_url: "",
@@ -122,6 +151,16 @@ onMounted(async () => {
   }
 })
 
+watch(showBirthPicker, (val) => {
+  if (val && form.birthday) {
+    const parts = form.birthday.split('-')
+    birthYear.value = parseInt(parts[0])
+    birthMonth.value = parseInt(parts[1])
+    birthSelected.value = form.birthday
+  } else if (val) {
+    birthSelected.value = ""
+  }
+})
 function handlePreview() {
   router.push("/user/" + userStore.user?.id)
 }
@@ -296,6 +335,72 @@ async function saveProfile() {
   color: #bbb;
 }
 
+/* Birthday calendar */
+.birth-calendar {
+  padding: 8px 0;
+  user-select: none;
+}
+.birth-year-month {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16px;
+}
+.birth-nav {
+  background: none;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.birth-nav:hover { background: #f0f0f0; }
+.birth-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 8px;
+}
+.birth-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.birth-day {
+  background: none;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+.birth-day:hover { background: #f0f0f0; }
+.birth-day.selected {
+  background: #ff2442;
+  color: #fff;
+  font-weight: 600;
+}
+.birth-day:disabled {
+  cursor: default;
+  background: none;
+}
 .save-btn {
   width: 100%;
   height: 44px;

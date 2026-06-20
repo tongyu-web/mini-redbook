@@ -140,7 +140,81 @@ const userStore = useUserStore()
 const notificationStore = useNotificationStore()
 const showAbout = ref(false)
 const showAccounts = ref(false)
+const showMore = ref(false)
 const defaultAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ddd'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E"
+
+const pwdDialog = ref(false)
+const pwdSaving = ref(false)
+const pwdForm = reactive({ old_password: "", new_password: "" })
+const emailDialog = ref(false)
+const emailSaving = ref(false)
+const emailForm = reactive({ email: "" })
+const currentEmail = ref("")
+const cancelDialog = ref(false)
+const cancelSaving = ref(false)
+const cancelForm = reactive({ reason: "", password: "" })
+
+function openChangePwd() {
+  showMore.value = false
+  if (!userStore.isLoggedIn) { openLoginDialog(); return }
+  pwdForm.old_password = ""
+  pwdForm.new_password = ""
+  pwdDialog.value = true
+}
+async function changePassword() {
+  if (!pwdForm.old_password || !pwdForm.new_password) { ElMessage.warning("请填写完整"); return }
+  if (pwdForm.new_password.length < 6) { ElMessage.warning("新密码至少6位"); return }
+  pwdSaving.value = true
+  try {
+    const { accountsApi } = await import("../api/accounts")
+    await accountsApi.changePassword({ old_password: pwdForm.old_password, new_password: pwdForm.new_password })
+    ElMessage.success("密码修改成功")
+    pwdDialog.value = false
+  } catch (e) { ElMessage.error(e.message || "修改失败") }
+  finally { pwdSaving.value = false }
+}
+function openBindEmail() {
+  showMore.value = false
+  if (!userStore.isLoggedIn) { openLoginDialog(); return }
+  emailForm.email = ""
+  emailDialog.value = true
+}
+async function bindEmail() {
+  if (!emailForm.email.trim()) { ElMessage.warning("请输入邮箱"); return }
+  emailSaving.value = true
+  try {
+    const { accountsApi } = await import("../api/accounts")
+    await accountsApi.bindEmail({ email: emailForm.email.trim() })
+    currentEmail.value = emailForm.email.trim()
+    ElMessage.success("邮箱绑定成功")
+    emailDialog.value = false
+  } catch (e) { ElMessage.error(e.message || "绑定失败") }
+  finally { emailSaving.value = false }
+}
+function goPrivacy() {
+  showMore.value = false
+  router.push("/settings")
+}
+function openCancelAccount() {
+  showMore.value = false
+  if (!userStore.isLoggedIn) { openLoginDialog(); return }
+  cancelForm.reason = ""
+  cancelForm.password = ""
+  cancelDialog.value = true
+}
+async function confirmCancel() {
+  if (!cancelForm.password) { ElMessage.warning("请输入密码确认"); return }
+  cancelSaving.value = true
+  try {
+    const { accountsApi } = await import("../api/accounts")
+    await accountsApi.cancelAccount({ reason: cancelForm.reason, password: cancelForm.password })
+    ElMessage.success("账号已注销")
+    cancelDialog.value = false
+    userStore.clearUser()
+    window.location.reload()
+  } catch (e) { ElMessage.error(e.message || "注销失败") }
+  finally { cancelSaving.value = false }
+} = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ddd'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E"
 
 function goCreate() {
   if (!userStore.isLoggedIn) { openLoginDialog(); return }

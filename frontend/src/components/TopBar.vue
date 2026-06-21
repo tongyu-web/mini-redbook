@@ -53,12 +53,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue"
-import { useRouter } from "vue-router"
+import { ref, watch, onMounted, onUnmounted } from "vue"
+import { useRoute, useRouter } from "vue-router"
 import { useUserStore } from "../stores/user"
 import { searchApi } from "../api/search"
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 const searchText = ref("")
 const activeCat = ref("recommend")
@@ -130,6 +131,9 @@ function onSearchInput() {
     } catch { suggestions.value = [] }
   }, 300)
 }
+
+// Sync searchText from route query (e.g. tag click)
+watch(() => route.query.q, (q) => { if (q && q !== searchText.value) searchText.value = q })
 
 function onSearchFocus() {
   showDropdown.value = true

@@ -295,13 +295,14 @@ onUnmounted(() => {
 })
 
 function handleAction(cmd) {
-  if (cmd === "edit") {
+  if (cmd === 'edit') {
     const id = store.currentNoteId
     store.close()
-    router.push("/edit/" + id)
+    router.push('/edit/' + id)
+  } else if (cmd === 'delete') {
+    deleteDialog.value = true
   }
 }
-
 async function confirmDelete() {
   deleteDialog.value = false
   try {

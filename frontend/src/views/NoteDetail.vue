@@ -236,6 +236,7 @@ const router = useRouter()
 const userStore = useUserStore()
 window.__router = router
 const store = useNoteDetailStore()
+window.__searchTag = function(name) { store.close(); if (window.__router) window.__router.push('/search?q=' + encodeURIComponent(name)) }
 
 const note = ref(null)
 const comments = ref([])
@@ -514,7 +515,7 @@ function searchTag(name) {
 
 function renderContent(text) {
   if (!text) return ''
-  return text.replace(/#([一-龥\w-]+)/g, '<a style="color:#409eff;cursor:pointer;text-decoration:none" onclick="event.stopPropagation();var r=window.__router;if(r)r.push(\'/search?q=\'+encodeURIComponent(\'$1\'))">#$1</a>')
+  return text.replace(/#([\u4e00-\u9fa5\w-]+)/g, '<a style="color:#409eff;cursor:pointer;text-decoration:none" onclick="event.stopPropagation();window.__searchTag && window.__searchTag(\'$1\');return false">#$1</a>')
 }
 
 </script>

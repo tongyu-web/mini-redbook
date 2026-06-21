@@ -93,11 +93,30 @@
                             </span>
                           </div>
                           <div v-if="c.replies?.length" class="replies">
-                                                        <div v-for="r in c.replies" :key="r.id" class="reply-item" style="display:flex;align-items:center;gap:6px;margin:6px 0">
-                            <span style="cursor:pointer;display:inline-flex" @click="store.close();$router.push('/user/' + r.user_id)"><el-avatar :size="20" :src="r.user_avatar" /></span>
-                            <strong style="cursor:pointer;color:#333;font-size:12px" @click="store.close();$router.push('/user/' + r.user_id)">{{ r.user_nickname }}:</strong>
-                            <span style="font-size:12px;color:#555">{{ r.content }}</span>
-                          </div>
+                            <div v-for="r in c.replies" :key="r.id" class="reply-item">
+                              <div class="reply-header">
+                                <span class="reply-avatar" @click="store.close();$router.push('/user/' + r.user_id)">
+                                  <el-avatar :size="18" :src="r.user_avatar" />
+                                </span>
+                                <strong class="reply-nickname" @click="store.close();$router.push('/user/' + r.user_id)">{{ r.user_nickname }}</strong>
+                                <span class="reply-time">{{ formatTime(r.created_at) }}</span>
+                                <el-button
+                                  v-if="userStore.isLoggedIn && userStore.user?.id === r.user_id"
+                                  text size="small" type="danger"
+                                  @click="deleteComment(r.id)"
+                                  class="reply-del-btn"
+                                >删除</el-button>
+                              </div>
+                              <div class="reply-body">{{ r.content }}</div>
+                              <div class="reply-actions">
+                                <span class="ra-item" @click="toggleCommentLike(r.id)">
+                                  <svg viewBox="0 0 24 24" :fill="r.is_liked ? '#ff2442' : 'none'" :stroke="r.is_liked ? '#ff2442' : '#999'" stroke-width="2" width="12" height="12">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                                  </svg>
+                                  <span>{{ r.like_count || 0 }}</span>
+                                </span>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -473,6 +492,9 @@ async function deleteComment(id) {
   try {
     await notesApi.deleteComment(id)
     comments.value = comments.value.filter(c => c.id !== id)
+    comments.value.forEach(c => {
+      if (c.replies) c.replies = c.replies.filter(r => r.id !== id)
+    })
     if (note.value) note.value.comment_count = Math.max(0, (note.value.comment_count || 0) - 1)
   } catch (e) { console.error("deleteComment error:", e); ElMessage.error("删除失败") }
 }
@@ -938,15 +960,58 @@ function renderContent(text) {
 .replies {
   margin-left: 34px;
   background: #f9f9f9;
-  padding: 6px 10px;
+  padding: 8px 10px;
   border-radius: 6px;
   margin-top: 6px;
 }
 .reply-item {
-  margin: 3px 0;
+  margin: 6px 0;
+}
+.reply-item + .reply-item {
+  padding-top: 6px;
+  border-top: 1px solid #f0f0f0;
+}
+.reply-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 2px;
+}
+.reply-avatar { display: inline-flex; cursor: pointer; flex-shrink: 0; }
+.reply-nickname { font-size: 12px; color: #333; cursor: pointer; }
+.reply-time { font-size: 10px; color: #bbb; }
+.reply-del-btn {
+  margin-left: auto;
+  font-size: 11px !important;
+  color: #bbb !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+}
+.reply-del-btn:hover { color: #ff2442 !important; }
+.reply-body {
   font-size: 12px;
   color: #555;
+  line-height: 1.4;
+  padding-left: 23px;
 }
+.reply-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 23px;
+  margin-top: 2px;
+}
+.ra-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  color: #999;
+  font-size: 11px;
+  transition: color 0.15s;
+}
+.ra-item:hover { color: #ff2442; }
 .c-time { font-size: 11px; color: #bbb; margin-left: 8px; }
 .comment-actions { display: flex; align-items: center; gap: 16px; margin-top: 6px; }
 .ca-item { display: flex; align-items: center; gap: 3px; cursor: pointer; color: #999; font-size: 12px; transition: color 0.15s; }

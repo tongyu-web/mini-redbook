@@ -80,6 +80,7 @@ import { accountsApi } from "../api/accounts"
 import { notesApi } from "../api/notes"
 import { socialApi } from "../api/social"
 import { useNoteDetailStore } from "../stores/noteDetail"
+import { ElMessage } from "element-plus"
 import NoteDetail from "./NoteDetail.vue"
 
 const noteDetailStore = useNoteDetailStore()
@@ -134,11 +135,27 @@ async function loadTab() {
       if (isOwn.value) {
         const res = await socialApi.getAllFavorites()
         items.value = res.results || res || []
+      } else {
+        try {
+          const res = await socialApi.getUserFavs(targetId)
+          items.value = res.results || res || []
+        } catch (e) {
+          items.value = []
+          ElMessage.warning(e.response?.data?.message || "无法查看该用户的收藏")
+        }
       }
     } else if (activeTab.value === "likes") {
       if (isOwn.value) {
         const res = await notesApi.getLikedNotes()
         items.value = res.results || res || []
+      } else {
+        try {
+          const res = await socialApi.getUserLikes(targetId)
+          items.value = res.results || res || []
+        } catch (e) {
+          items.value = []
+          ElMessage.warning(e.response?.data?.message || "无法查看该用户的点赞")
+        }
       }
     }
   } catch (e) {
@@ -147,7 +164,6 @@ async function loadTab() {
     loading.value = false
   }
 }
-
 async function toggleFollow() {
   const res = await socialApi.toggleFollow(route.params.id)
   isFollowing.value = res.is_following
@@ -354,6 +370,8 @@ function showFollowing() {
 .empty-state { text-align: center; padding: 80px 0; }
 .empty-text { font-size: 14px; color: #ccc; }
 </style>
+
+
 
 
 

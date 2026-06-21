@@ -2,7 +2,7 @@
   <div class="sidebar">
     <div class="logo" @click="$router.push('/')">
       <div class="logo-icon">R</div>
-      <span class="logo-text">mini-redbook</span>
+      <span class="logo-text">Mini小红书</span>
     </div>
     <div class="nav-items">
       <div class="nav-item" :class="{ active: $route.path === '/' }" @click="$router.push('/')">
@@ -51,7 +51,7 @@
         </svg>
         <span class="nav-label">回收站</span>
       </div>
-            <div class="more-container">
+      <div class="more-container">
         <div class="nav-item more-trigger" :class="{ active: showMore }" @click="showMore = !showMore">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
@@ -68,7 +68,7 @@
           </div>
         </Transition>
       </div>
-<!-- Account Switcher -->
+      <!-- Account Switcher -->
       <div class="account-section">
         <div v-if="userStore.isLoggedIn" class="account-trigger" @click="showAccounts = !showAccounts">
           <img class="account-avatar" :src="userStore.user?.avatar_url || defaultAvatar" />
@@ -102,145 +102,35 @@
       </div>
     </div>
   </div>
-    <!-- Change Password Dialog -->
-    <el-dialog v-model="pwdDialog" title="修改密码" width="90%" max-width="380px">
-      <el-input v-model="pwdForm.old_password" type="password" placeholder="旧密码" class="dialog-input" show-password />
-      <el-input v-model="pwdForm.new_password" type="password" placeholder="新密码（至少6位）" class="dialog-input" show-password />
-      <template #footer>
-        <el-button @click="pwdDialog = false">取消</el-button>
-        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="pwdSaving" @click="changePassword">确认修改</el-button>
-          <!-- Change Password Dialog -->
-    <el-dialog v-model="pwdDialog" title="修改密码" width="90%" max-width="380px">
-      <el-input v-model="pwdForm.old_password" type="password" placeholder="旧密码" class="dialog-input" show-password />
-      <el-input v-model="pwdForm.new_password" type="password" placeholder="新密码（至少6位）" class="dialog-input" show-password />
-      <template #footer>
-        <el-button @click="pwdDialog = false">取消</el-button>
-        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="pwdSaving" @click="changePassword">确认修改</el-button>
-      </template>
-    </el-dialog>
-    <!-- Bind Email Dialog -->
-    <el-dialog v-model="emailDialog" title="绑定邮箱" width="90%" max-width="380px">
-      <el-input v-model="emailForm.email" placeholder="输入邮箱地址" class="dialog-input" />
-      <p v-if="currentEmail" style="font-size:12px;color:#999;margin:4px 0 0">当前绑定：{{ currentEmail }}</p>
-      <template #footer>
-        <el-button @click="emailDialog = false">取消</el-button>
-        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="emailSaving" @click="bindEmail">绑定</el-button>
-      </template>
-    </el-dialog>
-    <!-- Cancel Account Dialog -->
-    <el-dialog v-model="cancelDialog" title="注销账号" width="90%" max-width="380px">
-      <p style="font-size:14px;color:#ff2442;font-weight:600;margin-bottom:12px">此操作不可逆，请确认：</p>
-      <el-input v-model="cancelForm.reason" type="textarea" :rows="3" placeholder="请告诉我们注销原因（选填）" class="dialog-input" />
-      <el-input v-model="cancelForm.password" type="password" placeholder="请输入密码确认" class="dialog-input" show-password />
-      <template #footer>
-        <el-button @click="cancelDialog = false">取消</el-button>
-        <el-button type="danger" :loading="cancelSaving" @click="confirmCancel">确认注销</el-button>
-      </template>
-    </el-dialog></template>
-    </el-dialog>
-
-    <!-- Bind Email Dialog -->
-    <el-dialog v-model="emailDialog" title="绑定邮箱" width="90%" max-width="380px">
-      <el-input v-model="emailForm.email" placeholder="输入邮箱地址" class="dialog-input" />
-      <p v-if="currentEmail" style="font-size:12px;color:#999;margin:4px 0 0">当前绑定：{{ currentEmail }}</p>
-      <template #footer>
-        <el-button @click="emailDialog = false">取消</el-button>
-        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="emailSaving" @click="bindEmail">绑定</el-button>
-          <!-- Change Password Dialog -->
-    <el-dialog v-model="pwdDialog" title="修改密码" width="90%" max-width="380px">
-      <el-input v-model="pwdForm.old_password" type="password" placeholder="旧密码" class="dialog-input" show-password />
-      <el-input v-model="pwdForm.new_password" type="password" placeholder="新密码（至少6位）" class="dialog-input" show-password />
-      <template #footer>
-        <el-button @click="pwdDialog = false">取消</el-button>
-        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="pwdSaving" @click="changePassword">确认修改</el-button>
-      </template>
-    </el-dialog>
-    <!-- Bind Email Dialog -->
-    <el-dialog v-model="emailDialog" title="绑定邮箱" width="90%" max-width="380px">
-      <el-input v-model="emailForm.email" placeholder="输入邮箱地址" class="dialog-input" />
-      <p v-if="currentEmail" style="font-size:12px;color:#999;margin:4px 0 0">当前绑定：{{ currentEmail }}</p>
-      <template #footer>
-        <el-button @click="emailDialog = false">取消</el-button>
-        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="emailSaving" @click="bindEmail">绑定</el-button>
-      </template>
-    </el-dialog>
-    <!-- Cancel Account Dialog -->
-    <el-dialog v-model="cancelDialog" title="注销账号" width="90%" max-width="380px">
-      <p style="font-size:14px;color:#ff2442;font-weight:600;margin-bottom:12px">此操作不可逆，请确认：</p>
-      <el-input v-model="cancelForm.reason" type="textarea" :rows="3" placeholder="请告诉我们注销原因（选填）" class="dialog-input" />
-      <el-input v-model="cancelForm.password" type="password" placeholder="请输入密码确认" class="dialog-input" show-password />
-      <template #footer>
-        <el-button @click="cancelDialog = false">取消</el-button>
-        <el-button type="danger" :loading="cancelSaving" @click="confirmCancel">确认注销</el-button>
-      </template>
-    </el-dialog></template>
-    </el-dialog>
-
-    <!-- Cancel Account Dialog -->
-    <el-dialog v-model="cancelDialog" title="注销账号" width="90%" max-width="380px">
-      <p style="font-size:14px;color:#ff2442;font-weight:600;margin-bottom:12px">此操作不可逆，请确认：</p>
-      <el-input v-model="cancelForm.reason" type="textarea" :rows="3" placeholder="请告诉我们注销原因（选填）" class="dialog-input" />
-      <el-input v-model="cancelForm.password" type="password" placeholder="请输入密码确认" class="dialog-input" show-password />
-      <template #footer>
-        <el-button @click="cancelDialog = false">取消</el-button>
-        <el-button type="danger" :loading="cancelSaving" @click="confirmCancel">确认注销</el-button>
-          <!-- Change Password Dialog -->
-    <el-dialog v-model="pwdDialog" title="修改密码" width="90%" max-width="380px">
-      <el-input v-model="pwdForm.old_password" type="password" placeholder="旧密码" class="dialog-input" show-password />
-      <el-input v-model="pwdForm.new_password" type="password" placeholder="新密码（至少6位）" class="dialog-input" show-password />
-      <template #footer>
-        <el-button @click="pwdDialog = false">取消</el-button>
-        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="pwdSaving" @click="changePassword">确认修改</el-button>
-      </template>
-    </el-dialog>
-    <!-- Bind Email Dialog -->
-    <el-dialog v-model="emailDialog" title="绑定邮箱" width="90%" max-width="380px">
-      <el-input v-model="emailForm.email" placeholder="输入邮箱地址" class="dialog-input" />
-      <p v-if="currentEmail" style="font-size:12px;color:#999;margin:4px 0 0">当前绑定：{{ currentEmail }}</p>
-      <template #footer>
-        <el-button @click="emailDialog = false">取消</el-button>
-        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="emailSaving" @click="bindEmail">绑定</el-button>
-      </template>
-    </el-dialog>
-    <!-- Cancel Account Dialog -->
-    <el-dialog v-model="cancelDialog" title="注销账号" width="90%" max-width="380px">
-      <p style="font-size:14px;color:#ff2442;font-weight:600;margin-bottom:12px">此操作不可逆，请确认：</p>
-      <el-input v-model="cancelForm.reason" type="textarea" :rows="3" placeholder="请告诉我们注销原因（选填）" class="dialog-input" />
-      <el-input v-model="cancelForm.password" type="password" placeholder="请输入密码确认" class="dialog-input" show-password />
-      <template #footer>
-        <el-button @click="cancelDialog = false">取消</el-button>
-        <el-button type="danger" :loading="cancelSaving" @click="confirmCancel">确认注销</el-button>
-      </template>
-    </el-dialog></template>
-    </el-dialog>    <!-- Change Password Dialog -->
-    <el-dialog v-model="pwdDialog" title="修改密码" width="90%" max-width="380px">
-      <el-input v-model="pwdForm.old_password" type="password" placeholder="旧密码" class="dialog-input" show-password />
-      <el-input v-model="pwdForm.new_password" type="password" placeholder="新密码（至少6位）" class="dialog-input" show-password />
-      <template #footer>
-        <el-button @click="pwdDialog = false">取消</el-button>
-        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="pwdSaving" @click="changePassword">确认修改</el-button>
-      </template>
-    </el-dialog>
-    <!-- Bind Email Dialog -->
-    <el-dialog v-model="emailDialog" title="绑定邮箱" width="90%" max-width="380px">
-      <el-input v-model="emailForm.email" placeholder="输入邮箱地址" class="dialog-input" />
-      <p v-if="currentEmail" style="font-size:12px;color:#999;margin:4px 0 0">当前绑定：{{ currentEmail }}</p>
-      <template #footer>
-        <el-button @click="emailDialog = false">取消</el-button>
-        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="emailSaving" @click="bindEmail">绑定</el-button>
-      </template>
-    </el-dialog>
-    <!-- Cancel Account Dialog -->
-    <el-dialog v-model="cancelDialog" title="注销账号" width="90%" max-width="380px">
-      <p style="font-size:14px;color:#ff2442;font-weight:600;margin-bottom:12px">此操作不可逆，请确认：</p>
-      <el-input v-model="cancelForm.reason" type="textarea" :rows="3" placeholder="请告诉我们注销原因（选填）" class="dialog-input" />
-      <el-input v-model="cancelForm.password" type="password" placeholder="请输入密码确认" class="dialog-input" show-password />
-      <template #footer>
-        <el-button @click="cancelDialog = false">取消</el-button>
-        <el-button type="danger" :loading="cancelSaving" @click="confirmCancel">确认注销</el-button>
-      </template>
-    </el-dialog></template>
-
+  <!-- Change Password Dialog -->
+  <el-dialog v-model="pwdDialog" title="修改密码" width="90%" max-width="380px">
+    <el-input v-model="pwdForm.old_password" type="password" placeholder="旧密码" class="dialog-input" show-password />
+    <el-input v-model="pwdForm.new_password" type="password" placeholder="新密码（至少6位）" class="dialog-input" show-password />
+    <template #footer>
+      <el-button @click="pwdDialog = false">取消</el-button>
+      <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="pwdSaving" @click="changePassword">确认修改</el-button>
+    </template>
+  </el-dialog>
+  <!-- Bind Email Dialog -->
+  <el-dialog v-model="emailDialog" title="绑定邮箱" width="90%" max-width="380px">
+    <el-input v-model="emailForm.email" placeholder="输入邮箱地址" class="dialog-input" />
+    <p v-if="currentEmail" style="font-size:12px;color:#999;margin:4px 0 0">当前绑定：{{ currentEmail }}</p>
+    <template #footer>
+      <el-button @click="emailDialog = false">取消</el-button>
+      <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="emailSaving" @click="bindEmail">绑定</el-button>
+    </template>
+  </el-dialog>
+  <!-- Cancel Account Dialog -->
+  <el-dialog v-model="cancelDialog" title="注销账号" width="90%" max-width="380px">
+    <p style="font-size:14px;color:#ff2442;font-weight:600;margin-bottom:12px">此操作不可逆，请确认：</p>
+    <el-input v-model="cancelForm.reason" type="textarea" :rows="3" placeholder="请告诉我们注销原因（选填）" class="dialog-input" />
+    <el-input v-model="cancelForm.password" type="password" placeholder="请输入密码确认" class="dialog-input" show-password />
+    <template #footer>
+      <el-button @click="cancelDialog = false">取消</el-button>
+      <el-button type="danger" :loading="cancelSaving" @click="confirmCancel">确认注销</el-button>
+    </template>
+  </el-dialog>
+</template>
 <script setup>
 import { ref, reactive } from "vue"
 import { useRouter } from "vue-router"
@@ -329,7 +219,6 @@ async function confirmCancel() {
   } catch (e) { ElMessage.error(e.message || "注销失败") }
   finally { cancelSaving.value = false }
 }
-
 function goCreate() {
   if (!userStore.isLoggedIn) { openLoginDialog(); return }
   router.push("/create")
@@ -371,7 +260,6 @@ if (typeof document !== "undefined") {
   })
 }
 </script>
-
 <style scoped>
 .sidebar {
   position: fixed;
@@ -379,7 +267,7 @@ if (typeof document !== "undefined") {
   top: 0;
   bottom: 0;
   width: 220px;
-  background: #f5f5f5;
+  background: #fff;
   border-right: 1px solid #e8e8e8;
   display: flex;
   flex-direction: column;
@@ -433,15 +321,12 @@ if (typeof document !== "undefined") {
 .nav-item.active { background: #fff0f0; color: #ff2442; font-weight: 600; }
 .nav-icon { width: 22px; height: 22px; flex-shrink: 0; }
 .nav-label { font-size: 14px; }
-
 .nav-badge {
   position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
   background: #ff2442; color: white; font-size: 10px; border-radius: 10px;
   padding: 1px 5px; min-width: 16px; text-align: center; font-weight: 600;
 }
-/* More dropdown */
 .more-container { position: relative; }
-.more-trigger { }
 .more-arrow { transition: transform 0.2s; }
 .more-arrow.open { transform: rotate(180deg); }
 .more-dropdown {
@@ -469,19 +354,16 @@ if (typeof document !== "undefined") {
 .more-item:hover { background: #f5f5f5; color: #222; }
 .more-item-danger { color: #ff2442; }
 .more-item-danger:hover { background: #fff0f0; }
-
 .more-fade-enter-active, .more-fade-leave-active { transition: opacity 0.15s, transform 0.15s; }
 .more-fade-enter-from, .more-fade-leave-to { opacity: 0; transform: translateY(-4px); }
-
-.dialog-input { margin-bottom: 10px; }.nav-bottom {
+.dialog-input { margin-bottom: 10px; }
+.nav-bottom {
   padding: 12px 10px 20px;
   border-top: 1px solid #f5f5f5;
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
-
-/* Account switcher */
 .account-section {
   position: relative;
   border-top: 1px solid #f0f0f0;
@@ -507,11 +389,8 @@ if (typeof document !== "undefined") {
 .account-name {
   flex: 1; font-size: 13px; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.account-arrow {
-  transition: transform 0.2s; color: #999; flex-shrink: 0;
-}
+.account-arrow { transition: transform 0.2s; color: #999; flex-shrink: 0; }
 .account-arrow.open { transform: rotate(180deg); }
-
 .account-dropdown {
   position: absolute;
   bottom: calc(100% + 4px);
@@ -544,7 +423,6 @@ if (typeof document !== "undefined") {
   background: none; border: none; color: #ccc; cursor: pointer; font-size: 14px; padding: 2px 4px; border-radius: 4px; line-height: 1;
 }
 .dd-remove:hover { color: #ff2442; background: #fff0f0; }
-
 .account-dropdown-divider { height: 1px; background: #f0f0f0; margin: 4px 0; }
 .add-account { color: #ff2442; }
 .add-account:hover { background: #fff0f0; }
@@ -552,10 +430,6 @@ if (typeof document !== "undefined") {
 .logout-item { color: #999; }
 .logout-item:hover { color: #ff2442; background: #fff0f0; }
 .dd-logout { font-size: 13px; }
-
 .account-fade-enter-active, .account-fade-leave-active { transition: opacity 0.15s, transform 0.15s; }
 .account-fade-enter-from, .account-fade-leave-to { opacity: 0; transform: translateY(4px); }
 </style>
-
-
-

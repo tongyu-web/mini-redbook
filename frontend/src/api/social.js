@@ -1,4 +1,4 @@
-import request from "./request"
+﻿import request from "./request"
 
 export const socialApi = {
   toggleFollow(userId) { return request.post(`/social/follow/${userId}/`) },
@@ -12,4 +12,6 @@ export const socialApi = {
   getAllFavorites() { return request.get("/social/favorites/all/") },
   removeFavoriteFromAll(noteId) { return request.delete(`/social/favorites/note/${noteId}/`) },
   getFavorites(folderId) { return request.get(`/social/favorites/${folderId}/`) },
+  getUserLikes(userId) { return request.get(`/social/user-likes/${userId}/`) },
+  getUserFavs(userId) { return request.get(`/social/user-favs/${userId}/`) },
 }

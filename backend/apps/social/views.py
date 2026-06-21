@@ -148,3 +148,67 @@ class FavoriteRemoveAllView(APIView):
             from apps.accounts.models import User
             User.objects.filter(id=Note.objects.get(pk=note_id).user_id).update(fav_received_count=F("fav_received_count") - 1)
         return ApiResponse.success(data={"is_favorited": False, "removed_count": count})
+
+class UserLikesView(APIView):
+    """查看指定用户的点赞列表（含隐私检查）"""
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get(self, request, user_id):
+        from apps.accounts.models import User
+        from apps.notes.models import Note
+        from apps.social.models import Follow, Like
+        target = get_object_or_404(User, pk=user_id)
+        if target.privacy == 2:
+            if not request.user.is_authenticated or str(request.user.id) != str(user_id):
+                return ApiResponse.error(code=403, message="该用户已设置隐私保护", status=403)
+        elif target.privacy == 1:
+            if not request.user.is_authenticated or str(request.user.id) == str(user_id):
+                pass
+            else:
+                is_friend = Follow.objects.filter(
+                    follower=request.user, following=target
+                ).exists() and Follow.objects.filter(
+                    follower=target, following=request.user
+                ).exists()
+                if not is_friend:
+                    return ApiResponse.error(code=403, message="仅互关好友可见", status=403)
+        note_ids = Like.objects.filter(user_id=user_id).values_list("note_id", flat=True)
+        qs = Note.objects.filter(id__in=list(note_ids), status=1).order_by("-created_at")
+        paginator = StandardPagination()
+        page = paginator.paginate_queryset(qs, request)
+        from apps.notes.serializers import NoteListSerializer
+        ser = NoteListSerializer(page, many=True, context={"request": request})
+        return ApiResponse.success(data=paginator.get_paginated_response(ser.data).data)
+
+
+class UserFavsView(APIView):
+    """查看指定用户的收藏列表（含隐私检查）"""
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get(self, request, user_id):
+        from apps.accounts.models import User
+        from apps.notes.models import Note
+        from apps.social.models import Follow, Favorite
+        target = get_object_or_404(User, pk=user_id)
+        if target.privacy == 2:
+            if not request.user.is_authenticated or str(request.user.id) != str(user_id):
+                return ApiResponse.error(code=403, message="该用户已设置隐私保护", status=403)
+        elif target.privacy == 1:
+            if not request.user.is_authenticated or str(request.user.id) == str(user_id):
+                pass
+            else:
+                is_friend = Follow.objects.filter(
+                    follower=request.user, following=target
+                ).exists() and Follow.objects.filter(
+                    follower=target, following=request.user
+                ).exists()
+                if not is_friend:
+                    return ApiResponse.error(code=403, message="仅互关好友可见", status=403)
+        note_ids = Favorite.objects.filter(user_id=user_id).values_list("note_id", flat=True).distinct()
+        qs = Note.objects.filter(id__in=list(note_ids), status=1).order_by("-created_at")
+        paginator = StandardPagination()
+        page = paginator.paginate_queryset(qs, request)
+        from apps.notes.serializers import NoteListSerializer
+        ser = NoteListSerializer(page, many=True, context={"request": request})
+        return ApiResponse.success(data=paginator.get_paginated_response(ser.data).data)
+

@@ -40,6 +40,7 @@ export const useUserStore = defineStore("user", () => {
       username: userData.username,
       nickname: userData.nickname || userData.username,
       avatar_url: userData.avatar_url || "",
+      privacy: userData.privacy ?? 0,
       access_token: accessToken,
       refresh_token: refreshToken,
     }
@@ -62,6 +63,7 @@ export const useUserStore = defineStore("user", () => {
       username: entry.username,
       nickname: entry.nickname,
       avatar_url: entry.avatar_url,
+      privacy: entry.privacy,
     }
     isLoggedIn.value = true
   }

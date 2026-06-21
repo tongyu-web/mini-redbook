@@ -13,4 +13,6 @@ urlpatterns = [
     path("favorites/", views.FavoriteView.as_view(), name="favorite-add"),
     path("favorites/note/<str:note_id>/", views.FavoriteRemoveAllView.as_view(), name="favorite-remove-all"),
     path("follower/<str:user_id>/", views.RemoveFollowerView.as_view(), name="remove-follower"),
+      path("user-likes/<str:user_id>/", views.UserLikesView.as_view(), name="user-likes"),
+      path("user-favs/<str:user_id>/", views.UserFavsView.as_view(), name="user-favs"),
 ]

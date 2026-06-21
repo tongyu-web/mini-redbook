@@ -55,6 +55,18 @@
         </div>
       </div>
 
+
+      <!-- Privacy settings card -->
+      <div class="profile-card">
+        <div class="info-row">
+          <span class="row-label">隐私</span>
+          <div class="row-right select-row" @click="showPrivacyPicker = true">
+            <span :class="{ placeholder: privacy === null }">{{ privacyLabel }}</span>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ccc" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+      </div>
+
       <button class="save-btn" :disabled="saving" @click="saveProfile">{{ saving ? '保存中...' : '保存' }}</button>
     </div>
 
@@ -72,7 +84,7 @@
       <div class="birth-calendar">
         <div class="birth-year-month">
           <button class="birth-nav" @click="birthYear--">&lt;</button>
-          <span>{{ birthYear }} 年 {{ String(birthMonth).padStart(2, '0') }} 月</span>
+          <span>{{ birthYear }} 年 {{ String(birthMonth).padStart(2, "0") }} 月</span>
           <button class="birth-nav" @click="birthMonth >= 12 ? (birthYear++, birthMonth=1) : birthMonth++">&gt;</button>
         </div>
         <div class="birth-weekdays">
@@ -87,11 +99,20 @@
         <el-button type="primary" style="background:#ff2442;border-color:#ff2442" @click="selectBirthDate">确定</el-button>
       </template>
     </el-dialog>
+
+    <!-- Privacy picker dialog -->
+    <el-dialog v-model="showPrivacyPicker" title="隐私设置" width="85%" max-width="360px">
+      <div class="picker-options">
+        <div class="picker-option" :class="{ active: privacy === 0 }" @click="privacy = 0; showPrivacyPicker = false">公开</div>
+        <div class="picker-option" :class="{ active: privacy === 1 }" @click="privacy = 1; showPrivacyPicker = false">仅互关好友可见</div>
+        <div class="picker-option" :class="{ active: privacy === 2 }" @click="privacy = 2; showPrivacyPicker = false">私密</div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted } from "vue"
+import { ref, reactive, computed, onMounted } from "vue"
 import { useRouter } from "vue-router"
 import { useUserStore } from "../stores/user"
 import { accountsApi } from "../api/accounts"
@@ -106,24 +127,24 @@ const saveType = ref("success")
 
 const showGenderPicker = ref(false)
 const showBirthPicker = ref(false)
-const birthYear = ref(new Date().getFullYear())
-const birthMonth = ref(new Date().getMonth() + 1)
-const birthSelected = ref("")
-const birthDays = computed(() => {
-  const days = []
-  const firstDay = new Date(birthYear.value, birthMonth.value - 1, 1).getDay()
-  const totalDays = new Date(birthYear.value, birthMonth.value, 0).getDate()
-  for (let i = 0; i < firstDay; i++) days.push({ key: 'empty-' + i, label: '', val: null })
-  for (let d = 1; d <= totalDays; d++) {
-    const val = birthYear.value + '-' + String(birthMonth.value).padStart(2, '0') + '-' + String(d).padStart(2, '0')
-    days.push({ key: val, label: String(d), val: val })
-  }
-  return days
+const showPrivacyPicker = ref(false)
+const privacy = ref(null)
+const privacyLabel = computed(() => {
+  const map = { 0: "公开", 1: "仅互关好友可见", 2: "私密" }
+  return privacy.value !== null ? map[privacy.value] : "选择隐私设置"
 })
+const birthdayTemp = ref("")
+
 function selectBirthDate() {
-  if (birthSelected.value) form.birthday = birthSelected.value
+  if (birthSelected.value) {
+    form.birthday = birthSelected.value
+  }
   showBirthPicker.value = false
 }
+
+const birthYear = ref(new Date().getFullYear() - 20)
+const birthMonth = ref(new Date().getMonth() + 1)
+const birthSelected = ref("")
 
 const form = reactive({
   avatar_url: "",
@@ -136,6 +157,16 @@ const form = reactive({
 const genderLabel = computed(() => {
   const map = { MALE: "男", FEMALE: "女", UNKNOWN: "保密" }
   return map[form.gender] || "选择性别"
+
+const birthDays = computed(() => {
+  const daysInMonth = new Date(birthYear.value, birthMonth.value, 0).getDate()
+  const firstDay = new Date(birthYear.value, birthMonth.value - 1, 1).getDay()
+  const result = []
+  for (let i = 0; i < firstDay; i++) { result.push({ key: "e" + i, label: "", val: null }) }
+  for (let d = 1; d <= daysInMonth; d++) { result.push({ key: "d" + d, label: String(d), val: birthYear.value + "-" + String(birthMonth.value).padStart(2, "0") + "-" + String(d).padStart(2, "0") }) }
+  return result
+})
+
 })
 
 onMounted(async () => {
@@ -146,21 +177,12 @@ onMounted(async () => {
     form.bio = userData.bio || ""
     form.gender = userData.gender || "UNKNOWN"
     form.birthday = userData.birthday || ""
+    privacy.value = userStore.user?.privacy ?? null
   } catch (e) {
     console.error(e)
   }
 })
 
-watch(showBirthPicker, (val) => {
-  if (val && form.birthday) {
-    const parts = form.birthday.split('-')
-    birthYear.value = parseInt(parts[0])
-    birthMonth.value = parseInt(parts[1])
-    birthSelected.value = form.birthday
-  } else if (val) {
-    birthSelected.value = ""
-  }
-})
 function handlePreview() {
   router.push("/user/" + userStore.user?.id)
 }
@@ -209,6 +231,15 @@ async function saveProfile() {
       birthday: form.birthday || undefined,
     })
     userStore.setUser(res)
+    // Save privacy separately
+    if (privacy.value !== null && privacy.value !== userStore.user?.privacy) {
+      try {
+        await accountsApi.updatePrivacy({ privacy: privacy.value })
+        userStore.user.privacy = privacy.value
+      } catch (e) {
+        ElMessage.error("隐私设置保存失败")
+      }
+    }
     saveMsg.value = "保存成功"
     saveType.value = "success"
   } catch (e) {
@@ -335,72 +366,6 @@ async function saveProfile() {
   color: #bbb;
 }
 
-/* Birthday calendar */
-.birth-calendar {
-  padding: 8px 0;
-  user-select: none;
-}
-.birth-year-month {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  font-size: 15px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 16px;
-}
-.birth-nav {
-  background: none;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  width: 32px;
-  height: 32px;
-  cursor: pointer;
-  font-size: 14px;
-  color: #666;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.birth-nav:hover { background: #f0f0f0; }
-.birth-weekdays {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  text-align: center;
-  font-size: 12px;
-  color: #999;
-  margin-bottom: 8px;
-}
-.birth-days {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
-}
-.birth-day {
-  background: none;
-  border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  font-size: 14px;
-  color: #333;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto;
-}
-.birth-day:hover { background: #f0f0f0; }
-.birth-day.selected {
-  background: #ff2442;
-  color: #fff;
-  font-weight: 600;
-}
-.birth-day:disabled {
-  cursor: default;
-  background: none;
-}
 .save-btn {
   width: 100%;
   height: 44px;

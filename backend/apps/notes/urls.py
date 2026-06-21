@@ -16,6 +16,7 @@ urlpatterns = [
     path("recycle/restore/<str:pk>/", views.NoteRestoreView.as_view(), name="note-restore"),
     path("recycle/hard-delete/<str:pk>/", views.NoteHardDeleteView.as_view(), name="note-hard-delete"),
     path("recycle/cleanup/", views.RecycleBinCleanupView.as_view(), name="recycle-cleanup"),
+    path("view-history/", views.ViewHistoryListView.as_view(), name="view-history"),
     path("comments/<str:pk>/delete/", views.CommentDeleteView.as_view(), name="comment-delete"),
     path("comments/<str:comment_id>/like/", views.CommentLikeToggleView.as_view(), name="comment-like"),
     path("<str:note_id>/comments/", views.CommentView.as_view(), name="comment-list"),

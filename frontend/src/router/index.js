@@ -10,6 +10,7 @@ const routes = [
   { path: "/edit/:id", name: "EditNote", component: () => import("../views/CreateNote.vue") },
   { path: "/search", name: "Search", component: () => import("../views/Search.vue") },
   { path: "/message", name: "Message", component: () => import("../views/Message.vue") },
+  { path: "/view-history", name: "ViewHistory", component: () => import("../views/ViewHistory.vue") },
   { path: "/chat/:userId", name: "Chat", component: () => import("../views/Chat.vue") },
   { path: "/recycle", name: "RecycleBin", component: () => import("../views/RecycleBin.vue") },
 ]
@@ -20,4 +21,3 @@ const router = createRouter({
 })
 
 export default router
-

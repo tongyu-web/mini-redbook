@@ -40,6 +40,10 @@
         </svg>
         <span class="nav-label">发现</span>
       </div>
+      <div class="nav-item" :class="{ active: $route.path === '/view-history' }" @click="$router.push('/view-history')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span class="nav-label">浏览记录</span>
+      </div>
       <div class="nav-item" @click="goRecycle">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>

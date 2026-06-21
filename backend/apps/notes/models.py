@@ -1,4 +1,4 @@
-import uuid
+﻿import uuid
 from django.db import models
 from config.constants import (
     NOTE_TYPE_IMAGE, NOTE_TYPE_VIDEO, NOTE_STATUS_DRAFT, NOTE_STATUS_PUBLISHED,
@@ -28,9 +28,9 @@ class Note(models.Model):
     user = models.ForeignKey("accounts.User", related_name="notes", on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     content = models.TextField(blank=True, default="")
-    type = models.IntegerField(choices=[(NOTE_TYPE_IMAGE, "图文"), (NOTE_TYPE_VIDEO, "视频")], default=NOTE_TYPE_IMAGE)
+    type = models.IntegerField(choices=[(NOTE_TYPE_IMAGE, "image"), (NOTE_TYPE_VIDEO, "video")], default=NOTE_TYPE_IMAGE)
     cover_img = models.ImageField(upload_to="covers/", blank=True, null=True)
-    status = models.IntegerField(choices=[(NOTE_STATUS_DRAFT, "草稿"), (NOTE_STATUS_PUBLISHED, "已发布"), (NOTE_STATUS_TAKEN_DOWN, "下架")], default=NOTE_STATUS_DRAFT)
+    status = models.IntegerField(choices=[(NOTE_STATUS_DRAFT, "draft"), (NOTE_STATUS_PUBLISHED, "published"), (NOTE_STATUS_TAKEN_DOWN, "taken_down")], default=NOTE_STATUS_DRAFT)
     category = models.CharField(max_length=20, blank=True, default="")
     like_count = models.IntegerField(default=0)
     fav_count = models.IntegerField(default=0)
@@ -53,7 +53,7 @@ class Media(models.Model):
     id = models.CharField(max_length=32, primary_key=True, default=uuid4_hex, editable=False)
     note = models.ForeignKey(Note, related_name="media_list", on_delete=models.CASCADE)
     file = models.FileField(upload_to="notes/")
-    media_type = models.IntegerField(choices=[(0, "图片"), (1, "视频")], default=0)
+    media_type = models.IntegerField(choices=[(0, "image"), (1, "video")], default=0)
     order = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -84,3 +84,17 @@ class Comment(models.Model):
     class Meta:
         db_table = "comments"
         ordering = ["-created_at"]
+
+class ViewHistory(models.Model):
+    id = models.CharField(max_length=32, primary_key=True, default=uuid4_hex, editable=False)
+    user = models.ForeignKey("accounts.User", related_name="view_history", on_delete=models.CASCADE)
+    note = models.ForeignKey(Note, related_name="view_history", on_delete=models.CASCADE)
+    viewed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "view_history"
+        ordering = ["-viewed_at"]
+        unique_together = [("user", "note")]
+
+    def __str__(self):
+        return f"{self.user_id} viewed {self.note_id}"

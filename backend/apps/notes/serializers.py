@@ -1,5 +1,5 @@
 ﻿from rest_framework import serializers
-from .models import Note, Tag, Media, NoteTag, Comment
+from .models import Note, Tag, Media, NoteTag, Comment, ViewHistory
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -133,3 +133,25 @@ class CommentSerializer(serializers.ModelSerializer):
             from apps.social.models import CommentLike
             return CommentLike.objects.filter(user=request.user, comment=obj).exists()
         return False
+
+class ViewHistorySerializer(serializers.ModelSerializer):
+    note_title = serializers.SerializerMethodField()
+    note_cover = serializers.SerializerMethodField()
+    note_user_nickname = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ViewHistory
+        fields = ["id", "note", "note_title", "note_cover", "note_user_nickname", "viewed_at"]
+
+    def get_note_title(self, obj):
+        return obj.note.title if obj.note else ""
+    def get_note_cover(self, obj):
+        if obj.note and obj.note.cover_img and hasattr(obj.note.cover_img, "url"):
+            return obj.note.cover_img.url
+        if obj.note and obj.note.media_list.exists():
+            m = obj.note.media_list.first()
+            if m.file and hasattr(m.file, "url"):
+                return m.file.url
+        return ""
+    def get_note_user_nickname(self, obj):
+        return obj.note.user.nickname if obj.note else ""

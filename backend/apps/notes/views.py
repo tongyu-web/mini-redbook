@@ -6,10 +6,10 @@ from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 from django.db.models import F
 from django.utils import timezone
-from .models import Note, Comment, Tag, NoteTag
+from .models import Note, Comment, Tag, NoteTag, ViewHistory
 from .serializers import (
     NoteListSerializer, NoteDetailSerializer, NoteCreateSerializer,
-    CommentSerializer, TagSerializer
+    CommentSerializer, TagSerializer, ViewHistorySerializer
 )
 from .tasks import NoteTask
 from common.response import ApiResponse
@@ -51,6 +51,10 @@ class NoteViewSet(viewsets.ModelViewSet):
         note = get_object_or_404(Note, pk=pk, status=NOTE_STATUS_PUBLISHED)
         Note.objects.filter(pk=pk).update(view_count=F("view_count") + 1)
         note.refresh_from_db()
+        # Auto-record view history for logged-in users
+        if request.user.is_authenticated:
+            ViewHistory.objects.filter(user=request.user, note=note).delete()
+            ViewHistory.objects.create(user=request.user, note=note)
         ser = NoteDetailSerializer(note, context={"request": request})
         return ApiResponse.success(data=ser.data)
 
@@ -215,6 +219,27 @@ class CommentLikeToggleView(APIView):
             return ApiResponse.success(data={"is_liked": True, "like_count": comment.like_count + 1})
 
 # 预定义分类
+
+class ViewHistoryListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        qs = ViewHistory.objects.filter(user=request.user).select_related("note__user").prefetch_related("note__media_list")
+        page = self.paginate_queryset(qs, request)
+        if hasattr(self, 'paginator') and page is not None:
+            ser = ViewHistorySerializer(page, many=True)
+            return ApiResponse.success(data=self.get_paginated_response(ser.data).data)
+        ser = ViewHistorySerializer(qs, many=True)
+        return ApiResponse.success(data=ser.data)
+
+    def paginate_queryset(self, qs, request):
+        from common.pagination import StandardPagination
+        self.paginator = StandardPagination()
+        return self.paginator.paginate_queryset(qs, request)
+
+    def get_paginated_response(self, data):
+        return self.paginator.get_paginated_response(data)
+
 NOTE_CATEGORIES = [
     {"key": "beauty", "name": "美妆"},
     {"key": "travel", "name": "旅行"},
@@ -247,6 +272,7 @@ class TagNoteListView(APIView):
             "tag": TagSerializer(tag).data,
             "notes": paginator.get_paginated_response(ser.data).data
         })
+
 
 
 

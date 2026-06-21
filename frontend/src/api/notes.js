@@ -20,4 +20,6 @@ export const notesApi = {
   deleteComment(id) { return request.delete(`/notes/comments/${id}/delete/`) },
   toggleCommentLike(id) { return request.post(`/notes/comments/${id}/like/`) },
   postComment(noteId, data) { return request.post(`/notes/${noteId}/comments/`, data) },
+  getViewHistory(page = 1) { return request.get(`/notes/view-history/?page=${page}`) },
 }
+

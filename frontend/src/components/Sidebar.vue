@@ -103,33 +103,73 @@
     </div>
   </div>
   <!-- Change Password Dialog -->
-  <el-dialog v-model="pwdDialog" title="修改密码" width="90%" max-width="380px">
-    <el-input v-model="pwdForm.old_password" type="password" placeholder="旧密码" class="dialog-input" show-password />
-    <el-input v-model="pwdForm.new_password" type="password" placeholder="新密码（至少6位）" class="dialog-input" show-password />
-    <template #footer>
-      <el-button @click="pwdDialog = false">取消</el-button>
-      <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="pwdSaving" @click="changePassword">确认修改</el-button>
-    </template>
-  </el-dialog>
-  <!-- Bind Email Dialog -->
-  <el-dialog v-model="emailDialog" title="绑定邮箱" width="90%" max-width="380px">
-    <el-input v-model="emailForm.email" placeholder="输入邮箱地址" class="dialog-input" />
-    <p v-if="currentEmail" style="font-size:12px;color:#999;margin:4px 0 0">当前绑定：{{ currentEmail }}</p>
-    <template #footer>
-      <el-button @click="emailDialog = false">取消</el-button>
-      <el-button type="primary" style="background:#ff2442;border-color:#ff2442" :loading="emailSaving" @click="bindEmail">绑定</el-button>
-    </template>
-  </el-dialog>
-  <!-- Cancel Account Dialog -->
-  <el-dialog v-model="cancelDialog" title="注销账号" width="90%" max-width="380px">
-    <p style="font-size:14px;color:#ff2442;font-weight:600;margin-bottom:12px">此操作不可逆，请确认：</p>
-    <el-input v-model="cancelForm.reason" type="textarea" :rows="3" placeholder="请告诉我们注销原因（选填）" class="dialog-input" />
-    <el-input v-model="cancelForm.password" type="password" placeholder="请输入密码确认" class="dialog-input" show-password />
-    <template #footer>
-      <el-button @click="cancelDialog = false">取消</el-button>
-      <el-button type="danger" :loading="cancelSaving" @click="confirmCancel">确认注销</el-button>
-    </template>
-  </el-dialog>
+
+<!-- Change Password Dialog -->
+<Teleport to="body">
+  <Transition name="login-fade">
+    <div v-if="pwdDialog" class="sd-overlay" @click.self="pwdDialog = false">
+      <Transition name="login-scale">
+        <div v-if="pwdDialog" class="sd-card">
+          <button class="sd-close" @click="pwdDialog = false">&times;</button>
+          <h3 class="sd-title">修改密码</h3>
+          <div class="sd-body">
+            <el-input v-model="pwdForm.old_password" type="password" placeholder="旧密码" class="sd-input" show-password />
+            <el-input v-model="pwdForm.new_password" type="password" placeholder="新密码（至少6位）" class="sd-input" show-password />
+          </div>
+          <div class="sd-footer">
+            <button class="sd-btn sd-btn-cancel" @click="pwdDialog = false">取消</button>
+            <button class="sd-btn sd-btn-primary" :disabled="pwdSaving" @click="changePassword">{{ pwdSaving ? "保存中..." : "确认修改" }}</button>
+          </div>
+        </div>
+      </Transition>
+    </div>
+  </Transition>
+</Teleport>
+
+<!-- Bind Email Dialog -->
+<Teleport to="body">
+  <Transition name="login-fade">
+    <div v-if="emailDialog" class="sd-overlay" @click.self="emailDialog = false">
+      <Transition name="login-scale">
+        <div v-if="emailDialog" class="sd-card">
+          <button class="sd-close" @click="emailDialog = false">&times;</button>
+          <h3 class="sd-title">绑定邮箱</h3>
+          <div class="sd-body">
+            <el-input v-model="emailForm.email" placeholder="输入邮箱地址" class="sd-input" />
+            <p v-if="currentEmail" style="font-size:13px;color:#999;margin:4px 0 0">当前绑定：{{ currentEmail }}</p>
+          </div>
+          <div class="sd-footer">
+            <button class="sd-btn sd-btn-cancel" @click="emailDialog = false">取消</button>
+            <button class="sd-btn sd-btn-primary" :disabled="emailSaving" @click="bindEmail">{{ emailSaving ? "保存中..." : "绑定" }}</button>
+          </div>
+        </div>
+      </Transition>
+    </div>
+  </Transition>
+</Teleport>
+
+<!-- Cancel Account Dialog -->
+<Teleport to="body">
+  <Transition name="login-fade">
+    <div v-if="cancelDialog" class="sd-overlay" @click.self="cancelDialog = false">
+      <Transition name="login-scale">
+        <div v-if="cancelDialog" class="sd-card">
+          <button class="sd-close" @click="cancelDialog = false">&times;</button>
+          <h3 class="sd-title">注销账号</h3>
+          <p style="font-size:14px;color:#ff2442;font-weight:600;margin-bottom:12px">此操作不可逆，请确认：</p>
+          <div class="sd-body">
+            <el-input v-model="cancelForm.reason" type="textarea" :rows="2" placeholder="请告诉我们注销原因（选填）" class="sd-input" />
+            <el-input v-model="cancelForm.password" type="password" placeholder="请输入密码确认" class="sd-input" show-password />
+          </div>
+          <div class="sd-footer">
+            <button class="sd-btn sd-btn-cancel" @click="cancelDialog = false">取消</button>
+            <button class="sd-btn sd-btn-danger" :disabled="cancelSaving" @click="confirmCancel">{{ cancelSaving ? "处理中..." : "确认注销" }}</button>
+          </div>
+        </div>
+      </Transition>
+    </div>
+  </Transition>
+</Teleport>
 </template>
 <script setup>
 import { ref, reactive } from "vue"
@@ -432,4 +472,106 @@ if (typeof document !== "undefined") {
 .dd-logout { font-size: 13px; }
 .account-fade-enter-active, .account-fade-leave-active { transition: opacity 0.15s, transform 0.15s; }
 .account-fade-enter-from, .account-fade-leave-to { opacity: 0; transform: translateY(4px); }
+
+
+/* Sidebar dialog overlay - matching LoginDialog style */
+.sd-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 3000;
+  display: flex; justify-content: center; align-items: center;
+  backdrop-filter: blur(2px);
+}
+.sd-card {
+  width: 380px;
+  max-width: 90vw;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+  padding: 32px 28px 24px;
+  position: relative;
+}
+.sd-close {
+  position: absolute; top: 14px; right: 14px;
+  width: 28px; height: 28px; border-radius: 50%;
+  border: none; background: #f5f5f5;
+  font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: #999; transition: all 0.15s;
+}
+.sd-close:hover { background: #e8e8e8; color: #333; }
+.sd-title {
+  font-size: 20px; font-weight: 700; color: #222;
+  margin: 0 0 20px;
+}
+.sd-body {
+  display: flex; flex-direction: column; gap: 12px;
+  margin-bottom: 20px;
+}
+.sd-input { width: 100%; }
+.sd-input :deep(.el-input__wrapper) {
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px #e8e8e8 inset;
+  padding: 0 14px;
+  background: #fff;
+}
+.sd-input :deep(.el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px #ddd inset;
+}
+.sd-input :deep(.el-input__wrapper.is-focus),
+.sd-input :deep(.el-input__wrapper:focus-within) {
+  box-shadow: 0 0 0 1px #ff2442 inset;
+}
+.sd-input :deep(.el-input__inner) {
+  height: 44px;
+  font-size: 14px;
+}
+.sd-input :deep(.el-textarea__inner) {
+  border-radius: 10px;
+  font-size: 14px;
+  box-shadow: 0 0 0 1px #e8e8e8 inset;
+  padding: 10px 14px;
+}
+.sd-input :deep(.el-textarea__inner:focus) {
+  box-shadow: 0 0 0 1px #ff2442 inset;
+}
+.sd-footer {
+  display: flex; gap: 10px;
+}
+.sd-btn {
+  flex: 1; height: 44px; border-radius: 22px;
+  border: none; font-size: 15px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s;
+}
+.sd-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.sd-btn-cancel {
+  background: #f5f5f5; color: #666;
+}
+.sd-btn-cancel:hover { background: #e8e8e8; }
+.sd-btn-primary {
+  background: #ff2442; color: #fff;
+}
+.sd-btn-primary:hover { opacity: 0.9; }
+.sd-btn-danger {
+  background: #ff2442; color: #fff;
+}
+.sd-btn-danger:hover { opacity: 0.9; }
+/* Dialog transitions */
+.sd-overlay .login-fade-enter-active,
+.sd-overlay .login-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.sd-overlay .login-fade-enter-from,
+.sd-overlay .login-fade-leave-to {
+  opacity: 0;
+}
+.sd-overlay .login-scale-enter-active,
+.sd-overlay .login-scale-leave-active {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+}
+.sd-overlay .login-scale-enter-from,
+.sd-overlay .login-scale-leave-to {
+  transform: scale(0.92);
+  opacity: 0;
+}
 </style>

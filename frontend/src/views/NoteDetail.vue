@@ -36,7 +36,7 @@
               <div class="drawer-right">
                 <!-- Author header -->
                 <div class="author-bar">
-                  <div class="author-info" @click="$router.push('/user/' + note.user_id)">
+                  <div class="author-info" @click="store.close();$router.push('/user/' + note.user_id)">
                     <el-avatar :size="36" :src="note.user_avatar" />
                     <div class="author-meta">
                       <span class="author-name">{{ note.user_nickname }}</span>
@@ -44,7 +44,6 @@
                     </div>
                   </div>
                   <div class="author-actions">
-                    <el-button v-if="!isOwner && userStore.isLoggedIn" size="small" round plain @click="sendPrivateMessage">发私信</el-button>
                     <el-button v-if="!isOwner && userStore.isLoggedIn" size="small" :type="note.is_following ? 'default' : 'danger'" round :class="{ 'follow-btn-red': !note.is_following }" @click="toggleFollow">{{ note.is_following ? '已关注' : '+ 关注' }}</el-button>
                     <el-dropdown v-if="isOwner" @command="handleAction" trigger="click">
                       <el-button text circle size="small"><span style="font-size:18px">&#8942;</span></el-button>

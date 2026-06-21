@@ -1,10 +1,8 @@
-import { createRouter, createWebHistory } from "vue-router"
+﻿import { createRouter, createWebHistory } from "vue-router"
 
 const routes = [
   { path: "/follow-list", name: "FollowList", component: () => import("../views/FollowList.vue") },
   { path: "/", name: "Home", component: () => import("../views/Home.vue") },
-  { path: "/login", name: "Login", component: () => import("../views/Login.vue") },
-  { path: "/register", name: "Register", component: () => import("../views/Register.vue") },
   { path: "/user/:id", name: "UserProfile", component: () => import("../views/UserProfile.vue") },
   { path: "/settings", name: "ProfileSettings", component: () => import("../views/ProfileSettings.vue") },
   { path: "/note/:id", name: "NoteDetail", component: () => import("../views/NoteDetail.vue") },
@@ -22,3 +20,4 @@ const router = createRouter({
 })
 
 export default router
+

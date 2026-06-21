@@ -1,5 +1,6 @@
 ﻿import axios from "axios"
 import router from "../router"
+import { openLoginDialog } from "../utils/dialogState"
 
 const request = axios.create({
   baseURL: "/api",
@@ -54,7 +55,7 @@ request.interceptors.response.use(
       }
       sessionStorage.removeItem("access_token")
       sessionStorage.removeItem("refresh_token")
-      router.push("/login")
+      openLoginDialog()
       return Promise.reject(error)
     }
     return Promise.reject(error)
@@ -62,3 +63,5 @@ request.interceptors.response.use(
 )
 
 export default request
+
+

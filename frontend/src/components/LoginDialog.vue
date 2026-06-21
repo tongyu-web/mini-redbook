@@ -23,6 +23,17 @@
                 />
               </div>
 
+              <!-- Password -->
+              <div class="form-field">
+                <el-input
+                  v-model="form.password"
+                  type="password"
+                  :placeholder="isRegister ? '设置密码（至少6位）' : '请输入密码'"
+                  show-password
+                  size="large"
+                />
+              </div>
+
               <!-- Verification Code (register only) -->
               <div v-if="isRegister" class="form-field form-field-code">
                 <el-input
@@ -39,17 +50,6 @@
                 >
                   {{ codeCountdown > 0 ? codeCountdown + "s" : "获取验证码" }}
                 </el-button>
-              </div>
-
-              <!-- Password -->
-              <div class="form-field">
-                <el-input
-                  v-model="form.password"
-                  type="password"
-                  :placeholder="isRegister ? '设置密码（至少6位）' : '请输入密码'"
-                  show-password
-                  size="large"
-                />
               </div>
 
               <el-button
@@ -216,17 +216,24 @@ watch(() => props.visible, (v) => {
   border-radius: 10px;
   box-shadow: 0 0 0 1px #e8e8e8 inset;
   padding: 0 14px;
-  transition: box-shadow 0.2s;
+  background: #fff;
 }
 .form-field :deep(.el-input__wrapper:hover) {
   box-shadow: 0 0 0 1px #ddd inset;
 }
-.form-field :deep(.el-input__wrapper.is-focus) {
+.form-field :deep(.el-input__wrapper.is-focus),
+.form-field :deep(.el-input__wrapper:focus-within) {
   box-shadow: 0 0 0 1px #ff2442 inset;
 }
 .form-field :deep(.el-input__inner) {
   height: 46px;
   font-size: 15px;
+}
+.form-field :deep(.el-input__suffix) {
+  background: transparent;
+}
+.form-field :deep(.el-input__suffix-inner) {
+  background: transparent;
 }
 
 .form-field-code { display: flex; gap: 10px; }
@@ -278,3 +285,44 @@ watch(() => props.visible, (v) => {
 .login-scale-enter-active, .login-scale-leave-active { transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease; }
 .login-scale-enter-from, .login-scale-leave-to { transform: scale(0.92); opacity: 0; }
 </style>
+<style>
+/* Login dialog inputs - clean white style */
+.login-card .el-input {
+  --el-input-focus-border-color: #ff2442 !important;
+  --el-input-border-color: #e8e8e8 !important;
+  --el-input-hover-border-color: #ddd !important;
+  --el-color-primary: #ff2442 !important;
+}
+.login-card .el-input__wrapper {
+  background: #fff !important;
+  box-shadow: 0 0 0 1px #e8e8e8 inset !important;
+  border-radius: 10px !important;
+  padding: 0 14px !important;
+}
+.login-card .el-input__wrapper.is-focus,
+.login-card .el-input__wrapper:focus-within {
+  box-shadow: 0 0 0 1px #ff2442 inset !important;
+}
+.login-card .el-input__inner {
+  background: transparent !important;
+  height: 46px !important;
+}
+.login-card .el-input__suffix {
+  background: transparent !important;
+  
+}
+.login-card .el-input__suffix-inner {
+  background: transparent !important;
+}
+.login-card .el-input__icon {
+  background: transparent !important;
+}
+</style>
+
+
+
+
+
+
+
+

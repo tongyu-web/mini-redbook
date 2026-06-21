@@ -356,6 +356,7 @@ function addAccount() {
 async function handleLogout() {
   showAccounts.value = false
   userStore.clearUser()
+  router.push("/")
 }
 if (typeof document !== "undefined") {
   document.addEventListener("click", function(e) {
@@ -551,4 +552,6 @@ if (typeof document !== "undefined") {
 .account-fade-enter-active, .account-fade-leave-active { transition: opacity 0.15s, transform 0.15s; }
 .account-fade-enter-from, .account-fade-leave-to { opacity: 0; transform: translateY(4px); }
 </style>
+
+
 

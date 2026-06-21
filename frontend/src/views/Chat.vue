@@ -1,30 +1,41 @@
 ﻿<template>
-  <div class="chat">
-    <div class="header">
-      <el-button text @click="goBack">← 返回</el-button>
-      <strong>{{ otherUser?.nickname || "聊天" }}</strong>
-      <div class="header-spacer"></div>
+  <div class="chat-wrap">
+    <div class="top-bar">
+      <button class="btn-back" @click="goBack">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#222" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="top-title">{{ otherUser?.nickname || "聊天" }}</span>
       <el-dropdown v-if="otherUser" @command="handleHeaderCommand" trigger="click">
-        <el-button text circle size="small"><span style="font-size:18px">&#8942;</span></el-button>
+        <el-button text circle size="small"><span style="font-size:20px;color:#666;letter-spacing:2px">···</span></el-button>
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item command="viewProfile">查看主页</el-dropdown-item>
-            <el-dropdown-item command="deleteConversation" divided>&#128465; 删除会话</el-dropdown-item>
-            <el-dropdown-item command="blockUser">&#128274; {{ isBlocked ? "取消屏蔽" : "屏蔽联系人" }}</el-dropdown-item>
+            <el-dropdown-item command="deleteConversation" divided>删除会话</el-dropdown-item>
+            <el-dropdown-item command="blockUser">{{ isBlocked ? "取消屏蔽" : "屏蔽联系人" }}</el-dropdown-item>
           </el-dropdown-menu>
         </template>
       </el-dropdown>
     </div>
-    <div class="messages" ref="msgRef">
-      <div v-if="messages.length === 0" class="empty-msg">暂无消息，发送第一条消息吧</div>
-      <div v-for="m in messages" :key="m.id" class="msg" :class="{ mine: m.from_user === currentUserId }">
-        <div class="bubble">{{ m.content }}</div>
-        <span class="time">{{ formatTime(m.created_at) }}</span>
-      </div>
+
+    <div class="msg-area" ref="msgRef">
+      <div v-if="messages.length === 0" class="msg-empty">暂无消息，开始聊天吧</div>
+      <template v-for="(m, idx) in messages" :key="m.id">
+        <div v-if="showTime(idx)" class="time-tag">{{ formatTime(m.created_at) }}</div>
+        <div class="msg-row" :class="isMine(m) ? 'msg-right' : 'msg-left'">
+          <div v-if="!isMine(m)" class="msg-avt" style="cursor:pointer" @click="$router.push(`/user/` + otherUser?.id)">
+            <el-avatar :size="28" :src="otherUser?.avatar_url" />
+          </div>
+          <div v-if="isMine(m)" class="msg-avt" style="cursor:pointer" @click="$router.push(`/user/` + userStore.user?.id)">
+            <el-avatar :size="28" :src="userStore.user?.avatar_url" />
+          </div>
+          <div class="msg-bubble">{{ m.content }}</div>
+        </div>
+      </template>
     </div>
+
     <div class="input-area">
-      <el-input v-model="text" placeholder="输入消息..." @keyup.enter="send" />
-      <el-button type="primary" @click="send" :disabled="!text.trim()">发送</el-button>
+      <el-input v-model="text" class="input-field" placeholder="输入消息..." :maxlength="500" clearable @keydown.enter.prevent="send" />
+      <button class="btn-send" :disabled="!text.trim()" @click="send">发送</button>
     </div>
   </div>
 </template>
@@ -48,17 +59,17 @@ const otherUser = ref(null)
 const msgRef = ref(null)
 const isBlocked = ref(false)
 const currentUserId = computed(() => userStore.user?.id)
+function isMine(m) { return String(m.from_user) === String(currentUserId.value) }
 let pollTimer = null
 
 onMounted(async () => {
   try {
-    const profileData = await accountsApi.getProfile(route.params.userId)
-    otherUser.value = profileData
+    const data = await accountsApi.getProfile(route.params.userId)
+    otherUser.value = data
   } catch (e) {
     otherUser.value = { nickname: "用户" }
   }
   await loadMessages()
-  // Auto-poll for new messages every 3 seconds while chat is open
   pollTimer = setInterval(loadMessages, 3000)
 })
 
@@ -75,13 +86,18 @@ function formatTime(t) {
   const d = new Date(t)
   const now = new Date()
   const pad = n => String(n).padStart(2, "0")
-  if (d.toDateString() === now.toDateString()) {
-    return pad(d.getHours()) + ":" + pad(d.getMinutes())
-  }
-  const yesterday = new Date(now)
-  yesterday.setDate(yesterday.getDate() - 1)
-  if (d.toDateString() === yesterday.toDateString()) return "昨天 " + pad(d.getHours()) + ":" + pad(d.getMinutes())
+  if (d.toDateString() === now.toDateString()) return pad(d.getHours()) + ":" + pad(d.getMinutes())
+  const y = new Date(now)
+  y.setDate(y.getDate() - 1)
+  if (d.toDateString() === y.toDateString()) return "昨天 " + pad(d.getHours()) + ":" + pad(d.getMinutes())
   return pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes())
+}
+
+function showTime(idx) {
+  if (idx === 0) return true
+  const prev = new Date(messages.value[idx - 1].created_at)
+  const curr = new Date(messages.value[idx].created_at)
+  return (curr - prev) > 5 * 60 * 1000
 }
 
 async function loadMessages() {
@@ -101,7 +117,6 @@ async function send() {
     await messageApi.sendMessage({ to_user_id: route.params.userId, content: text.value })
     text.value = ""
     await loadMessages()
-    // Refresh notification badge
     notificationStore.fetchUnreadCount()
   } catch (e) {
     ElMessage.error("发送失败: " + (e.message || e))
@@ -117,7 +132,7 @@ async function handleHeaderCommand(cmd) {
       await messageApi.deleteConversation(route.params.userId)
       ElMessage.success("会话已删除")
       router.push("/message")
-    } catch (e) { /* cancelled */ }
+    } catch (e) { }
   } else if (cmd === "blockUser") {
     try {
       if (isBlocked.value) {
@@ -130,21 +145,112 @@ async function handleHeaderCommand(cmd) {
         isBlocked.value = true
         ElMessage.success("已屏蔽")
       }
-    } catch (e) { /* cancelled */ }
+    } catch (e) { }
   }
 }
 </script>
 
 <style scoped>
-.chat { display: flex; flex-direction: column; height: 100vh; }
-.header { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid #eee; }
-.header-spacer { flex: 1; }
-.messages { flex: 1; overflow-y: auto; padding: 16px; }
-.empty-msg { text-align: center; padding: 60px 0; color: #bbb; font-size: 14px; }
-.msg { margin-bottom: 12px; }
-.msg.mine { text-align: right; }
-.bubble { display: inline-block; max-width: 70%; padding: 10px 14px; border-radius: 18px; background: #f0f0f0; font-size: 14px; word-break: break-word; }
-.msg.mine .bubble { background: #ff2442; color: white; }
-.time { display: block; font-size: 11px; color: #999; margin-top: 2px; }
-.input-area { display: flex; gap: 8px; padding: 10px 16px; border-top: 1px solid #eee; }
+.chat-wrap {
+  display: flex; flex-direction: column;
+  height: 100vh; max-width: 800px; margin: 0 auto;
+  background: #fff;
+}
+
+/* top bar */
+.top-bar {
+  display: flex; align-items: center;
+  padding: 10px 12px; background: #fff;
+  flex-shrink: 0;
+}
+.btn-back {
+  background: none; border: none;
+  cursor: pointer; padding: 4px; display: flex;
+}
+.top-title {
+  flex: 1; text-align: center;
+  font-size: 17px; font-weight: 600; color: #222;
+}
+
+/* message area */
+.msg-area {
+  flex: 1; overflow-y: auto;
+  padding: 12px 16px;
+  display: flex; flex-direction: column;
+  gap: 6px;
+}
+.msg-empty {
+  text-align: center; padding: 60px 0;
+  color: #ccc; font-size: 14px;
+}
+
+/* time tag */
+.time-tag {
+  text-align: center;
+  font-size: 11px; color: #c9c9c9;
+  padding: 12px 0 6px;
+}
+
+/* message row */
+.msg-row {
+  display: flex; gap: 8px;
+  max-width: 70%; align-items: flex-end;
+}
+.msg-left { align-self: flex-start; }
+.msg-right {
+  align-self: flex-end;
+  justify-content: flex-end;
+  flex-direction: row-reverse;
+  max-width: 60%;
+}
+
+/* avatar */
+.msg-avt { flex-shrink: 0; }
+
+/* bubble */
+.msg-bubble {
+  display: inline-block;
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 14px; line-height: 1.5;
+  word-break: break-word;
+  text-align: left;
+}
+.msg-left .msg-bubble {
+  background: #f2f2f2; color: #222;
+}
+.msg-right .msg-bubble {
+  background: #4a90d9; color: #fff;
+}
+
+/* input area */
+.input-area {
+  display: flex; align-items: center;
+  gap: 8px; padding: 8px 12px;
+  background: #fff; flex-shrink: 0;
+}
+.input-field { flex: 1; }
+.input-field :deep(.el-input__wrapper) {
+  border-radius: 22px;
+  background: #f5f5f5;
+  box-shadow: none; padding: 0 16px;
+}
+.input-field :deep(.el-input__inner) {
+  height: 40px; font-size: 14px;
+}
+.btn-send {
+  flex-shrink: 0;
+  height: 38px; padding: 0 20px;
+  border-radius: 19px; border: none;
+  background: #ff2442; color: #fff;
+  font-size: 14px; font-weight: 500;
+  cursor: pointer;
+}
+.btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
 </style>
+
+
+
+
+
+

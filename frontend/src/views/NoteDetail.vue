@@ -62,10 +62,7 @@
                 <!-- Title & content -->
                 <div class="note-body">
                   <h2 class="note-title">{{ note.title }}</h2>
-                  <p class="note-content">{{ note.content }}</p>
-                  <div class="note-tags" v-if="note.tags?.length">
-                    <el-tag v-for="tag in note.tags" :key="tag.id" size="small" effect="plain">{{ tag.name }}</el-tag>
-                  </div>
+                  <p class="note-content" v-html="renderContent(note.content)"></p>
                 </div>
 
                 <!-- Comments section -->
@@ -237,6 +234,7 @@ import { socialApi } from "../api/social"
 
 const router = useRouter()
 const userStore = useUserStore()
+window.__router = router
 const store = useNoteDetailStore()
 
 const note = ref(null)
@@ -509,6 +507,16 @@ function formatTime(dateStr) {
   return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
 }
 
+function searchTag(name) {
+  store.close()
+  if (window.__router) window.__router.push('/search?q=' + encodeURIComponent(name))
+}
+
+function renderContent(text) {
+  if (!text) return ''
+  return text.replace(/#([一-龥\w-]+)/g, '<a style="color:#409eff;cursor:pointer;text-decoration:none" onclick="event.stopPropagation();var r=window.__router;if(r)r.push(\'/search?q=\'+encodeURIComponent(\'$1\'))">#$1</a>')
+}
+
 </script>
 
 <style scoped>
@@ -737,12 +745,6 @@ function formatTime(dateStr) {
   color: #555;
   white-space: pre-wrap;
   margin: 0;
-}
-.note-tags {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-top: 10px;
 }
 /* Bottom action bar */
 .bottom-bar {

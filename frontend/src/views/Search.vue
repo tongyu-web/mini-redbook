@@ -69,6 +69,10 @@ import NoteDetail from "./NoteDetail.vue"
 import { searchApi } from "../api/search"
 import { useNoteDetailStore } from "../stores/noteDetail"
 
+const props = defineProps({
+  category: { type: String, default: "recommend" }
+})
+
 const route = useRoute()
 const router = useRouter()
 const noteDetailStore = useNoteDetailStore()

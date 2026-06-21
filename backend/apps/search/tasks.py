@@ -1,6 +1,8 @@
-﻿from django.db.models import Q
-from .models import SearchHistory
+﻿from django.db import models, transaction
+from django.db.models import Q
+from .models import SearchHistory, HotSearchTerm
 from config.constants import NOTE_STATUS_PUBLISHED, MAX_SEARCH_HISTORY, ACCOUNT_STATUS_NORMAL
+
 
 class SearchTask:
     @staticmethod
@@ -11,6 +13,14 @@ class SearchTask:
             if total > MAX_SEARCH_HISTORY:
                 ids = SearchHistory.objects.filter(user=user).values_list("id", flat=True)[MAX_SEARCH_HISTORY:]
                 SearchHistory.objects.filter(id__in=list(ids)).delete()
+
+        with transaction.atomic():
+            term, created = HotSearchTerm.objects.get_or_create(
+                keyword=keyword,
+                defaults={"search_count": 1}
+            )
+            if not created:
+                HotSearchTerm.objects.filter(pk=term.pk).update(search_count=models.F("search_count") + 1)
 
         from apps.notes.models import Note
         from apps.accounts.models import User
@@ -34,7 +44,6 @@ class SearchTask:
                 status=NOTE_STATUS_PUBLISHED
             ).select_related("user").order_by("-created_at")
 
-        # Manual pagination
         start = (page - 1) * page_size
         end = start + page_size
         total = qs.count()
@@ -44,13 +53,17 @@ class SearchTask:
             from apps.notes.serializers import NoteListSerializer
             from django.http import HttpRequest
             fake_req = HttpRequest()
-            fake_req.user = user
+            fake_req.user = user if user and user.is_authenticated else type("AnonymousUser", (), {"is_authenticated": False})()
             fake_req.META = {"SERVER_NAME": "localhost", "SERVER_PORT": "8000", "HTTP_HOST": "localhost:8000", "wsgi.url_scheme": "http"}
             ser = NoteListSerializer(page_items, many=True, context={"request": fake_req})
             return {"count": total, "results": ser.data}
         elif search_type == "user":
             from apps.accounts.serializers import UserSimpleSerializer
-            ser = UserSimpleSerializer(page_items, many=True)
+            from django.http import HttpRequest
+            fake_req = HttpRequest()
+            fake_req.user = user if user and user.is_authenticated else type("AnonymousUser", (), {"is_authenticated": False})()
+            fake_req.META = {"SERVER_NAME": "localhost", "SERVER_PORT": "8000", "HTTP_HOST": "localhost:8000", "wsgi.url_scheme": "http"}
+            ser = UserSimpleSerializer(page_items, many=True, context={"request": fake_req})
             return {"count": total, "results": ser.data}
         elif search_type == "tag":
             data = [{"name": t.name, "hot_value": t.hot_value, "note_count": t.note_count} for t in page_items]
@@ -66,6 +79,11 @@ class SearchTask:
     def hot_tags():
         from apps.notes.models import Tag
         return list(Tag.objects.order_by("-hot_value")[:20].values("name", "hot_value", "note_count"))
+
+    @staticmethod
+    def hot_search_terms(limit=20):
+        qs = HotSearchTerm.objects.order_by("-search_count")[:limit]
+        return list(qs.values("keyword", "search_count", "updated_at"))
 
     @staticmethod
     def recommend(user):

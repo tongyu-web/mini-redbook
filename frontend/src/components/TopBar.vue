@@ -1,8 +1,12 @@
-﻿﻿<template>
+﻿<template>
   <div class="topbar">
     <div class="topbar-inner">
       <!-- Search bar section -->
-            <div class="search-section" ref="searchSection">
+      <div
+        class="search-section"
+        :class="{ 'has-dropdown': showDropdown }"
+        ref="searchSection"
+      >
         <div class="search-card">
           <div class="search-card-top">
             <input
@@ -30,6 +34,75 @@
         <!-- Search Dropdown -->
         <Transition name="search-drop">
           <div v-if="showDropdown" class="search-dropdown">
+            <!-- Suggestions (when user is typing) -->
+            <template v-if="searchText.trim() && suggestions.length">
+              <div class="sd-section">
+                <div class="sd-title-row">
+                  <span class="sd-title">搜索建议</span>
+                </div>
+                <div class="sd-tags">
+                  <span
+                    v-for="s in suggestions"
+                    :key="s.name"
+                    class="sd-tag"
+                    @click="selectSuggestion(s.name)"
+                  >
+                    {{ s.name }}
+                  </span>
+                </div>
+              </div>
+            </template>
+
+            <!-- History section -->
+            <template v-if="localHistory.length">
+              <div class="sd-section">
+                <div class="sd-title-row">
+                  <span class="sd-title">历史记录</span>
+                  <button class="sd-clear-btn" @click="clearHistory" title="清空历史记录">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2" width="16" height="16">
+                      <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                  </button>
+                </div>
+                <div class="sd-tags">
+                  <span
+                    v-for="(item, index) in localHistory"
+                    :key="index"
+                    class="sd-tag"
+                    @click="selectSuggestion(item)"
+                  >
+                    {{ item }}
+                  </span>
+                </div>
+              </div>
+            </template>
+
+            <!-- Trending / Hot search section -->
+            <template v-if="hotTerms.length">
+              <div class="sd-section">
+                <div class="sd-title-row">
+                  <span class="sd-title">猜你想搜</span>
+                </div>
+                <div class="sd-tags">
+                  <span
+                    v-for="term in hotTerms"
+                    :key="term.keyword"
+                    class="sd-tag"
+                    @click="selectSuggestion(term.keyword)"
+                  >
+                    {{ term.keyword }}
+                  </span>
+                </div>
+              </div>
+            </template>
+
+            <!-- Empty state -->
+            <div v-if="!localHistory.length && !hotTerms.length && !suggestions.length" class="sd-empty">
+              <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#ddd" stroke-width="1.5">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <p>搜索你感兴趣的内容</p>
+            </div>
           </div>
         </Transition>
       </div>
@@ -58,108 +131,90 @@ import { useRoute, useRouter } from "vue-router"
 import { useUserStore } from "../stores/user"
 import { searchApi } from "../api/search"
 
-const router = useRouter()
 const route = useRoute()
+const router = useRouter()
 const userStore = useUserStore()
+
 const searchText = ref("")
-const activeCat = ref("recommend")
-const tabsRef = ref(null)
-const searchSection = ref(null)
 const showDropdown = ref(false)
-const hotTags = ref([])
 const suggestions = ref([])
 const localHistory = ref([])
-
-// --- Search history local cache ---
-const HISTORY_KEY = "mini_search_history"
-
-function loadHistory() {
-  try {
-    return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]")
-  } catch { return [] }
-}
-
-function saveHistory(list) {
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, 20)))
-}
-
-function addToHistory(keyword) {
-  let list = loadHistory()
-  list = list.filter(k => k !== keyword)
-  list.unshift(keyword)
-  saveHistory(list)
-  localHistory.value = list
-}
-
-function removeHistoryItem(index) {
-  let list = loadHistory()
-  list.splice(index, 1)
-  saveHistory(list)
-  localHistory.value = list
-}
-
-function clearHistory() {
-  localStorage.removeItem(HISTORY_KEY)
-  localHistory.value = []
-  // Also clear server-side
-  if (userStore.isLoggedIn) {
-    searchApi.clearHistory().catch(() => {})
-  }
-}
-
-// --- Hot tags ---
-async function loadHotTags() {
-  try {
-    const tags = await searchApi.hotTags()
-    hotTags.value = Array.isArray(tags) ? tags : []
-  } catch { hotTags.value = [] }
-}
-
-// --- Suggest with debounce ---
-let suggestTimer = null
-function onSearchInput() {
-  showDropdown.value = true
-  if (suggestTimer) clearTimeout(suggestTimer)
-  if (!searchText.value.trim()) {
-    suggestions.value = []
-    return
-  }
-  suggestTimer = setTimeout(async () => {
-    try {
-      const res = await searchApi.suggest(searchText.value.trim())
-      suggestions.value = Array.isArray(res) ? res : []
-    } catch { suggestions.value = [] }
-  }, 300)
-}
-
-// Sync searchText from route query (e.g. tag click)
-watch(() => route.query.q, (q) => { if (q && q !== searchText.value) searchText.value = q })
+const hotTerms = ref([])
+const searchSection = ref(null)
+const activeCat = ref("recommend")
 
 function onSearchFocus() {
   showDropdown.value = true
-  if (!searchText.value.trim()) {
+  loadHotTerms()
+}
+
+function onSearchInput() {
+  const t = searchText.value.trim()
+  if (t.length >= 1) {
+    loadSuggestions(t)
+  } else {
     suggestions.value = []
-    loadHotTags()
   }
-  localHistory.value = loadHistory()
+}
+
+async function loadSuggestions(q) {
+  try {
+    const res = await searchApi.suggest({ q })
+    if (res?.results) suggestions.value = res.results
+  } catch {
+    suggestions.value = []
+  }
+}
+
+async function loadHotTerms() {
+  if (hotTerms.value.length) return
+  try {
+    const res = await searchApi.hot()
+    if (res?.results) hotTerms.value = res.results
+  } catch {
+    hotTerms.value = []
+  }
+}
+
+function loadHistory() {
+  try {
+    const stored = localStorage.getItem("search_history")
+    localHistory.value = stored ? JSON.parse(stored) : []
+  } catch {
+    localHistory.value = []
+  }
+}
+
+function saveHistory(q) {
+  if (!q.trim()) return
+  let h = [q.trim(), ...localHistory.value.filter(i => i !== q.trim())]
+  if (h.length > 10) h = h.slice(0, 10)
+  localHistory.value = h
+  localStorage.setItem("search_history", JSON.stringify(h))
+}
+
+function clearHistory() {
+  localHistory.value = []
+  localStorage.removeItem("search_history")
 }
 
 function selectSuggestion(text) {
   searchText.value = text
   showDropdown.value = false
-  addToHistory(text)
-  router.push("/search?q=" + encodeURIComponent(text))
+  saveHistory(text)
+  router.push({ path: "/search", query: { q: text } })
+  emit("search", text)
 }
 
 function doSearch() {
-  const q = searchText.value.trim()
-  if (!q) return
+  const t = searchText.value.trim()
+  if (!t) return
   showDropdown.value = false
-  addToHistory(q)
-  router.push("/search?q=" + encodeURIComponent(q))
+  saveHistory(t)
+  router.push({ path: "/search", query: { q: t } })
+  emit("search", t)
 }
 
-// Close dropdown on outside click
 function onDocClick(e) {
   if (searchSection.value && !searchSection.value.contains(e.target)) {
     showDropdown.value = false
@@ -167,22 +222,20 @@ function onDocClick(e) {
 }
 
 onMounted(() => {
-  loadHotTags()
   document.addEventListener("click", onDocClick)
-  localHistory.value = loadHistory()
+  loadHistory()
 })
 
 onUnmounted(() => {
   document.removeEventListener("click", onDocClick)
-  if (suggestTimer) clearTimeout(suggestTimer)
 })
 
 const categories = [
   { key: "recommend", label: "推荐" },
-  { key: "beauty", label: "美妆" },
-  { key: "travel", label: "旅行" },
-  { key: "food", label: "美食" },
   { key: "fashion", label: "穿搭" },
+  { key: "beauty", label: "美妆" },
+  { key: "food", label: "美食" },
+  { key: "travel", label: "旅行" },
   { key: "fitness", label: "健身" },
   { key: "tech", label: "数码" },
   { key: "study", label: "学习" },
@@ -206,14 +259,8 @@ function switchCategory(key) {
 
 <style scoped>
 .topbar {
-  
-  
-  
-  
   height: auto;
   background: #fff;
-  
-  
 }
 .topbar-inner {
   max-width: 1000px;
@@ -221,138 +268,32 @@ function switchCategory(key) {
   padding: 10px 24px 0;
 }
 
-/* Search section */
+/* ===== Unified search container =====
+   Default state: standalone rounded card with shadow.
+   .has-dropdown state: top corners round, bottom flat, no bottom border,
+   letting the dropdown seamlessly extend below. */
 .search-section {
-  padding-bottom: 6px;
-}
-.search-input-wrapper {
-  max-width: 700px;
+  position: relative;
+  max-width: 900px;
   margin: 0 auto;
-  display: flex;
-  align-items: center;
-  background: #fff;
-  border-radius: 16px;
-  padding: 0 4px 0 8px;
-  height: 50px;
-  gap: 6px;
-  
-  
-}
-.search-input-wrapper:focus-within {
-
-}
-.quick-create-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: transparent;
-  color: #555;
-  cursor: pointer;
-  border-radius: 50%;
-  flex-shrink: 0;
-  transition: all 0.15s;
-}
-.quick-create-btn:hover {
-  background: #eee;
-  color: #ff2442;
-}
-.search-input {
-  flex: 1;
-  border: none;
-  background: transparent;
-  font-size: 14px;
-  outline: none;
-  color: #333;
-}
-.search-input::placeholder { color: #bbb; }
-.search-submit-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: transparent;
-  color: #999;
-  cursor: pointer;
-  border-radius: 50%;
-  flex-shrink: 0;
-  transition: all 0.15s;
-}
-.search-submit-btn:hover {
-  background: #eee;
-  color: #ff2442;
-}
-
-/* Tabs section with divider */
-.tabs-section {
-  
-  padding-top: 4px;
-  display: flex;
-  justify-content: center;
-}
-.category-tabs-wrapper {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-.category-tabs-wrapper::-webkit-scrollbar { display: none; }
-.category-tabs {
-  display: flex;
-  gap: 0;
-  padding: 2px 0;
-  justify-content: center;
-}
-.cat-tab { font-size: 15px;
-  padding: 8px 18px;
-  font-size: 14px;
-  color: #888;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s;
-  font-weight: 400;
-}
-.cat-tab:hover {
-  color: #555;
-}
-.cat-tab.active {
-  color: #ff2442;
-  font-weight: 700;
-}
-
-/* Search dropdown */
-.search-section { position: relative; }
-.search-dropdown {
-  position: absolute;
-  top: calc(100% + 0px);
-  left: 0;
-  
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-  padding: 8px 0;
-  z-index: 500;
-  max-height: 420px;
-  overflow-y: auto;
-}
-.sd-section { padding: 4px 0; }
-.sd-section + .sd-section { border-top: 1px solid #f5f5f5; }
-
-.search-section { position: relative; padding: 24px 24px 0; max-width: 900px; margin: 0 auto; }
-
-.search-card { margin-bottom: 20px;
+  padding: 0;
   background: #fff;
   border: 1px solid #e8e8e8;
   border-radius: 18px;
-  padding: 16px 24px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.04);
-  transition: box-shadow 0.2s;
 }
-.search-card:hover, .search-card:focus-within {
+.search-section:focus-within {
   box-shadow: 0 6px 20px rgba(0,0,0,0.07);
+}
+.search-section.has-dropdown {
+  border-radius: 18px 18px 0 0;
+  border-bottom: none;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.04);
+}
+
+/* Search bar inner */
+.search-card {
+  padding: 16px 24px;
 }
 
 .search-card-top { margin-bottom: 10px; }
@@ -387,8 +328,6 @@ function switchCategory(key) {
 .sc-create-btn:hover { border-color: #ff2442; }
 .sc-create-btn:hover svg { stroke: #ff2442; }
 
-.sc-hint { font-size: 12px; color: #ccc; }
-
 .sc-search-btn {
   display: flex;
   align-items: center;
@@ -402,15 +341,148 @@ function switchCategory(key) {
   transition: background 0.2s, transform 0.15s;
 }
 .sc-search-btn:hover { background: #ff2442; transform: scale(1.05); }
-.dd-remove {
-  background: none; border: none; color: #ccc; cursor: pointer; font-size: 14px; padding: 2px 4px; border-radius: 4px; line-height: 1;
+
+/* ===== Search Dropdown =====
+   Background (#fff) matches the search-section/search-card exactly.
+   Sits flush below search-section when visible — one seamless panel. */
+.search-dropdown {
+  position: absolute;
+  top: 100%;
+  left: -1px;
+  right: -1px;
+  background: #fff;
+  border-radius: 0 0 18px 18px;
+  border: 1px solid #e8e8e8;
+  border-top: none;
+  padding: 6px 0 20px;
+  z-index: 500;
+  max-height: 480px;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
 }
-.dd-remove:hover { color: #ff2442; background: #fff0f0; }
-.remove-history-btn { background: none; border: none; color: #ccc; cursor: pointer; font-size: 12px; padding: 2px; }
-.remove-history-btn:hover { color: #ff2442; }
 
-.sd-empty { text-align: center; padding: 24px 0; color: #ccc; font-size: 13px; }
+/* ===== Section title + tags =====
+   Two independent modules: 历史记录 / 猜你想搜.
+   Separated by generous whitespace — no dividing lines. */
+.sd-section {
+  padding: 6px 24px;
+}
 
-.search-drop-enter-active, .search-drop-leave-active { transition: opacity 0.15s, transform 0.15s; }
-.search-drop-enter-from, .search-drop-leave-to { opacity: 0; transform: translateY(-4px); }
+/* Large whitespace between sections */
+.sd-section + .sd-section {
+  margin-top: 28px;
+  padding-top: 0;
+}
+
+/* Title row */
+.sd-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.sd-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* Clear button */
+.sd-clear-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+.sd-clear-btn:hover { background: #f5f5f5; }
+.sd-clear-btn:hover svg { stroke: #999; }
+
+/* Tag flow */
+.sd-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Capsule tag — same border color as search-section for harmony */
+.sd-tag {
+  display: inline-block;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: #999;
+  border: 1px solid #e8e8e8;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  line-height: 1.4;
+  user-select: none;
+}
+.sd-tag:hover {
+  color: #666;
+  border-color: #ccc;
+  background: #fafafa;
+}
+
+/* Empty state */
+.sd-empty {
+  text-align: center;
+  padding: 32px 0 20px;
+  color: #ddd;
+}
+.sd-empty p {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #ccc;
+}
+
+/* Transition */
+.search-drop-enter-active, .search-drop-leave-active {
+  transition: opacity 0.15s, transform 0.15s;
+}
+.search-drop-enter-from, .search-drop-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+/* Category tabs */
+.tabs-section {
+  padding-top: 4px;
+  display: flex;
+  justify-content: center;
+}
+.category-tabs-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.category-tabs-wrapper::-webkit-scrollbar { display: none; }
+.category-tabs {
+  display: flex;
+  gap: 0;
+  padding: 2px 0;
+  justify-content: center;
+}
+.cat-tab {
+  padding: 8px 18px;
+  font-size: 14px;
+  color: #888;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  font-weight: 400;
+}
+.cat-tab:hover { color: #555; }
+.cat-tab.active {
+  color: #ff2442;
+  font-weight: 700;
+}
 </style>

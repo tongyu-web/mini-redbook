@@ -1,10 +1,11 @@
-from rest_framework.views import APIView
+﻿from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.db.models import Q
 from .tasks import SearchTask
 from common.response import ApiResponse
 from common.pagination import StandardPagination
 from config.constants import NOTE_STATUS_PUBLISHED
+
 
 class SearchView(APIView):
     permission_classes = [AllowAny]
@@ -18,6 +19,7 @@ class SearchView(APIView):
         result = SearchTask.search(request.user, q, search_type, page)
         return ApiResponse.success(data=result)
 
+
 class SuggestView(APIView):
     permission_classes = [AllowAny]
 
@@ -28,12 +30,23 @@ class SuggestView(APIView):
         result = SearchTask.suggest(q)
         return ApiResponse.success(data=result)
 
+
 class HotTagView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
         result = SearchTask.hot_tags()
         return ApiResponse.success(data=result)
+
+
+class HotSearchView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        limit = int(request.query_params.get("limit", 20))
+        result = SearchTask.hot_search_terms(limit=limit)
+        return ApiResponse.success(data=result)
+
 
 class RecommendView(APIView):
     permission_classes = [AllowAny]
@@ -46,13 +59,17 @@ class RecommendView(APIView):
         ser = NoteListSerializer(page, many=True, context={"request": request})
         return ApiResponse.success(data=paginator.get_paginated_response(ser.data).data)
 
+
 class SearchHistoryView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         from .models import SearchHistory
         qs = SearchHistory.objects.filter(user=request.user).order_by("-created_at")[:20]
-        return ApiResponse.success(data=[{"id": h.id, "keyword": h.keyword, "created_at": h.created_at.isoformat()} for h in qs])
+        return ApiResponse.success(data=[
+            {"id": h.id, "keyword": h.keyword, "created_at": h.created_at.isoformat()}
+            for h in qs
+        ])
 
     def delete(self, request):
         from .models import SearchHistory

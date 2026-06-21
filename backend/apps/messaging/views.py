@@ -68,7 +68,7 @@ class ConversationView(APIView):
         seen = set()
         conversations = []
         for msg in last_msgs:
-            other_id = str(msg["to_user"]) if str(msg["from_user"]) != str(user.id) else str(msg["from_user"])
+            other_id = str(msg["from_user"]) if str(msg["from_user"]) != str(user.id) else str(msg["to_user"])
             if other_id in seen:
                 continue
             seen.add(other_id)
@@ -111,13 +111,6 @@ class MessageView(APIView):
         if BlockedContact.objects.filter(user_id=to_user_id, blocked_user=request.user).exists():
             return ApiResponse.error(code=4001, message="对方已屏蔽你", status=403)
         msg = Message.objects.create(from_user=request.user, to_user_id=to_user_id, content=content)
-        # Create notification for the recipient
-        Notification.objects.create(
-            to_user_id=to_user_id,
-            from_user=request.user,
-            type="message",
-            content=content[:100],
-        )
         return ApiResponse.success(data=MessageSerializer(msg).data, message="发送成功", status=201)
 
 class BlockContactView(APIView):

@@ -81,25 +81,7 @@
           </div>
           <div v-else class="empty-state">暂无新增关注</div>
         </el-tab-pane>
-        <el-tab-pane name="message">
-          <template #label>
-            <span class="tab-label">
-              消息通知
-              <sup v-if="msgNotifUnread > 0" class="tab-dot">{{ msgNotifUnread > 99 ? "99+" : msgNotifUnread }}</sup>
-            </span>
-          </template>
-          <div v-if="messageItems.length" class="notif-list">
-            <div v-for="n in messageItems" :key="n.id" class="notif-item" @click="handleMessageNotif(n)">
-              <el-avatar :size="40" :src="n.from_user_avatar" />
-              <div class="notif-body">
-                <p><strong>{{ n.from_user_nickname }}</strong> 给你发了一条私信</p>
-                <p class="notif-preview">{{ n.content }}</p>
-                <span class="time">{{ formatTime(n.created_at) }}</span>
-              </div>
-            </div>
-          </div>
-          <div v-else class="empty-state">暂无消息通知</div>
-        </el-tab-pane>
+        
       </el-tabs>
     </div>
   </div>
@@ -121,13 +103,11 @@ const unreadMsgCount = computed(() => notificationStore.unreadMessageCount || 0)
 const commentUnread = computed(() => notificationStore.byType?.comment || 0)
 const likeUnread = computed(() => (notificationStore.byType?.like || 0) + (notificationStore.byType?.favorite || 0))
 const followUnread = computed(() => notificationStore.byType?.follow || 0)
-const msgNotifUnread = computed(() => notificationStore.byType?.message || 0)
 
 const notifications = ref([])
 const commentItems = ref([])
 const likeItems = ref([])
 const followItems = ref([])
-const messageItems = ref([])
 const conversations = ref([])
 
 onMounted(() => {
@@ -174,7 +154,6 @@ function filterItems() {
   commentItems.value = notifications.value.filter(n => n.type === "comment")
   likeItems.value = notifications.value.filter(n => n.type === "like" || n.type === "favorite")
   followItems.value = notifications.value.filter(n => n.type === "follow")
-  messageItems.value = notifications.value.filter(n => n.type === "message")
 }
 
 function loadTab() {
@@ -186,16 +165,6 @@ function loadTab() {
 
 function openChat(userId) {
   router.push("/chat/" + userId)
-}
-
-async function handleMessageNotif(n) {
-  if (!n.is_read) {
-    await messageApi.markRead(n.id)
-    notificationStore.fetchUnreadCount()
-  }
-  if (n.from_user) {
-    router.push("/chat/" + n.from_user)
-  }
 }
 
 async function handleClick(n) {

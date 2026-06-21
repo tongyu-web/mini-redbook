@@ -372,11 +372,16 @@ function openCancelAccount() {
 }
 async function confirmCancel() {
   cancelSaving.value = true
+  try {
     const { accountsApi } = await import("../api/accounts")
     await accountsApi.cancelAccount({ reason: cancelForm.reason, password: cancelForm.password })
     cancelDialog.value = false
     userStore.clearUser()
     window.location.reload()
+  } catch (e) {
+    cancelSaving.value = false
+    ElMessage.error(e?.message || "注销失败，请重试")
+  }
 }
 function goCreate() {
   if (!userStore.isLoggedIn) { openLoginDialog(); return }

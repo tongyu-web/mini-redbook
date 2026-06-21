@@ -1,4 +1,4 @@
-import request from "./request"
+﻿import request from "./request"
 
 export const accountsApi = {
   register(data) { return request.post("/accounts/register/", data) },
@@ -13,6 +13,10 @@ export const accountsApi = {
   getFollowing(userId) { return request.get(`/accounts/${userId}/following/`) },
   changePassword(data) { return request.post('/accounts/password/change/', data) },
   bindEmail(data) { return request.post('/accounts/email/bind/', data) },
+  sendEmailCode(data) { return request.post('/accounts/email/send-code/', data) },
+  bindEmailWithCode(data) { return request.post('/accounts/email/bind-with-code/', data) },
+  unbindEmail() { return request.post("/accounts/email/unbind/") },
   updatePrivacy(data) { return request.put('/accounts/privacy/', data) },
   cancelAccount(data) { return request.post('/accounts/cancel/', data) },
 }
+

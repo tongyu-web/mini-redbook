@@ -1,4 +1,4 @@
-import uuid
+﻿import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from config.constants import (
@@ -40,3 +40,18 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
+
+class EmailVerification(models.Model):
+    id = models.CharField(max_length=32, primary_key=True, default=uuid4_hex, editable=False)
+    email = models.EmailField()
+    code = models.CharField(max_length=6)
+    user = models.ForeignKey(User, related_name='email_verifications', on_delete=models.CASCADE, null=True, blank=True)
+    is_used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'email_verifications'
+
+    def __str__(self):
+        return f'{self.email} - {self.code}'
+

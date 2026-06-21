@@ -38,6 +38,9 @@ request.interceptors.response.use(
     return Promise.reject(new Error(message || "请求失败"))
   },
   async (error) => {
+    // Extract the actual error message from the backend response
+    const errMsg = error.response?.data?.message || error.message || "请求失败"
+    const apiError = new Error(errMsg)
     if (error.response?.status === 401) {
       const originalRequest = error.config
       if (!originalRequest?._retry) {
@@ -56,12 +59,10 @@ request.interceptors.response.use(
       sessionStorage.removeItem("access_token")
       sessionStorage.removeItem("refresh_token")
       openLoginDialog()
-      return Promise.reject(error)
+      return Promise.reject(apiError)
     }
-    return Promise.reject(error)
+    return Promise.reject(apiError)
   }
 )
 
 export default request
-
-

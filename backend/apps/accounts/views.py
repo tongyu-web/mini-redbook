@@ -1,4 +1,4 @@
-from rest_framework.views import APIView
+﻿from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework import serializers as drf_serializers
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -207,6 +207,72 @@ class LogoutView(APIView):
             except Exception:
                 pass
         return ApiResponse.success(message="已退出登录")
+
+class SendEmailCodeView(APIView):
+    """发送邮箱验证码"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        email = request.data.get("email", "").strip()
+        if not email:
+            return ApiResponse.error(code=4001, message="请输入邮箱地址", status=400)
+        import random
+        code = "".join(random.choices("0123456789", k=6))
+        from .models import EmailVerification
+        EmailVerification.objects.filter(email=email, is_used=False).update(is_used=True)
+        EmailVerification.objects.create(email=email, code=code, user=request.user)
+        from django.core.mail import send_mail
+        from django.conf import settings
+        try:
+            send_mail(
+                subject="Mini小红书 - 邮箱验证码",
+                message=f"您的验证码是：{code}\n验证码有效期为10分钟，请勿泄露给他人。",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+                fail_silently=False,
+            )
+            return ApiResponse.success(data={"email": email}, message="验证码已发送")
+        except Exception as e:
+            return ApiResponse.error(code=5001, message=f"邮件发送失败: {str(e)}", status=500)
+
+
+class BindEmailWithCodeView(APIView):
+    """验证码绑定邮箱"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        email = request.data.get("email", "").strip()
+        code = request.data.get("code", "").strip()
+        if not email or not code:
+            return ApiResponse.error(code=4001, message="请填写邮箱和验证码", status=400)
+        from .models import EmailVerification
+        from django.utils import timezone
+        from datetime import timedelta
+        record = EmailVerification.objects.filter(
+            email=email, code=code, is_used=False,
+            created_at__gte=timezone.now() - timedelta(minutes=10)
+        ).first()
+        if not record:
+            return ApiResponse.error(code=4001, message="验证码无效或已过期", status=400)
+        from .models import User
+        # If another user has this email, auto-unbind since current user proved ownership
+        User.objects.filter(email=email).exclude(id=request.user.id).update(email="")
+        record.is_used = True
+        record.save()
+        request.user.email = email
+        request.user.save()
+        return ApiResponse.success(data={"email": email}, message="邮箱绑定成功")
+
+class UnbindEmailView(APIView):
+    """解绑邮箱"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if not request.user.email:
+            return ApiResponse.error(code=4001, message="当前未绑定邮箱", status=400)
+        request.user.email = ""
+        request.user.save()
+        return ApiResponse.success(message="邮箱已解绑")
 
 class FollowingListView(APIView):
     permission_classes = [IsAuthenticated]

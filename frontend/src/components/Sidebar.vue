@@ -133,21 +133,25 @@
       <Transition name="login-scale">
         <div v-if="emailDialog" class="sd-card">
           <button class="sd-close" @click="emailDialog = false">&times;</button>
-          <h3 class="sd-title">绑定邮箱</h3>
+          <h3 class="sd-title">{{ currentEmail ? "邮箱管理" : "绑定邮箱" }}</h3>
           <div class="sd-body">
-            <el-input v-model="emailForm.email" placeholder="输入邮箱地址" class="sd-input" />
+            <el-input v-model="emailForm.email" placeholder="输入邮箱地址" class="sd-input" :disabled="!!currentEmail" />
+            <div style="display:flex;gap:8px">
+              <el-input v-model="emailForm.code" placeholder="输入验证码" class="sd-input" maxlength="6" style="flex:1" />
+              <button class="code-btn-sd" :disabled="codeSending || codeCountdown > 0" @click="sendEmailCode">{{ codeCountdown > 0 ? codeCountdown + "s" : "获取验证码" }}</button>
+            </div>
             <p v-if="currentEmail" style="font-size:13px;color:#999;margin:4px 0 0">当前绑定：{{ currentEmail }}</p>
           </div>
-          <div class="sd-footer">
+          <div class="sd-footer" style="flex-wrap:wrap;gap:8px">
             <button class="sd-btn sd-btn-cancel" @click="emailDialog = false">取消</button>
-            <button class="sd-btn sd-btn-primary" :disabled="emailSaving" @click="bindEmail">{{ emailSaving ? "保存中..." : "绑定" }}</button>
+            <button v-if="currentEmail" class="sd-btn sd-btn-cancel" style="color:#ff2442;border:1px solid #ff2442;background:#fff" :disabled="unbindSaving" @click="unbindEmail">{{ unbindSaving ? "解绑中..." : "解绑邮箱" }}</button>
+            <button class="sd-btn sd-btn-primary" :disabled="emailSaving || !emailForm.code" @click="bindEmailWithCode">{{ emailSaving ? "绑定中..." : (currentEmail ? "换绑" : "确认绑定") }}</button>
           </div>
         </div>
       </Transition>
     </div>
   </Transition>
 </Teleport>
-
 <!-- Cancel Account Dialog -->
 <Teleport to="body">
   <Transition name="login-fade">
@@ -192,8 +196,12 @@ const pwdSaving = ref(false)
 const pwdForm = reactive({ old_password: "", new_password: "" })
 const emailDialog = ref(false)
 const emailSaving = ref(false)
-const emailForm = reactive({ email: "" })
+const emailForm = reactive({ email: "", code: "" })
+const unbindSaving = ref(false)
 const currentEmail = ref("")
+const codeSending = ref(false)
+const codeCountdown = ref(0)
+let codeTimer = null
 const cancelDialog = ref(false)
 const cancelSaving = ref(false)
 const cancelForm = reactive({ reason: "", password: "" })
@@ -220,20 +228,51 @@ async function changePassword() {
 function openBindEmail() {
   showMore.value = false
   if (!userStore.isLoggedIn) { openLoginDialog(); return }
-  emailForm.email = ""
+  emailForm.email = currentEmail.value || ""
   emailDialog.value = true
 }
-async function bindEmail() {
-  if (!emailForm.email.trim()) { ElMessage.warning("请输入邮箱"); return }
+async function sendEmailCode() {
+  if (!emailForm.email.trim()) { ElMessage.warning("请输入邮箱地址"); return }
+  codeSending.value = true
+  try {
+    const { accountsApi } = await import("../api/accounts")
+    await accountsApi.sendEmailCode({ email: emailForm.email.trim() })
+    ElMessage.success("验证码已发送到邮箱")
+    codeCountdown.value = 60
+    if (codeTimer) clearInterval(codeTimer)
+    codeTimer = setInterval(() => {
+      codeCountdown.value--
+      if (codeCountdown.value <= 0) { clearInterval(codeTimer); codeTimer = null }
+    }, 1000)
+  } catch (e) { ElMessage.error(e.message || "发送失败") }
+  finally { codeSending.value = false }
+}
+
+async function bindEmailWithCode() {
+  if (!emailForm.email.trim()) { ElMessage.warning("请输入邮箱地址"); return }
+  if (!emailForm.code.trim()) { ElMessage.warning("请输入验证码"); return }
   emailSaving.value = true
   try {
     const { accountsApi } = await import("../api/accounts")
-    await accountsApi.bindEmail({ email: emailForm.email.trim() })
+    await accountsApi.bindEmailWithCode({ email: emailForm.email.trim(), code: emailForm.code.trim() })
     currentEmail.value = emailForm.email.trim()
     ElMessage.success("邮箱绑定成功")
     emailDialog.value = false
+    if (codeTimer) { clearInterval(codeTimer); codeTimer = null }
+    codeCountdown.value = 0
   } catch (e) { ElMessage.error(e.message || "绑定失败") }
   finally { emailSaving.value = false }
+}
+async function unbindEmail() {
+  unbindSaving.value = true
+  try {
+    const { accountsApi } = await import("../api/accounts")
+    await accountsApi.unbindEmail()
+    currentEmail.value = ""
+    ElMessage.success("邮箱已解绑")
+    emailDialog.value = false
+  } catch (e) { ElMessage.error(e.message || "解绑失败") }
+  finally { unbindSaving.value = false }
 }
 function goPrivacy() {
   showMore.value = false
@@ -247,17 +286,12 @@ function openCancelAccount() {
   cancelDialog.value = true
 }
 async function confirmCancel() {
-  if (!cancelForm.password) { ElMessage.warning("请输入密码确认"); return }
   cancelSaving.value = true
-  try {
     const { accountsApi } = await import("../api/accounts")
     await accountsApi.cancelAccount({ reason: cancelForm.reason, password: cancelForm.password })
-    ElMessage.success("账号已注销")
     cancelDialog.value = false
     userStore.clearUser()
     window.location.reload()
-  } catch (e) { ElMessage.error(e.message || "注销失败") }
-  finally { cancelSaving.value = false }
 }
 function goCreate() {
   if (!userStore.isLoggedIn) { openLoginDialog(); return }
@@ -574,4 +608,12 @@ if (typeof document !== "undefined") {
   transform: scale(0.92);
   opacity: 0;
 }
+.code-btn-sd {
+  height: 44px; padding: 0 14px; border-radius: 10px;
+  border: 1px solid #e8e8e8; background: #fafafa;
+  color: #ff2442; font-size: 13px; cursor: pointer;
+  transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
+}
+.code-btn-sd:hover:not(:disabled) { background: #fff0f0; border-color: #ff2442; }
+.code-btn-sd:disabled { color: #ccc; cursor: not-allowed; }
 </style>

@@ -14,12 +14,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # 第三方
+    # 绗笁鏂?
     "rest_framework",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
-    # 项目 App
+    # 椤圭洰 App
     "apps.accounts",
     "apps.notes",
     "apps.social",
@@ -109,3 +109,14 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 # Auth
 AUTH_USER_MODEL = "accounts.User"
+
+# ============ 邮件配置 ============
+# 已配置 QQ 邮箱 SMTP 真实发送
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.qq.com'
+EMAIL_PORT = 465
+EMAIL_USE_SSL = True
+EMAIL_HOST_USER = '2825919095@qq.com'
+EMAIL_HOST_PASSWORD = 'qrorkpvdppnydddj'
+DEFAULT_FROM_EMAIL = '2825919095@qq.com'
+

@@ -298,10 +298,10 @@ onUnmounted(() => {
 
 function handleAction(cmd) {
   if (cmd === "edit") {
+    const id = store.currentNoteId
     store.close()
-    router.push({ path: "/edit/" + store.currentNoteId })
+    router.push("/edit/" + id)
   }
-  if (cmd === "delete") deleteDialog.value = true
 }
 
 async function confirmDelete() {
@@ -1050,6 +1050,7 @@ function formatTime(dateStr) {
   font-weight: 600 !important;
 }
 </style>
+
 
 
 

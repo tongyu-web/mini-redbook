@@ -54,7 +54,7 @@ class NoteViewSet(viewsets.ModelViewSet):
         ser = NoteDetailSerializer(note, context={"request": request})
         return ApiResponse.success(data=ser.data)
 
-    def update(self, request, pk=None):
+    def update(self, request, pk=None, partial=False):
         note = self.get_object()
         ser = NoteCreateSerializer(data=request.data, partial=True)
         ser.is_valid(raise_exception=True)
@@ -247,5 +247,6 @@ class TagNoteListView(APIView):
             "tag": TagSerializer(tag).data,
             "notes": paginator.get_paginated_response(ser.data).data
         })
+
 
 

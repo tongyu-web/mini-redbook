@@ -85,6 +85,7 @@
       </el-tabs>
     </div>
   </div>
+  <NoteDetail />
 </template>
 
 <script setup>
@@ -92,9 +93,12 @@ import { ref, onMounted, computed } from "vue"
 import { useRouter } from "vue-router"
 import { messageApi } from "../api/messaging"
 import { useNotificationStore } from "../stores/notification"
+import { useNoteDetailStore } from "../stores/noteDetail"
+import NoteDetail from "./NoteDetail.vue"
 
 const router = useRouter()
 const notificationStore = useNotificationStore()
+const noteDetailStore = useNoteDetailStore()
 const activeTab = ref("conversations")
 
 const defaultAvatar = computed(() => "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23f0f0f0'/%3E%3Ctext x='50' y='55' text-anchor='middle' font-size='40' fill='%23ccc'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E")
@@ -171,6 +175,9 @@ async function handleClick(n) {
   if (!n.is_read) {
     await messageApi.markRead(n.id)
     notificationStore.fetchUnreadCount()
+  }
+  if (n.note) {
+    noteDetailStore.open(n.note)
   }
 }
 </script>

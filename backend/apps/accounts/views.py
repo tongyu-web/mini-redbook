@@ -273,6 +273,61 @@ class UnbindEmailView(APIView):
         request.user.email = ""
         request.user.save()
         return ApiResponse.success(message="邮箱已解绑")
+class SendPhoneCodeView(APIView):
+    """发送手机验证码（开发环境：验证码固定为 666666）"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        phone = request.data.get("phone", "").strip()
+        if not phone:
+            return ApiResponse.error(code=4001, message="请输入手机号", status=400)
+        import random
+        code = "666666"
+        from .models import PhoneVerification
+        PhoneVerification.objects.filter(phone=phone, is_used=False).update(is_used=True)
+        PhoneVerification.objects.create(phone=phone, code=code, user=request.user)
+        print(f"[DEV] 手机验证码发送: phone={phone}, code={code}")
+        return ApiResponse.success(data={"phone": phone}, message="验证码已发送（开发环境：666666）")
+
+
+class BindPhoneWithCodeView(APIView):
+    """验证码绑定手机"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        phone = request.data.get("phone", "").strip()
+        code = request.data.get("code", "").strip()
+        if not phone or not code:
+            return ApiResponse.error(code=4001, message="请填写手机号和验证码", status=400)
+        from .models import PhoneVerification
+        from django.utils import timezone
+        from datetime import timedelta
+        record = PhoneVerification.objects.filter(
+            phone=phone, code=code, is_used=False,
+            created_at__gte=timezone.now() - timedelta(minutes=10)
+        ).first()
+        if not record:
+            return ApiResponse.error(code=4001, message="验证码无效或已过期", status=400)
+        from .models import User
+        User.objects.filter(phone=phone).exclude(id=request.user.id).update(phone="")
+        record.is_used = True
+        record.save()
+        request.user.phone = phone
+        request.user.save()
+        return ApiResponse.success(data={"phone": phone}, message="手机绑定成功")
+
+
+class UnbindPhoneView(APIView):
+    """解绑手机"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if not request.user.phone:
+            return ApiResponse.error(code=4001, message="当前未绑定手机", status=400)
+        request.user.phone = ""
+        request.user.save()
+        return ApiResponse.success(message="手机已解绑")
+
 
 class FollowingListView(APIView):
     permission_classes = [IsAuthenticated]

@@ -63,6 +63,7 @@
           <div v-if="showMore" class="more-dropdown">
             <div class="more-item" @click="openChangePwd"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#555" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>修改密码</span></div>
             <div class="more-item" @click="openBindEmail"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#555" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg><span>绑定邮箱</span></div>
+            <div class="more-item" @click="openBindPhone"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#555" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg><span>绑定手机</span></div>
             <div class="more-item" @click="goPrivacy"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#555" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>隐私设置</span></div>
             <div class="more-item more-item-danger" @click="openCancelAccount"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ff2442" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg><span>注销账号</span></div>
           </div>
@@ -152,6 +153,33 @@
     </div>
   </Transition>
 </Teleport>
+
+<!-- Bind Phone Dialog -->
+<Teleport to="body">
+  <Transition name="login-fade">
+    <div v-if="phoneDialog" class="sd-overlay" @click.self="phoneDialog = false">
+      <Transition name="login-scale">
+        <div v-if="phoneDialog" class="sd-card">
+          <button class="sd-close" @click="phoneDialog = false">&times;</button>
+          <h3 class="sd-title">{{ currentPhone ? "手机管理" : "绑定手机" }}</h3>
+          <div class="sd-body">
+            <el-input v-model="phoneForm.phone" placeholder="输入手机号" class="sd-input" :disabled="!!currentPhone" />
+            <div style="display:flex;gap:8px">
+              <el-input v-model="phoneForm.code" placeholder="输入验证码" class="sd-input" maxlength="6" style="flex:1" />
+              <button class="code-btn-sd" :disabled="phoneCodeSending || phoneCodeCountdown > 0" @click="sendPhoneCode">{{ phoneCodeCountdown > 0 ? phoneCodeCountdown + "s" : "获取验证码" }}</button>
+            </div>
+            <p v-if="currentPhone" style="font-size:13px;color:#999;margin:4px 0 0">当前绑定：{{ currentPhone }}</p>
+          </div>
+          <div class="sd-footer" style="flex-wrap:wrap;gap:8px">
+            <button class="sd-btn sd-btn-cancel" @click="phoneDialog = false">取消</button>
+            <button v-if="currentPhone" class="sd-btn sd-btn-cancel" style="color:#ff2442;border:1px solid #ff2442;background:#fff" :disabled="phoneUnbindSaving" @click="unbindPhone">{{ phoneUnbindSaving ? "解绑中..." : "解绑手机" }}</button>
+            <button class="sd-btn sd-btn-primary" :disabled="phoneSaving || !phoneForm.code" @click="bindPhoneWithCode">{{ phoneSaving ? "绑定中..." : (currentPhone ? "换绑" : "确认绑定") }}</button>
+          </div>
+        </div>
+      </Transition>
+    </div>
+  </Transition>
+</Teleport>
 <!-- Cancel Account Dialog -->
 <Teleport to="body">
   <Transition name="login-fade">
@@ -199,6 +227,14 @@ const emailSaving = ref(false)
 const emailForm = reactive({ email: "", code: "" })
 const unbindSaving = ref(false)
 const currentEmail = ref("")
+const phoneDialog = ref(false)
+const phoneSaving = ref(false)
+const phoneUnbindSaving = ref(false)
+const phoneForm = reactive({ phone: "", code: "" })
+const currentPhone = ref("")
+const phoneCodeSending = ref(false)
+const phoneCodeCountdown = ref(0)
+let phoneTimer = null
 const codeSending = ref(false)
 const codeCountdown = ref(0)
 let codeTimer = null
@@ -273,6 +309,55 @@ async function unbindEmail() {
     emailDialog.value = false
   } catch (e) { ElMessage.error(e.message || "解绑失败") }
   finally { unbindSaving.value = false }
+}
+
+function openBindPhone() {
+  showMore.value = false
+  if (!userStore.isLoggedIn) { openLoginDialog(); return }
+  phoneForm.phone = currentPhone.value || ""
+  phoneDialog.value = true
+}
+async function sendPhoneCode() {
+  if (!phoneForm.phone.trim()) { ElMessage.warning("请输入手机号"); return }
+  phoneCodeSending.value = true
+  try {
+    const { accountsApi } = await import("../api/accounts")
+    await accountsApi.sendPhoneCode({ phone: phoneForm.phone.trim() })
+    ElMessage.success("验证码已发送（开发环境：666666）")
+    phoneCodeCountdown.value = 60
+    if (phoneTimer) clearInterval(phoneTimer)
+    phoneTimer = setInterval(() => {
+      phoneCodeCountdown.value--
+      if (phoneCodeCountdown.value <= 0) { clearInterval(phoneTimer); phoneTimer = null }
+    }, 1000)
+  } catch (e) { ElMessage.error(e.message || "发送失败") }
+  finally { phoneCodeSending.value = false }
+}
+async function bindPhoneWithCode() {
+  if (!phoneForm.phone.trim()) { ElMessage.warning("请输入手机号"); return }
+  if (!phoneForm.code.trim()) { ElMessage.warning("请输入验证码"); return }
+  phoneSaving.value = true
+  try {
+    const { accountsApi } = await import("../api/accounts")
+    await accountsApi.bindPhoneWithCode({ phone: phoneForm.phone.trim(), code: phoneForm.code.trim() })
+    currentPhone.value = phoneForm.phone.trim()
+    ElMessage.success("手机绑定成功")
+    phoneDialog.value = false
+    if (phoneTimer) { clearInterval(phoneTimer); phoneTimer = null }
+    phoneCodeCountdown.value = 0
+  } catch (e) { ElMessage.error(e.message || "绑定失败") }
+  finally { phoneSaving.value = false }
+}
+async function unbindPhone() {
+  phoneUnbindSaving.value = true
+  try {
+    const { accountsApi } = await import("../api/accounts")
+    await accountsApi.unbindPhone()
+    currentPhone.value = ""
+    ElMessage.success("手机已解绑")
+    phoneDialog.value = false
+  } catch (e) { ElMessage.error(e.message || "解绑失败") }
+  finally { phoneUnbindSaving.value = false }
 }
 function goPrivacy() {
   showMore.value = false

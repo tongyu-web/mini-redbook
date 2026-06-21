@@ -16,6 +16,9 @@ export const accountsApi = {
   sendEmailCode(data) { return request.post('/accounts/email/send-code/', data) },
   bindEmailWithCode(data) { return request.post('/accounts/email/bind-with-code/', data) },
   unbindEmail() { return request.post("/accounts/email/unbind/") },
+  sendPhoneCode(data) { return request.post("/accounts/phone/send-code/", data) },
+  bindPhoneWithCode(data) { return request.post("/accounts/phone/bind-with-code/", data) },
+  unbindPhone() { return request.post("/accounts/phone/unbind/") },
   updatePrivacy(data) { return request.put('/accounts/privacy/', data) },
   cancelAccount(data) { return request.post('/accounts/cancel/', data) },
 }

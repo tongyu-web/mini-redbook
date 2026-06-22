@@ -12,6 +12,9 @@ from .tasks import AccountTask
 from common.response import ApiResponse
 from common.pagination import StandardPagination
 from config.constants import MAX_AVATAR_SIZE_MB
+import logging
+import traceback
+logger = logging.getLogger(__name__)
 
 ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/jpg"]
 
@@ -20,17 +23,33 @@ class RegisterView(APIView):
 
     def post(self, request):
         ser = RegisterSerializer(data=request.data)
-        ser.is_valid(raise_exception=True)
+        try:
+            ser.is_valid(raise_exception=True)
+        except Exception as e:
+            err = getattr(e, 'detail', str(e))
+            if isinstance(err, dict):
+                msg = list(err.values())[0]
+                if isinstance(msg, list):
+                    msg = msg[0]
+            else:
+                msg = str(err)
+            return ApiResponse.error(code=4001, message=msg, status=400)
         data = ser.validated_data
         if User.objects.filter(username=data["username"]).exists():
             return ApiResponse.error(code=4001, message="用户名已存在", status=409)
         nickname = data.get("nickname", "").strip() or data["username"]
-        user = User.objects.create_user(
-            username=data["username"],
-            password=data["password"],
-            nickname=nickname,
-            gender=data.get("gender", "UNKNOWN")
-        )
+        if User.objects.filter(nickname=nickname).exists():
+            return ApiResponse.error(code=4001, message="该昵称已被使用，请换一个", status=409)
+        try:
+            user = User.objects.create_user(
+                username=data["username"],
+                password=data["password"],
+                nickname=nickname,
+                gender=data.get("gender", "UNKNOWN")
+            )
+        except Exception as e:
+            logger.error("register create_user error: %s\n%s", e, traceback.format_exc())
+            return ApiResponse.error(code=5001, message=f"注册失败：{str(e)}", status=500)
         refresh = RefreshToken.for_user(user)
         return ApiResponse.success(data={
             "access_token": str(refresh.access_token),

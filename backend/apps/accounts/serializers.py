@@ -51,7 +51,7 @@ class UserUpdateSerializer(serializers.Serializer):
         if self.context.get("request") and hasattr(self.context["request"], "user"):
             qs = qs.exclude(id=self.context["request"].user.id)
         if qs.exists():
-            raise serializers.ValidationError("璇ユ樀绉板凡琚娇鐢?)
+            raise serializers.ValidationError("该昵称已被使用")
         return value
 
 class UserSimpleSerializer(serializers.ModelSerializer):

@@ -1,15 +1,24 @@
 ﻿<template>
   <div class="page-center">
     <div class="auth-card">
-      <h2>注册</h2>
+      <h2 class="auth-title">注册</h2>
       <el-alert v-if="errorMsg" :title="errorMsg" type="error" show-icon closable @close="errorMsg=''" class="mb-3" />
-      <el-form @submit.prevent="handleRegister">
-        <el-input v-model="form.username" placeholder="手机号/用户名" class="mb-3" />
-        <el-input v-model="form.nickname" placeholder="昵称（选填）" class="mb-3" />
-        <el-input v-model="form.password" type="password" placeholder="密码（至少6位）" class="mb-3" show-password />
-        <el-button type="primary" native-type="submit" class="w-full" :loading="loading">注册</el-button>
-      </el-form>
-      <p class="mt-3 text-center">已有账号？<router-link to="/login">去登录</router-link></p>
+      <form @submit.prevent="handleRegister" class="auth-form">
+        <div class="input-group">
+          <input v-model="form.username" placeholder="手机号" maxlength="11" class="auth-input" />
+        </div>
+        <div class="input-group">
+          <input v-model="form.nickname" placeholder="昵称（选填）" class="auth-input" />
+        </div>
+        <div class="input-group">
+          <input v-model="form.password" type="password" placeholder="密码（至少6位）" class="auth-input" />
+        </div>
+        <button type="submit" class="auth-btn" :disabled="loading">
+          <span v-if="loading" class="btn-loading"></span>
+          <span v-else>注册</span>
+        </button>
+      </form>
+      <p class="auth-footer">已有账号？<router-link to="/login" class="auth-link">去登录</router-link></p>
     </div>
   </div>
 </template>
@@ -54,9 +63,112 @@ async function handleRegister() {
 </script>
 
 <style scoped>
-.page-center { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f5f5f5; }
-.auth-card { width: 360px; padding: 32px; background: white; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+.page-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+.auth-card {
+  width: 360px;
+  padding: 40px 32px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+}
+.auth-title {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 28px;
+}
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.input-group {
+  position: relative;
+}
+.auth-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  border: 1.5px solid #e8e8e8;
+  border-radius: 10px;
+  font-size: 15px;
+  color: #1a1a1a;
+  background: #fafafa;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+.auth-input::placeholder {
+  color: #bbb;
+  font-size: 14px;
+}
+.auth-input:focus {
+  border-color: #ff2442;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(255,36,66,0.08);
+}
+.auth-input:focus::placeholder {
+  color: #ccc;
+}
+.auth-btn {
+  width: 100%;
+  height: 48px;
+  border: none;
+  border-radius: 10px;
+  background: #ff2442;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, transform 0.1s;
+  margin-top: 4px;
+}
+.auth-btn:hover {
+  background: #d61e38;
+}
+.auth-btn:active {
+  transform: scale(0.98);
+}
+.auth-btn:disabled {
+  background: #f0f0f0;
+  color: #ccc;
+  cursor: default;
+  transform: none;
+}
+.btn-loading {
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid #ddd;
+  border-top-color: #ff2442;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.auth-footer {
+  text-align: center;
+  margin-top: 22px;
+  font-size: 13px;
+  color: #999;
+}
+.auth-link {
+  color: #ff2442;
+  text-decoration: none;
+  font-weight: 500;
+}
+.auth-link:hover {
+  text-decoration: underline;
+}
 .mb-3 { margin-bottom: 16px; }
-.mt-3 { margin-top: 16px; }
-.w-full { width: 100%; }
 </style>

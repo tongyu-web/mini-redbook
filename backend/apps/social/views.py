@@ -60,8 +60,17 @@ class FavoriteFolderViewSet(viewsets.ModelViewSet):
         from apps.notes.models import Note
         favs = instance.favorites.all()
         for fav in favs:
-            Note.objects.filter(pk=fav.note_id).update(fav_count=F("fav_count") - 1)
+            Note.objects.filter(pk=fav.note_id).update(fav_count=F('fav_count') - 1)
         instance.delete()
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            self.perform_destroy(instance)
+            return ApiResponse.success(message='收藏夹已删除')
+        except Exception as e:
+            logger.error('destroy folder error: %s\n%s', e, traceback.format_exc())
+            return ApiResponse.error(code=4004, message='删除失败', status=404)
 
 class FavoriteView(APIView):
     permission_classes = [IsAuthenticated]

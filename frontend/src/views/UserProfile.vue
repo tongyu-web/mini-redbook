@@ -51,7 +51,7 @@
           <div v-for="f in folders" :key="f.id" class="folder-pill" :class="{ active: selectedFolderId === f.id }" @click="selectFolder(f.id)">
             <span class="folder-pill-name">{{ f.name }}</span>
             <span class="folder-pill-count">{{ f.note_count || 0 }}</span>
-            <button v-if="f.name !== '默认收藏夹'" class="folder-pill-del" title="删除收藏夹" @click.stop="deleteFolder(f.id)">×</button>
+            <button v-if="manageMode && f.name !== '默认收藏夹'" class="folder-pill-del" title="删除收藏夹" @click.stop="deleteFolder(f.id)">×</button>
           </div>
         </div>
         <div class="folder-actions">

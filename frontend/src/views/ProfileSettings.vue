@@ -79,26 +79,57 @@
       </div>
     </el-dialog>
 
-    <!-- Birthday picker dialog -->
-    <el-dialog v-model="showBirthPicker" title="选择生日" width="85%" max-width="360px">
-      <div class="birth-calendar">
-        <div class="birth-year-month">
-          <button class="birth-nav" @click="birthYear--">&lt;</button>
-          <span>{{ birthYear }} 年 {{ String(birthMonth).padStart(2, "0") }} 月</span>
-          <button class="birth-nav" @click="birthMonth >= 12 ? (birthYear++, birthMonth=1) : birthMonth++">&gt;</button>
+        <!-- Birthday picker – mini-redbook style bottom sheet -->
+    <div v-if="showBirthPicker" class="birth-overlay" @click.self="showBirthPicker = false">
+      <div class="birth-sheet">
+        <div class="birth-sheet-header">
+          <button class="bs-cancel" @click="showBirthPicker = false">取消</button>
+          <button class="bs-confirm" @click="selectBirthDate">确定</button>
         </div>
-        <div class="birth-weekdays">
-          <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+
+        <!-- Month view -->
+        <div v-if="!showYearPicker" class="birth-calendar">
+          <div class="birth-month-nav">
+            <button class="bn-btn" @click="prevMonth">&#8249;</button>
+            <div class="bn-label" @click="showYearPicker = true">
+              <span class="bn-year">{{ birthYear }}</span>
+              <span class="bn-unit">年</span>
+              <span class="bn-month">{{ birthMonth }}</span>
+              <span class="bn-unit">月</span>
+            </div>
+            <button class="bn-btn" @click="nextMonth">&#8250;</button>
+          </div>
+          <div class="birth-weekdays">
+            <span v-for="w in weekLabels" :key="w">{{ w }}</span>
+          </div>
+          <div class="birth-days-grid">
+            <button v-for="d in birthDays" :key="d.key" class="bd-cell" :class="{ selected: d.val === birthSelected, disabled: !d.val, today: d.today }" @click="pickDay(d)" :disabled="!d.val">{{ d.label }}</button>
+          </div>
         </div>
-        <div class="birth-days">
-          <button v-for="d in birthDays" :key="d.key" class="birth-day" :class="{ selected: d.val === birthSelected }" @click="birthSelected = d.val" :disabled="!d.val">{{ d.label }}</button>
+
+        <!-- Year picker view -->
+        <div v-if="showYearPicker" class="birth-year-picker">
+          <div class="year-picker-header">
+            <button class="bn-btn" @click="prevYearBatch">&#8249;</button>
+            <span class="yp-range">{{ yearBatchStart }} - {{ yearBatchStart + 11 }}</span>
+            <button class="bn-btn" @click="nextYearBatch">&#8250;</button>
+          </div>
+          <div class="year-grid">
+            <button
+              v-for="y in yearBatch"
+              :key="y"
+              class="yg-cell"
+              :class="{ selected: y === birthYear }"
+              @click="birthYear = y; showYearPicker = false"
+            >{{ y }}</button>
+          </div>
+        </div>
+
+        <div class="birth-footer">
+          <button class="bf-clear" @click="clearBirthday">清除生日</button>
         </div>
       </div>
-      <template #footer>
-        <el-button @click="showBirthPicker = false">取消</el-button>
-        <el-button type="primary" style="background:#ff2442;border-color:#ff2442" @click="selectBirthDate">确定</el-button>
-      </template>
-    </el-dialog>
+    </div>
 
     <!-- Privacy picker dialog -->
     <el-dialog v-model="showPrivacyPicker" title="隐私设置" width="85%" max-width="360px">
@@ -133,18 +164,6 @@ const privacyLabel = computed(() => {
   const map = { 0: "公开", 1: "仅互关好友可见", 2: "私密" }
   return privacy.value !== null ? map[privacy.value] : "选择隐私设置"
 })
-const birthdayTemp = ref("")
-
-function selectBirthDate() {
-  if (birthSelected.value) {
-    form.birthday = birthSelected.value
-  }
-  showBirthPicker.value = false
-}
-
-const birthYear = ref(new Date().getFullYear() - 20)
-const birthMonth = ref(new Date().getMonth() + 1)
-const birthSelected = ref("")
 
 const form = reactive({
   avatar_url: "",
@@ -157,17 +176,83 @@ const form = reactive({
 const genderLabel = computed(() => {
   const map = { MALE: "男", FEMALE: "女", UNKNOWN: "保密" }
   return map[form.gender] || "选择性别"
+})
+
+const birthYear = ref(new Date().getFullYear() - 20)
+const birthMonth = ref(new Date().getMonth() + 1)
+const birthSelected = ref("")
+const showYearPicker = ref(false)
+const yearBatchStart = ref(Math.floor((new Date().getFullYear() - 20) / 12) * 12)
+
+const yearBatch = computed(() => {
+  const start = yearBatchStart.value
+  const years = []
+  for (let y = start; y <= start + 11; y++) years.push(y)
+  return years
+})
+
+function prevYearBatch() {
+  yearBatchStart.value -= 12
+}
+
+function nextYearBatch() {
+  yearBatchStart.value += 12
+}
+
+const weekLabels = ["日", "一", "二", "三", "四", "五", "六"]
 
 const birthDays = computed(() => {
-  const daysInMonth = new Date(birthYear.value, birthMonth.value, 0).getDate()
-  const firstDay = new Date(birthYear.value, birthMonth.value - 1, 1).getDay()
+  const y = birthYear.value
+  const m = birthMonth.value
+  const daysInMonth = new Date(y, m, 0).getDate()
+  const firstDay = new Date(y, m - 1, 1).getDay()
+  const todayStr = new Date().toISOString().slice(0, 10)
   const result = []
-  for (let i = 0; i < firstDay; i++) { result.push({ key: "e" + i, label: "", val: null }) }
-  for (let d = 1; d <= daysInMonth; d++) { result.push({ key: "d" + d, label: String(d), val: birthYear.value + "-" + String(birthMonth.value).padStart(2, "0") + "-" + String(d).padStart(2, "0") }) }
+  for (let i = 0; i < firstDay; i++) {
+    result.push({ key: "e" + i, label: "", val: null, today: false })
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = y + "-" + String(m).padStart(2, "0") + "-" + String(d).padStart(2, "0")
+    result.push({ key: "d" + d, label: String(d), val: dateStr, today: dateStr === todayStr })
+  }
   return result
 })
 
-})
+function prevMonth() {
+  if (birthMonth.value <= 1) {
+    birthYear.value--
+    birthMonth.value = 12
+  } else {
+    birthMonth.value--
+  }
+}
+
+function nextMonth() {
+  if (birthMonth.value >= 12) {
+    birthYear.value++
+    birthMonth.value = 1
+  } else {
+    birthMonth.value++
+  }
+}
+
+function pickDay(d) {
+  if (!d.val) return
+  birthSelected.value = d.val
+}
+
+function selectBirthDate() {
+  if (birthSelected.value) {
+    form.birthday = birthSelected.value
+  }
+  showBirthPicker.value = false
+}
+
+function clearBirthday() {
+  form.birthday = ""
+  birthSelected.value = ""
+  showBirthPicker.value = false
+}
 
 onMounted(async () => {
   try {
@@ -395,4 +480,188 @@ async function saveProfile() {
 }
 .picker-option:last-child { border-bottom: none; }
 .picker-option:hover { color: #ff2442; }
+
+/* Birth bottom sheet – clean minimal calendar */
+.birth-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 2000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.birth-sheet {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  animation: sheetUp 0.25s ease;
+}
+@keyframes sheetUp { from { transform: translateY(100%) } to { transform: translateY(0) } }
+
+/* Header: cancel + confirm only */
+.birth-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 0;
+}
+.bs-cancel, .bs-confirm {
+  border: none; background: none;
+  font-size: 15px; font-weight: 500;
+  cursor: pointer;
+}
+.bs-cancel { color: #999; }
+.bs-confirm { color: #ff2442; font-weight: 600; }
+
+/* Year picker */
+.birth-year-picker {
+  padding: 20px 24px 8px;
+}
+.year-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+.yp-range {
+  font-size: 16px;
+  font-weight: 500;
+  color: #222;
+  min-width: 126px;
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+.year-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding-bottom: 4px;
+}
+.yg-cell {
+  aspect-ratio: 1.6;
+  border: none; background: #f7f7f7;
+  font-size: 14px;
+  color: #333;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s;
+  font-weight: 400;
+}
+.yg-cell:hover:not(.selected) { background: #eee; }
+.yg-cell.selected {
+  background: #ff2442;
+  color: #fff;
+  font-weight: 500;
+}
+
+/* Calendar block – uniform padding */
+.birth-calendar {
+  padding: 20px 24px 8px;
+}
+.birth-month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+.bn-btn {
+  border: none; background: none;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  font-size: 20px;
+  color: #999;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.bn-btn:hover { background: #f5f5f5; }
+.bn-label {
+  font-size: 16px; font-weight: 500; color: #222;
+  min-width: 126px; text-align: center;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+.bn-label:hover { background: #f5f5f5; }
+.bn-year {
+  font-size: 20px;
+  font-weight: 600;
+  color: #222;
+}
+.bn-month {
+  font-size: 18px;
+  font-weight: 500;
+  color: #222;
+  margin-left: 4px;
+}
+.bn-unit {
+  font-size: 13px;
+  color: #999;
+}
+
+.birth-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  margin-bottom: 6px;
+}
+.birth-weekdays span {
+  font-size: 12px;
+  color: #bbb;
+  padding: 0 0 8px;
+  font-weight: 400;
+}
+
+.birth-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+.bd-cell {
+  aspect-ratio: 1;
+  border: none; background: none;
+  font-size: 14px;
+  color: #333;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+  font-weight: 400;
+}
+.bd-cell:hover:not(.disabled):not(.selected) { background: #f5f5f5; }
+.bd-cell.disabled { visibility: hidden; cursor: default; }
+.bd-cell.today { font-weight: 600; color: #ff2442; }
+.bd-cell.selected {
+  background: #ff2442;
+  color: #fff;
+  font-weight: 500;
+}
+
+/* Footer */
+.birth-footer {
+  padding: 4px 20px 20px;
+  text-align: center;
+}
+.bf-clear {
+  border: none; background: none;
+  font-size: 13px; color: #ccc;
+  cursor: pointer;
+  padding: 10px 16px;
+  border-radius: 8px;
+  transition: background 0.15s, color 0.15s;
+}
+.bf-clear:hover { background: #f5f5f5; color: #999; }
 </style>

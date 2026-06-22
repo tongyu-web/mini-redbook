@@ -12,23 +12,25 @@
               <!-- LEFT: Image gallery -->
               <div class="drawer-left">
                 <div class="image-gallery">
-                  <div v-if="images.length" class="main-image" :class="{ clickable: images.length > 1 }">
-                    <button v-if="images.length > 1" class="img-nav-btn prev" @click.stop="prevGallery">&#8249;</button>
-                    <img :src="images[galleryIdx].file" @click="openViewer(galleryIdx)" />
-                    <button v-if="images.length > 1" class="img-nav-btn next" @click.stop="nextGallery">&#8250;</button>
-                    <div v-if="images.length > 1" class="img-counter">{{ galleryIdx + 1 }} / {{ images.length }}</div>
-                  </div>
-                  <div v-else-if="note.cover_img" class="main-image">
-                    <img :src="note.cover_img" />
-                  </div>
-                  <div v-if="images.length > 1" class="thumb-strip">
-                    <div v-for="(m, i) in images" :key="m.id" class="thumb-item" :class="{ active: i === galleryIdx }" @click="galleryIdx = i">
-                      <img :src="m.file" />
-                    </div>
-                  </div>
                   <div v-if="videos.length" class="video-section">
                     <video v-for="m in videos" :key="m.id" :src="m.file" controls class="detail-video" />
                   </div>
+                  <template v-else>
+                    <div v-if="images.length" class="main-image" :class="{ clickable: images.length > 1 }">
+                      <button v-if="images.length > 1" class="img-nav-btn prev" @click.stop="prevGallery">&#8249;</button>
+                      <img :src="images[galleryIdx].file" @click="openViewer(galleryIdx)" />
+                      <button v-if="images.length > 1" class="img-nav-btn next" @click.stop="nextGallery">&#8250;</button>
+                      <div v-if="images.length > 1" class="img-counter">{{ galleryIdx + 1 }} / {{ images.length }}</div>
+                    </div>
+                    <div v-else-if="note.cover_img" class="main-image">
+                      <img :src="note.cover_img" />
+                    </div>
+                    <div v-if="images.length > 1" class="thumb-strip">
+                      <div v-for="(m, i) in images" :key="m.id" class="thumb-item" :class="{ active: i === galleryIdx }" @click="galleryIdx = i">
+                        <img :src="m.file" />
+                      </div>
+                    </div>
+                  </template>
                 </div>
               </div>
 

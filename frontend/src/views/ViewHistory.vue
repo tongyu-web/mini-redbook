@@ -29,6 +29,7 @@
 </template>
 
 <script setup>
+defineProps({ category: String })
 import { ref, onMounted } from "vue"
 import { useRouter } from "vue-router"
 import { notesApi } from "../api/notes"

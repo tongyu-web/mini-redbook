@@ -44,6 +44,20 @@
         <div class="pt-item" :class="{ active: activeTab === 'likes' }" @click="switchTab('likes')">点赞</div>
       </div>
 
+      <!-- Folder management bar -->
+      <div v-if="isOwn && activeTab === 'favorites'" class="folder-bar">
+        <div class="folder-pills">
+          <div class="folder-pill" :class="{ active: selectedFolderId === null }" @click="selectFolder(null)">全部</div>
+          <div v-for="f in folders" :key="f.id" class="folder-pill" :class="{ active: selectedFolderId === f.id }" @click="selectFolder(f.id)">
+            {{ f.name }}
+            <span class="folder-pill-count">{{ f.note_count || 0 }}</span>
+          </div>
+        </div>
+        <div class="folder-actions">
+          <button class="folder-add-btn" @click="createFolder">+</button>
+        </div>
+      </div>
+
       <!-- Waterfall grid -->
       <div v-if="loading" class="center">加载中...</div>
       <div v-else-if="items.length === 0" class="empty-state">
@@ -73,7 +87,8 @@
   <NoteDetail />
 </template>
 <script setup>
-import { ref, computed, onMounted, watch } from "vue"
+import { ref, computed, onMounted, watch, defineProps } from "vue"
+defineProps({ category: String })
 import { useRoute, useRouter } from "vue-router"
 import { useUserStore } from "../stores/user"
 import { accountsApi } from "../api/accounts"
@@ -120,6 +135,10 @@ async function loadProfile() {
 
 async function switchTab(tab) {
   activeTab.value = tab
+  if (tab === "favorites" && isOwn.value) {
+    selectedFolderId.value = null
+    await loadFolders()
+  }
   await loadTab()
 }
 
@@ -133,8 +152,13 @@ async function loadTab() {
       items.value = res.results || res || []
     } else if (activeTab.value === "favorites") {
       if (isOwn.value) {
-        const res = await socialApi.getAllFavorites()
-        items.value = res.results || res || []
+        if (selectedFolderId.value) {
+          const res = await socialApi.getFavorites(selectedFolderId.value)
+          items.value = res.results || res || []
+        } else {
+          const res = await socialApi.getAllFavorites()
+          items.value = res.results || res || []
+        }
       } else {
         try {
           const res = await socialApi.getUserFavs(targetId)
@@ -164,6 +188,50 @@ async function loadTab() {
     loading.value = false
   }
 }
+const folders = ref([])
+const selectedFolderId = ref(null)
+
+async function loadFolders() {
+  try {
+    const res = await socialApi.getFolders()
+    folders.value = res || []
+  } catch (e) {
+    folders.value = []
+  }
+}
+
+async function selectFolder(folderId) {
+  selectedFolderId.value = folderId
+  await loadTab()
+}
+
+async function createFolder() {
+  const name = prompt("请输入新收藏夹名称：")
+  if (!name || !name.trim()) return
+  try {
+    const res = await socialApi.createFolder({ name: name.trim() })
+    folders.value.push(res)
+    ElMessage.success("收藏夹已创建")
+  } catch (e) {
+    ElMessage.error("创建失败: " + (e.message || e))
+  }
+}
+
+async function deleteFolder(folderId) {
+  if (!confirm("确定删除该收藏夹？收藏夹内的笔记不会被删除")) return
+  try {
+    await socialApi.deleteFolder(folderId)
+    folders.value = folders.value.filter(f => f.id !== folderId)
+    if (selectedFolderId.value === folderId) {
+      selectedFolderId.value = null
+      await loadTab()
+    }
+    ElMessage.success("收藏夹已删除")
+  } catch (e) {
+    ElMessage.error("删除失败: " + (e.message || e))
+  }
+}
+
 async function toggleFollow() {
   const res = await socialApi.toggleFollow(route.params.id)
   isFollowing.value = res.is_following
@@ -179,6 +247,16 @@ function showFollowing() {
 }
 </script>
 <style scoped>
+.folder-bar { display: flex; align-items: center; gap: 8px; padding: 8px 0; margin-bottom: 8px; }
+.folder-pills { display: flex; gap: 6px; flex: 1; overflow-x: auto; padding-bottom: 4px; }
+.folder-pills::-webkit-scrollbar { height: 0; }
+.folder-pill { display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px; border-radius: 16px; font-size: 13px; color: #666; background: #f5f5f5; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+.folder-pill:hover { background: #eee; }
+.folder-pill.active { background: #ff2442; color: #fff; }
+.folder-pill-count { font-size: 11px; opacity: 0.7; }
+.folder-actions { flex-shrink: 0; }
+.folder-add-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px dashed #ccc; background: #fff; color: #999; font-size: 18px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.folder-add-btn:hover { border-color: #ff2442; color: #ff2442; }
 .profile-page {
   display: flex;
   justify-content: center;

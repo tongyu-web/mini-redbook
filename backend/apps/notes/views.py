@@ -216,6 +216,16 @@ class CommentLikeToggleView(APIView):
         else:
             CommentLike.objects.create(user=request.user, comment=comment)
             Comment.objects.filter(pk=comment_id).update(like_count=F("like_count") + 1)
+            # 点赞评论通知
+            if str(comment.user_id) != str(request.user.id):
+                from apps.messaging.models import Notification
+                Notification.objects.create(
+                    to_user_id=comment.user_id,
+                    from_user=request.user,
+                    note=comment.note,
+                    comment=comment,
+                    type="comment_like",
+                )
             return ApiResponse.success(data={"is_liked": True, "like_count": comment.like_count + 1})
 
 # 预定义分类

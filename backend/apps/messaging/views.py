@@ -39,7 +39,7 @@ class UnreadCountView(APIView):
         qs = Notification.objects.filter(to_user=request.user, is_read=False)
         total = qs.count()
         by_type = {}
-        for nt in ["like", "comment", "follow", "favorite", "message"]:
+        for nt in ["like", "comment", "follow", "favorite", "comment_like", "message"]:
             by_type[nt] = qs.filter(type=nt).count()
         # Also count unread private messages (from Message model)
         unread_msg_count = Message.objects.filter(to_user=request.user, is_read=False).count()

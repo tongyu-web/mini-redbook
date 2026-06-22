@@ -56,7 +56,7 @@
             <div v-for="n in likeItems" :key="n.id" class="notif-item" @click="handleClick(n)">
               <el-avatar :size="40" :src="n.from_user_avatar" />
               <div class="notif-body">
-                <p><strong>{{ n.from_user_nickname }}</strong> {{ n.type === "favorite" ? "收藏" : "赞" }}了你的笔记</p>
+                <p><strong>{{ n.from_user_nickname }}</strong> {{ n.type === "favorite" ? "收藏" : n.type === "comment_like" ? "赞了你的评论" : "赞" }}了你的笔记</p><p v-if="n.type === 'comment_like'" class="notif-preview">{{ n.note_title || "" }}</p>
                 <span class="time">{{ formatTime(n.created_at) }}</span>
               </div>
             </div>
@@ -89,6 +89,7 @@
 </template>
 
 <script setup>
+defineProps({ category: String })
 import { ref, onMounted, computed } from "vue"
 import { useRouter } from "vue-router"
 import { messageApi } from "../api/messaging"
@@ -105,7 +106,7 @@ const defaultAvatar = computed(() => "data:image/svg+xml,%3Csvg xmlns='http://ww
 
 const unreadMsgCount = computed(() => notificationStore.unreadMessageCount || 0)
 const commentUnread = computed(() => notificationStore.byType?.comment || 0)
-const likeUnread = computed(() => (notificationStore.byType?.like || 0) + (notificationStore.byType?.favorite || 0))
+const likeUnread = computed(() => (notificationStore.byType?.like || 0) + (notificationStore.byType?.favorite || 0) + (notificationStore.byType?.comment_like || 0))
 const followUnread = computed(() => notificationStore.byType?.follow || 0)
 
 const notifications = ref([])
@@ -156,7 +157,7 @@ async function loadNotifications() {
 
 function filterItems() {
   commentItems.value = notifications.value.filter(n => n.type === "comment")
-  likeItems.value = notifications.value.filter(n => n.type === "like" || n.type === "favorite")
+  likeItems.value = notifications.value.filter(n => n.type === "like" || n.type === "favorite" || n.type === "comment_like")
   followItems.value = notifications.value.filter(n => n.type === "follow")
 }
 

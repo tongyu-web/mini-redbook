@@ -152,7 +152,7 @@
                         <svg viewBox="0 0 24 24" width="20" height="20" :fill="note.is_liked ? '#ff2442' : 'none'" :stroke="note.is_liked ? '#ff2442' : '#666'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                         <span>{{ note.like_count || 0 }}</span>
                       </div>
-                      <div class="bottom-icon-item" @click="showFolderDialog">
+                      <div class="bottom-icon-item" @mousedown="favStart" @mouseup="favEnd" @mouseleave="favCancel" @touchstart="favStart" @touchend="favEnd" @touchcancel="favCancel">
                         <svg viewBox="0 0 24 24" width="20" height="20" :fill="note.is_favorited ? '#ffb800' : 'none'" :stroke="note.is_favorited ? '#ffb800' : '#666'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
                         <span>{{ note.fav_count || 0 }}</span>
                       </div>
@@ -278,6 +278,67 @@ const deleteDialog = ref(false)
 const favDialogVisible = ref(false)
 const folders = ref([])
 
+// Favorite - long press
+const pressTimer = ref(null)
+const PRESS_DELAY = 400
+
+async function quickFavorite() {
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning("请先登录")
+    router.push("/login")
+    store.close()
+    return
+  }
+  if (!note.value) return
+  if (note.value.is_favorited) {
+    try {
+      await socialApi.removeFavoriteFromAll(store.currentNoteId)
+      if (note.value) {
+        note.value.is_favorited = false
+        note.value.fav_count = Math.max(0, (note.value.fav_count || 1) - 1)
+      }
+      ElMessage.success("已取消收藏")
+    } catch (e) {
+      console.error("quickFavorite error:", e)
+      ElMessage.error("取消收藏失败")
+    }
+    return
+  }
+  try {
+    const res = await socialApi.addFavorite({ note_id: store.currentNoteId })
+    if (note.value) {
+      note.value.is_favorited = true
+      note.value.fav_count = res.fav_count ?? (note.value.fav_count || 0) + 1
+    }
+    ElMessage.success("已收藏到默认收藏夹")
+  } catch (e) {
+    console.error("quickFavorite error:", e)
+    ElMessage.error("收藏失败: " + (e.message || e))
+  }
+}
+
+function favStart() {
+  pressTimer.value = setTimeout(() => {
+    pressTimer.value = null
+    showFolderDialog()
+  }, PRESS_DELAY)
+}
+
+function favEnd() {
+  if (pressTimer.value) {
+    clearTimeout(pressTimer.value)
+    pressTimer.value = null
+    quickFavorite()
+  }
+}
+
+function favCancel() {
+  if (pressTimer.value) {
+    clearTimeout(pressTimer.value)
+    pressTimer.value = null
+  }
+}
+
 // Comment
 const commentContent = ref("")
 const commentFile = ref(null)
@@ -370,16 +431,7 @@ async function showFolderDialog() {
     return
   }
   if (!note.value) return
-  if (note.value.is_favorited) {
-    try {
-      await socialApi.removeFavoriteFromAll(store.currentNoteId)
-      if (note.value) {
-        note.value.is_favorited = false
-        note.value.fav_count = Math.max(0, (note.value.fav_count || 1) - 1)
-      }
-    } catch (e) { console.error(e) }
-    return
-  }
+
   try {
     console.log("showFolderDialog: fetching folders")
     const res = await socialApi.getFolders()
@@ -399,7 +451,7 @@ async function selectFolder(folder) {
     console.log("selectFolder: API response", res)
     if (note.value) {
       note.value.is_favorited = true
-      note.value.fav_count = (note.value.fav_count || 0) + 1
+      note.value.fav_count = res.fav_count ?? (note.value.fav_count || 0) + 1
     }
     favDialogVisible.value = false
   } catch (e) {

@@ -45,7 +45,7 @@ class SocialTask:
         with transaction.atomic():
             note = Note.objects.get(pk=note_id)
             folder = FavoriteFolder.objects.get(pk=folder_id, user=user)
-            _, created = Favorite.objects.get_or_create(user=user, note=note, folder=folder)
+            fav_obj, created = Favorite.objects.update_or_create(user=user, note=note, defaults={"folder": folder})
             if created:
                 Note.objects.filter(pk=note_id).update(fav_count=F("fav_count") + 1)
                 FavoriteFolder.objects.filter(pk=folder_id).update(note_count=F("note_count") + 1)

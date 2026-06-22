@@ -152,7 +152,7 @@
                         <svg viewBox="0 0 24 24" width="20" height="20" :fill="note.is_liked ? '#ff2442' : 'none'" :stroke="note.is_liked ? '#ff2442' : '#666'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                         <span>{{ note.like_count || 0 }}</span>
                       </div>
-                      <div class="bottom-icon-item" @mousedown="favStart" @mouseup="favEnd" @mouseleave="favCancel" @touchstart="favStart" @touchend="favEnd" @touchcancel="favCancel">
+                      <div class="bottom-icon-item" @click="handleFavClick">
                         <svg viewBox="0 0 24 24" width="20" height="20" :fill="note.is_favorited ? '#ffb800' : 'none'" :stroke="note.is_favorited ? '#ffb800' : '#666'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
                         <span>{{ note.fav_count || 0 }}</span>
                       </div>
@@ -210,24 +210,7 @@
     </template>
   </el-dialog>
 
-  <!-- Favorite folder dialog -->
-  <el-dialog v-model="favDialogVisible" title="收藏到文件夹" width="90%" max-width="400px">
-    <div class="folder-list">
-      <div v-for="f in folders" :key="f.id" class="folder-item" @click="selectFolder(f)">
-        <span class="folder-icon">{{ f.is_public ? '&#128194;' : '&#128274;' }}</span>
-        <span class="folder-name">{{ f.name }}</span>
-        <span class="folder-count">{{ f.note_count || 0 }} 篇</span>
-      </div>
-    </div>
-    <div class="folder-create" @click="createAndSelect">
-      <span class="folder-icon">&#10133;</span>
-      <span class="folder-name">新建收藏夹</span>
-    </div>
-    <template #footer>
-      <el-button @click="favDialogVisible = false">取消</el-button>
-    </template>
-  </el-dialog>
-
+  
   <!-- Image viewer -->
   <Teleport to="body">
     <div v-if="viewerVisible" class="image-viewer" @click="closeViewer">
@@ -274,15 +257,8 @@ const viewerImages = ref([])
 // Delete
 const deleteDialog = ref(false)
 
-// Favorite
-const favDialogVisible = ref(false)
-const folders = ref([])
-
-// Favorite - long press
-const pressTimer = ref(null)
-const PRESS_DELAY = 400
-
-async function quickFavorite() {
+// Favorite - toggle
+async function handleFavClick() {
   if (!userStore.isLoggedIn) {
     ElMessage.warning("请先登录")
     router.push("/login")
@@ -299,46 +275,24 @@ async function quickFavorite() {
       }
       ElMessage.success("已取消收藏")
     } catch (e) {
-      console.error("quickFavorite error:", e)
+      console.error("handleFavClick error:", e)
       ElMessage.error("取消收藏失败")
     }
-    return
-  }
-  try {
-    const res = await socialApi.addFavorite({ note_id: store.currentNoteId })
-    if (note.value) {
-      note.value.is_favorited = true
-      note.value.fav_count = res.fav_count ?? (note.value.fav_count || 0) + 1
+  } else {
+    try {
+      const res = await socialApi.addFavorite({ note_id: store.currentNoteId })
+      if (note.value) {
+        note.value.is_favorited = true
+        note.value.fav_count = res.fav_count ?? (note.value.fav_count || 0) + 1
+      }
+      ElMessage.success("已收藏")
+    } catch (e) {
+      console.error("handleFavClick error:", e)
+      if (note.value) note.value.is_favorited = false
+      ElMessage.error("收藏失败")
     }
-    ElMessage.success("已收藏到默认收藏夹")
-  } catch (e) {
-    console.error("quickFavorite error:", e)
-    ElMessage.error("收藏失败: " + (e.message || e))
   }
 }
-
-function favStart() {
-  pressTimer.value = setTimeout(() => {
-    pressTimer.value = null
-    showFolderDialog()
-  }, PRESS_DELAY)
-}
-
-function favEnd() {
-  if (pressTimer.value) {
-    clearTimeout(pressTimer.value)
-    pressTimer.value = null
-    quickFavorite()
-  }
-}
-
-function favCancel() {
-  if (pressTimer.value) {
-    clearTimeout(pressTimer.value)
-    pressTimer.value = null
-  }
-}
-
 // Comment
 const commentContent = ref("")
 const commentFile = ref(null)
@@ -423,52 +377,6 @@ async function toggleLike() {
 }
 
 // Favorite
-async function showFolderDialog() {
-  if (!userStore.isLoggedIn) {
-    ElMessage.warning("请先登录")
-    router.push("/login")
-    store.close()
-    return
-  }
-  if (!note.value) return
-
-  try {
-    console.log("showFolderDialog: fetching folders")
-    const res = await socialApi.getFolders()
-    console.log("showFolderDialog: folders", res)
-    folders.value = res || []
-    favDialogVisible.value = true
-  } catch (e) {
-    console.error("showFolderDialog error:", e)
-    ElMessage.error("获取收藏夹失败: " + (e.message || e))
-  }
-}
-
-async function selectFolder(folder) {
-  try {
-    console.log("selectFolder: adding favorite", { note_id: store.currentNoteId, folder_id: folder.id })
-    const res = await socialApi.addFavorite({ note_id: store.currentNoteId, folder_id: folder.id })
-    console.log("selectFolder: API response", res)
-    if (note.value) {
-      note.value.is_favorited = true
-      note.value.fav_count = res.fav_count ?? (note.value.fav_count || 0) + 1
-    }
-    favDialogVisible.value = false
-  } catch (e) {
-    console.error("selectFolder error:", e)
-    ElMessage.error("收藏失败: " + (e.message || e))
-  }
-}
-
-async function createAndSelect() {
-  const name = prompt("请输入新收藏夹名称：")
-  if (!name || !name.trim()) return
-  try {
-    const res = await socialApi.createFolder({ name: name.trim() })
-    await selectFolder(res)
-  } catch (e) { console.error(e) }
-}
-
 // Image viewer functions
 function openViewer(index) {
   viewerImages.value = images.value.map(m => m.file)
@@ -1106,15 +1014,7 @@ function renderContent(text) {
   opacity: 0;
 }
 
-/* Folder dialog */
-.folder-list { max-height: 260px; overflow-y: auto; }
-.folder-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 8px; cursor: pointer; transition: background 0.15s; }
-.folder-item:hover { background: #f5f5f5; }
-.folder-icon { font-size: 18px; }
-.folder-name { flex: 1; font-size: 14px; color: #333; }
-.folder-count { font-size: 12px; color: #999; }
-.folder-create { display: flex; align-items: center; gap: 10px; padding: 10px; border-top: 1px solid #f0f0f0; margin-top: 6px; cursor: pointer; border-radius: 8px; color: #ff2442; font-size: 14px; }
-.folder-create:hover { background: #fff0f0; }
+/* Folder dialog */
 
 /* Image viewer */
 :global(.image-viewer) { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 9999; display: flex; align-items: center; justify-content: center; }

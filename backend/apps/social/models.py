@@ -1,4 +1,4 @@
-import uuid
+﻿import uuid
 from django.db import models
 
 def uuid4_hex():
@@ -57,4 +57,4 @@ class Favorite(models.Model):
 
     class Meta:
         db_table = "favorites"
-        unique_together = [("user", "note", "folder")]
+        unique_together = [("user", "note")]

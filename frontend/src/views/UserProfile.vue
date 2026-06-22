@@ -49,11 +49,13 @@
         <div class="folder-pills">
           <div class="folder-pill" :class="{ active: selectedFolderId === null }" @click="selectFolder(null)">全部</div>
           <div v-for="f in folders" :key="f.id" class="folder-pill" :class="{ active: selectedFolderId === f.id }" @click="selectFolder(f.id)">
-            {{ f.name }}
+            <span class="folder-pill-name">{{ f.name }}</span>
             <span class="folder-pill-count">{{ f.note_count || 0 }}</span>
+            <button v-if="f.name !== '默认收藏夹'" class="folder-pill-del" title="删除收藏夹" @click.stop="deleteFolder(f.id)">×</button>
           </div>
         </div>
         <div class="folder-actions">
+          <button class="folder-manage-btn" @click="toggleManageMode">{{ manageMode ? "完成" : "管理" }}</button>
           <button class="folder-add-btn" @click="createFolder">+</button>
         </div>
       </div>
@@ -63,8 +65,19 @@
       <div v-else-if="items.length === 0" class="empty-state">
         <p class="empty-text">{{ emptyText }}</p>
       </div>
-      <div v-else class="waterfall">
-        <div v-for="n in items" :key="n.id" class="wf-card" @click="noteDetailStore.open(n.id)">
+      <div v-if="manageMode && selectedItems.length > 0" class="move-bar">
+        <span class="move-bar-count">已选择 {{ selectedItems.length }} 篇</span>
+        <select class="move-bar-select" v-model="moveTargetFolderId">
+          <option value="">移动到...</option>
+          <option v-for="f in folders" :key="f.id" :value="f.id">{{ f.name }}</option>
+        </select>
+        <button class="move-bar-btn" @click="doMoveSelected">移动</button>
+      </div>
+            <div v-else class="waterfall">
+        <div v-for="n in items" :key="n.id" class="wf-card" :class="{ selected: selectedItems.includes(n.id) }" @click="manageMode ? toggleItem(n.id) : noteDetailStore.open(n.id)">
+          <div v-if="manageMode" class="wf-check" @click.stop="toggleItem(n.id)">
+            <span :class="{ checked: selectedItems.includes(n.id) }">{{ selectedItems.includes(n.id) ? "\u2713" : "" }}</span>
+          </div>
           <div class="wf-cover">
             <img v-if="n.cover_img" :src="n.cover_img" :alt="n.title" />
             <div v-else class="wf-placeholder">{{ n.title?.[0] || "?" }}</div>
@@ -218,7 +231,7 @@ async function createFolder() {
 }
 
 async function deleteFolder(folderId) {
-  if (!confirm("确定删除该收藏夹？收藏夹内的笔记不会被删除")) return
+  if (!confirm("确定删除该收藏夹？收藏夹内的笔记将自动取消收藏")) return
   try {
     await socialApi.deleteFolder(folderId)
     folders.value = folders.value.filter(f => f.id !== folderId)
@@ -244,6 +257,37 @@ function showFollowers() {
 
 function showFollowing() {
   router.push({ path: "/follow-list", query: { tab: "following", user_id: route.params.id } })
+}
+
+const manageMode = ref(false)
+const selectedItems = ref([])
+const moveTargetFolderId = ref('')
+
+function toggleManageMode() {
+  manageMode.value = !manageMode.value
+  if (!manageMode.value) { selectedItems.value = []; moveTargetFolderId.value = '' }
+}
+
+function toggleItem(noteId) {
+  const idx = selectedItems.value.indexOf(noteId)
+  if (idx >= 0) { selectedItems.value.splice(idx, 1) } else { selectedItems.value.push(noteId) }
+}
+
+async function doMoveSelected() {
+  if (!moveTargetFolderId.value || selectedItems.value.length === 0) return
+  try {
+    for (const noteId of selectedItems.value) {
+      await socialApi.removeFavoriteFromAll(noteId)
+      await socialApi.addFavorite({ note_id: noteId, folder_id: moveTargetFolderId.value })
+    }
+    ElMessage.success("已移动 " + selectedItems.value.length + " 篇笔记")
+    selectedItems.value = []
+    moveTargetFolderId.value = ''
+    await loadTab()
+  } catch (e) {
+    console.error("move error:", e)
+    ElMessage.error("移动失败")
+  }
 }
 </script>
 <style scoped>
@@ -447,6 +491,38 @@ function showFollowing() {
 .center { text-align: center; padding: 60px 0; color: #999; font-size: 14px; }
 .empty-state { text-align: center; padding: 80px 0; }
 .empty-text { font-size: 14px; color: #ccc; }
+
+/* Folder bar - improved */
+.folder-bar { display: flex; align-items: center; gap: 8px; padding: 12px 0; overflow-x: auto; }
+::-webkit-scrollbar { height: 0; }
+.folder-pills { display: flex; gap: 8px; flex: 1; overflow-x: auto; }
+.folder-pill { display: flex; align-items: center; gap: 4px; padding: 6px 14px; border-radius: 20px; font-size: 13px; color: #666; background: #f5f5f5; cursor: pointer; white-space: nowrap; transition: all 0.2s; flex-shrink: 0; }
+.folder-pill:hover { background: #eee; }
+.folder-pill.active { background: #ff2442; color: #fff; }
+.folder-pill.active .folder-pill-del { color: rgba(255,255,255,0.6); }
+.folder-pill.active .folder-pill-del:hover { color: #fff; }
+.folder-pill-name { max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.folder-pill-count { font-size: 11px; opacity: 0.7; }
+.folder-pill-del { background: none; border: none; font-size: 14px; color: #bbb; cursor: pointer; padding: 0; line-height: 1; margin-left: 2px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; transition: color 0.15s; }
+.folder-pill-del:hover { color: #ff2442 !important; }
+.folder-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.folder-manage-btn { background: none; border: 1px solid #ddd; border-radius: 16px; padding: 5px 12px; font-size: 12px; color: #666; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+.folder-manage-btn:hover { border-color: #ff2442; color: #ff2442; }
+.folder-add-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px dashed #ddd; background: none; font-size: 18px; color: #999; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
+.folder-add-btn:hover { border-color: #ff2442; color: #ff2442; }
+/* Move bar */
+.move-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #fff5f5; border: 1px solid #ffe0e0; border-radius: 12px; margin-bottom: 14px; }
+.move-bar-count { font-size: 13px; color: #d61e38; font-weight: 500; flex-shrink: 0; }
+.move-bar-select { flex: 1; padding: 6px 10px; border: 1px solid #ffd0d0; border-radius: 8px; font-size: 13px; outline: none; background: #fff; }
+.move-bar-select:focus { border-color: #ff2442; }
+.move-bar-btn { background: #ff2442; color: #fff; border: none; border-radius: 16px; padding: 6px 16px; font-size: 12px; cursor: pointer; transition: background 0.15s; }
+.move-bar-btn:hover { background: #d61e38; }
+.move-bar-btn:disabled { background: #ffcccc; cursor: default; }
+.wf-card.selected { outline: 2px solid #ff2442; outline-offset: -2px; border-radius: 12px; position: relative; }
+.wf-check { position: absolute; top: 8px; left: 8px; z-index: 2; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.wf-check span { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.8); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: transparent; background: rgba(0,0,0,0.15); transition: all 0.15s; }
+.wf-check span.checked { background: #ff2442; border-color: #ff2442; color: #fff; }
+.wf-card:hover .wf-check span { border-color: #fff; }
 </style>
 
 

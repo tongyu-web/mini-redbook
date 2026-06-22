@@ -65,15 +65,37 @@
       <div v-else-if="items.length === 0" class="empty-state">
         <p class="empty-text">{{ emptyText }}</p>
       </div>
-      <div v-if="manageMode && selectedItems.length > 0" class="move-bar">
-        <span class="move-bar-count">已选择 {{ selectedItems.length }} 篇</span>
-        <select class="move-bar-select" v-model="moveTargetFolderId">
-          <option value="">移动到...</option>
-          <option v-for="f in folders" :key="f.id" :value="f.id">{{ f.name }}</option>
-        </select>
-        <button class="move-bar-btn" @click="doMoveSelected">移动</button>
+      <div v-if="manageMode" class="manage-bar">
+        <div class="manage-bar-inner">
+          <div class="manage-bar-left">
+            <span class="manage-bar-count">已选 {{ selectedItems.length }}</span>
+          </div>
+          <div class="manage-bar-right">
+            <div class="manage-folder-picker" @click="showFolderPicker = true">
+              <span class="manage-folder-label">{{ moveTargetFolderName || "移动到..." }}</span>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#999" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <button class="manage-do-btn" :disabled="!moveTargetFolderId || selectedItems.length === 0" @click="doMoveSelected">移动</button>
+          </div>
+        </div>
       </div>
-            <div v-else class="waterfall">
+
+      <!-- Folder picker sheet -->
+      <Teleport to="body">
+        <div v-if="showFolderPicker" class="picker-overlay" @click.self="showFolderPicker = false">
+          <div class="picker-sheet">
+            <div class="picker-handle"></div>
+            <div class="picker-title">选择收藏夹</div>
+            <div class="picker-list">
+              <div v-for="f in folders" :key="f.id" class="picker-item" :class="{ active: moveTargetFolderId === f.id }" @click="selectMoveTarget(f)">
+                <span class="picker-item-name">{{ f.name }}</span>
+                <span v-if="moveTargetFolderId === f.id" class="picker-item-check">✓</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Teleport>
+            <div class="waterfall">
         <div v-for="n in items" :key="n.id" class="wf-card" :class="{ selected: selectedItems.includes(n.id) }" @click="manageMode ? toggleItem(n.id) : noteDetailStore.open(n.id)">
           <div v-if="manageMode" class="wf-check" @click.stop="toggleItem(n.id)">
             <span :class="{ checked: selectedItems.includes(n.id) }">{{ selectedItems.includes(n.id) ? "\u2713" : "" }}</span>
@@ -288,6 +310,15 @@ async function doMoveSelected() {
     console.error("move error:", e)
     ElMessage.error("移动失败")
   }
+}
+
+const showFolderPicker = ref(false)
+const moveTargetFolderName = ref('')
+
+function selectMoveTarget(folder) {
+  moveTargetFolderId.value = folder.id
+  moveTargetFolderName.value = folder.name
+  showFolderPicker.value = false
 }
 </script>
 <style scoped>
@@ -510,14 +541,33 @@ async function doMoveSelected() {
 .folder-manage-btn:hover { border-color: #ff2442; color: #ff2442; }
 .folder-add-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px dashed #ddd; background: none; font-size: 18px; color: #999; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
 .folder-add-btn:hover { border-color: #ff2442; color: #ff2442; }
-/* Move bar */
-.move-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #fff5f5; border: 1px solid #ffe0e0; border-radius: 12px; margin-bottom: 14px; }
-.move-bar-count { font-size: 13px; color: #d61e38; font-weight: 500; flex-shrink: 0; }
-.move-bar-select { flex: 1; padding: 6px 10px; border: 1px solid #ffd0d0; border-radius: 8px; font-size: 13px; outline: none; background: #fff; }
-.move-bar-select:focus { border-color: #ff2442; }
-.move-bar-btn { background: #ff2442; color: #fff; border: none; border-radius: 16px; padding: 6px 16px; font-size: 12px; cursor: pointer; transition: background 0.15s; }
-.move-bar-btn:hover { background: #d61e38; }
-.move-bar-btn:disabled { background: #ffcccc; cursor: default; }
+/* Manage bar - floating bottom */
+.manage-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; background: #fff; border-top: 1px solid #f0f0f0; padding: 0 16px; padding-bottom: env(safe-area-inset-bottom, 12px); box-shadow: 0 -2px 12px rgba(0,0,0,0.06); }
+.manage-bar-inner { display: flex; align-items: center; justify-content: space-between; max-width: 1000px; margin: 0 auto; padding: 10px 0; }
+.manage-bar-left { display: flex; align-items: center; gap: 8px; }
+.manage-bar-count { font-size: 14px; font-weight: 500; color: #ff2442; }
+.manage-bar-right { display: flex; align-items: center; gap: 10px; }
+.manage-folder-picker { display: flex; align-items: center; gap: 4px; padding: 7px 12px; border: 1px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: border-color 0.15s; }
+.manage-folder-picker:hover { border-color: #ff2442; }
+.manage-folder-label { font-size: 13px; color: #333; min-width: 60px; }
+.manage-do-btn { background: #ff2442; color: #fff; border: none; border-radius: 18px; padding: 8px 20px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+.manage-do-btn:hover { background: #d61e38; }
+.manage-do-btn:disabled { background: #f0f0f0; color: #ccc; cursor: default; }
+
+/* Folder picker sheet */
+.picker-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.35); z-index: 200; display: flex; align-items: flex-end; justify-content: center; }
+.picker-sheet { background: #fff; border-radius: 16px 16px 0 0; width: 100%; max-width: 480px; padding: 16px 0 32px; }
+.picker-handle { width: 36px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 12px; }
+.picker-title { text-align: center; font-size: 16px; font-weight: 600; color: #333; margin-bottom: 8px; }
+.picker-list { max-height: 300px; overflow-y: auto; padding: 0 16px; }
+.picker-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 10px; cursor: pointer; transition: background 0.1s; }
+.picker-item:hover { background: #f5f5f5; }
+.picker-item.active { background: #fff5f5; }
+.picker-item-name { font-size: 14px; color: #333; }
+.picker-item-check { color: #ff2442; font-size: 16px; font-weight: 600; }
+
+/* Waterfall spacing */
+.profile-content { padding-bottom: 70px; }
 .wf-card.selected { outline: 2px solid #ff2442; outline-offset: -2px; border-radius: 12px; position: relative; }
 .wf-check { position: absolute; top: 8px; left: 8px; z-index: 2; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .wf-check span { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.8); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: transparent; background: rgba(0,0,0,0.15); transition: all 0.15s; }

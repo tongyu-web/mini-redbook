@@ -1,4 +1,4 @@
-from rest_framework import serializers
+﻿from rest_framework import serializers
 from .models import User
 
 class RegisterSerializer(serializers.Serializer):
@@ -6,6 +6,11 @@ class RegisterSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True, required=True, min_length=6)
     nickname = serializers.CharField(max_length=15, required=False, allow_blank=True)
     gender = serializers.ChoiceField(choices=["MALE","FEMALE","UNKNOWN"], required=False)
+
+    def validate_username(self, value):
+        if not value.isdigit() or len(value) != 11:
+            raise serializers.ValidationError("手机号必须为11位数字")
+        return value
 
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField(required=True)
@@ -46,7 +51,7 @@ class UserUpdateSerializer(serializers.Serializer):
         if self.context.get("request") and hasattr(self.context["request"], "user"):
             qs = qs.exclude(id=self.context["request"].user.id)
         if qs.exists():
-            raise serializers.ValidationError("该昵称已被使用")
+            raise serializers.ValidationError("璇ユ樀绉板凡琚娇鐢?)
         return value
 
 class UserSimpleSerializer(serializers.ModelSerializer):

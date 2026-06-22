@@ -32,6 +32,10 @@ async function handleRegister() {
     errorMsg.value = "请填写手机号和密码"
     return
   }
+  if (form.username.length !== 11 || !/^\d{11}$/.test(form.username)) {
+    errorMsg.value = "手机号必须为11位数字"
+    return
+  }
   if (form.password.length < 6) {
     errorMsg.value = "密码至少6位"
     return
